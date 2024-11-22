@@ -122,7 +122,7 @@ def st_home_page(settings: Settings, data: app_data.AppData):
             st.error(f"Error analyzing data: {str(e)}")
 
     st.container(height=1, border=False)
-    with st.expander("Show Full Dataset"):
+    with st.expander("Full Dataset", expanded=True):
         if dataset == "Patients and Encounters":
             tabs = st.tabs(["Patients", "Encounters"])
             with tabs[0]:
