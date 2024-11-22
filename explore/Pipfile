@@ -11,7 +11,8 @@ plotly = "*"
 cryptography = "*"
 sqlalchemy = "<2"
 boto3 = "*"
-pandasai = "*"
+pandasai = {version = "*", extras = ["streamlit", "plotly", "numpy"]}
+openai = "<2"
 seaborn = "*"
 
 [requires]
