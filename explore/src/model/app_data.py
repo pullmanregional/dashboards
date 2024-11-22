@@ -79,7 +79,7 @@ def transform(src_data: source_data.SourceData) -> AppData:
         )
 
         encounters = EncountersDataset(
-            ai_prompt="Palouse Pediatrics, or just Pediatrics, includes both encounter locations Palouse Pediatrics Pullman and Palouse Pediatrics Moscow. Well visits are encounter_type=Well.",
+            ai_prompt="Use all locations to answer questions, unless specifically asked to limit the answer to specified locations. If asked about Palouse Pediatrics, or just Pediatrics, this includes both encounter locations Palouse Pediatrics Pullman and Palouse Pediatrics Moscow. Well visits are encounter_type=Well.",
             patients_df=patients_connector,
             encounters_df=encounters_connector,
         )

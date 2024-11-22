@@ -69,9 +69,9 @@ def st_home_page(settings: Settings, data: app_data.AppData):
     st.subheader("Analysis")
 
     # Get the currently active dataframe based on dataset selection
-    active_dfs, ai_prompt = None, ""
+    active_dfs, dataset_prompt = None, ""
     if dataset == "Patients and Encounters":
-        ai_prompt = data.encounters.ai_prompt
+        dataset_prompt = data.encounters.ai_prompt
         active_dfs = [data.encounters.patients_df, data.encounters.encounters_df]
     elif dataset == "Volumes":
         active_dfs = [
@@ -91,12 +91,9 @@ def st_home_page(settings: Settings, data: app_data.AppData):
     if query:
         container.chat_message("user").write(query)
 
-        # Prefix our query with a custom prompt to help with context
-        global_prompt = "Do not try to plot anything or create visualizations. "
-        if "plot" in query.lower() or "graph" in query.lower():
-            global_prompt = "When creating visualizations, return a plotly object to display in Streamlit."
+        # Prefix our query with custom prompts to help with context
+        query = construct_prompt("", dataset_prompt, query)
 
-        query = f"{global_prompt}\n\n{ai_prompt}\n\n{query}"
         try:
             llm = OpenAI(
                 api_token=settings.openai_api_key, model="gpt-4o-mini", verbose=True
@@ -161,3 +158,17 @@ def st_home_page(settings: Settings, data: app_data.AppData):
                 st.dataframe(data.finance.budget_df)
             with tabs[1]:
                 st.dataframe(data.finance.income_stmt_df)
+
+
+def construct_prompt(global_prompt, dataset_prompt, query):
+    if "plot" in query.lower() or "graph" in query.lower() or "chart" in query.lower():
+        query = (
+            "When creating visualizations, return a plotly object to display in Streamlit. "
+            + query
+        )
+    else:
+        query = "Do not try to plot anything or create visualizations. " + query
+
+    query = f"{global_prompt}\n\n{dataset_prompt}\n\n{query}"
+
+    return query
