@@ -6,16 +6,14 @@ name = "pypi"
 [packages]
 streamlit = "*"
 pandas = "*"
-numpy = "<2"
 plotly = "*"
 cryptography = "*"
-sqlalchemy = "<2"
 boto3 = "*"
-pandasai = "*"
-seaborn = "*"
+numpy = "<2"
+pandasai = {extras = ["streamlit", "plotly", "seaborn"], version = "*"}
+sqlalchemy = "<2"
+
+[dev-packages]
 
 [requires]
-python_version = "3"
-
-[pipenv]
-allow_prereleases = true
+python_version = "3.11"

@@ -1,11 +1,13 @@
 # Add main repo directory to include path to access common/ modules
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 
 import streamlit as st
-from src import route, source_data, ui
+from src import route, ui
+from src.model import source_data
 from common import auth, st_util
 
 
@@ -27,7 +29,7 @@ def run():
     if src_data is None:
         return st.write("No data available. Please contact administrator.")
     elif not auth.authenticate():
-            return st.stop()
+        return st.stop()
     else:
         return ui.show_home(src_data)
 
