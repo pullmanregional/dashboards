@@ -112,7 +112,11 @@ def st_home_page(settings: Settings, data: app_data.AppData):
                 response = smart_df.chat(query)
                 if response is not None:
                     tabs[0].write(response)
-                tabs[1].code(smart_df.last_code_generated)
+                with tabs[1]:
+                    st.write("Prompt:")
+                    st.code(query, language="text")
+                    st.write("Code:")
+                    st.code(smart_df.last_code_generated)
 
         except Exception as e:
             st.error(f"Error analyzing data: {str(e)}")
@@ -163,11 +167,11 @@ def st_home_page(settings: Settings, data: app_data.AppData):
 def construct_prompt(global_prompt, dataset_prompt, query):
     if "plot" in query.lower() or "graph" in query.lower() or "chart" in query.lower():
         query = (
-            "When creating visualizations, return a plotly object to display in Streamlit. "
+            "When creating visualizations, return a plotly object to display in Streamlit.\n\n"
             + query
         )
     else:
-        query = "Do not try to plot anything or create visualizations. " + query
+        query = "Do not try to plot anything or create visualizations.\n\n" + query
 
     query = f"{global_prompt}\n\n{dataset_prompt}\n\n{query}"
 
