@@ -12,6 +12,7 @@ boto3 = "*"
 numpy = "<2"
 pandasai = {extras = ["streamlit", "plotly", "seaborn"], version = "*"}
 sqlalchemy = "<2"
+pyyaml = "*"
 
 [dev-packages]
 
