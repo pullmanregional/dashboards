@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+streamlit = "*"
+pandas = "*"
+numpy = "<2"
+plotly = "*"
+cryptography = "*"
+sqlalchemy = "<2"
+boto3 = "*"
+pandasai = "*"
+seaborn = "*"
+
+[requires]
+python_version = "3"
+
+[pipenv]
+allow_prereleases = true
