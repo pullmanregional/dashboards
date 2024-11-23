@@ -7,7 +7,7 @@ import sqlite3
 import boto3
 from dataclasses import dataclass
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import create_engine
 from . import encrypt
 
 
@@ -81,7 +81,7 @@ def json_from_s3(
 
 def sqlite_engine_from_s3(
     s3_config: S3Config, bucket: str, obj: str, data_key: str = None
-) -> Engine:
+):
     """
     Fetches the SQLite database file from a remote S3-compatible storage, decrypts it,
     and loads it into a temporary SQLite database.
@@ -92,6 +92,14 @@ def sqlite_engine_from_s3(
     logging.info("Reading DB to memory")
     open(TMP_DB_FILE, "wb").write(data)
     conn = sqlite3.connect(TMP_DB_FILE)
+    return create_engine(f"sqlite://", creator=lambda: conn)
+
+
+def sqlite_engine_from_file(file):
+    """
+    Reads the specified SQLite database file and returns a SQLAlchemy engine.
+    """
+    conn = sqlite3.connect(file)
     return create_engine(f"sqlite://", creator=lambda: conn)
 
 

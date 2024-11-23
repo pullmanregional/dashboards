@@ -69,8 +69,9 @@ def clear_tables_and_insert_data(session: Session, tables_data: List[TableData])
         session.exec(delete(table_data.table))
 
         # Select columns from dataframe that match table columns, except "id" column
-        table_columns = table_data.table.__table__.columns.keys()
-        table_columns.remove("id")
+        table_columns = list(table_data.table.__table__.columns.keys())
+        if "id" in table_columns:
+            table_columns.remove("id")
 
         # Remove columns that aren't in the dataframe
         table_columns = [col for col in table_columns if col in table_data.df.columns]
