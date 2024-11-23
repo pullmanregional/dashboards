@@ -67,61 +67,66 @@ def st_home_page(settings: Settings, data: app_data.AppData):
 
     st.subheader("Analysis")
 
-    # Get the currently active dataframe based on dataset selection
-    active_dfs, dataset_prompt = None, ""
-    if dataset == "Patients and Encounters":
-        dataset_prompt = data.encounters.ai_prompt
-        active_dfs = [data.encounters.patients_df, data.encounters.encounters_df]
-    elif dataset == "Volumes":
-        active_dfs = [
-            data.volumes.volumes_df,
-            data.volumes.uos_df,
-            data.volumes.hours_df,
-            data.volumes.contracted_hours_df,
-        ]
-    else:
-        active_dfs = [data.finance.budget_df, data.finance.income_stmt_df]
+    analysis_tabs = st.tabs(["Analysis", "Full Data"])
 
-    # Chat input and clear button in columns
-    container = st.container()
-    query = container.chat_input(
-        "Ask a question, like how many patients were seen in 2023?"
-    )
-    if query:
-        container.chat_message("user").write(query)
+    with analysis_tabs[0]:
 
-        # Prefix our query with custom prompts to help with context
-        query = construct_prompt("", dataset_prompt, query)
+        # Get the currently active dataframe based on dataset selection
+        active_dfs, dataset_prompt = None, ""
+        if dataset == "Patients and Encounters":
+            dataset_prompt = data.encounters.ai_prompt
+            active_dfs = [data.encounters.patients_df, data.encounters.encounters_df]
+        elif dataset == "Volumes":
+            active_dfs = [
+                data.volumes.volumes_df,
+                data.volumes.uos_df,
+                data.volumes.hours_df,
+                data.volumes.contracted_hours_df,
+            ]
+        else:
+            active_dfs = [data.finance.budget_df, data.finance.income_stmt_df]
 
-        try:
-            llm = OpenAI(
-                api_token=settings.openai_api_key, model="gpt-4o-mini", verbose=True
-            )
-            tabs = container.tabs(["Result", "Debug"])
-            smart_df = SmartDatalake(
-                active_dfs,
-                config={
-                    "llm": llm,
-                    "custom_whitelisted_dependencies": ["plotly"],
-                    "response_parser": StreamlitResponse.parser_class_factory(tabs[0]),
-                },
-            )
+        # Chat input and clear button in columns
+        container = st.container()
+        query = container.chat_input(
+            "Ask a question, like how many patients were seen in 2023?"
+        )
+        if query:
+            container.chat_message("user").write(query)
 
-            with st.spinner("Analyzing..."):
-                response = smart_df.chat(query)
-                if response is not None:
-                    tabs[0].write(response)
-                with tabs[1]:
-                    st.write("Prompt:")
-                    st.code(query, language="text")
-                    st.write("Code:")
-                    st.code(smart_df.last_code_generated)
+            # Prefix our query with custom prompts to help with context
+            query = construct_prompt("", dataset_prompt, query)
 
-        except Exception as e:
-            st.error(f"Error analyzing data: {str(e)}")
+            try:
+                llm = OpenAI(
+                    api_token=settings.openai_api_key, model="gpt-4o-mini", verbose=True
+                )
+                tabs = container.tabs(["Result", "Debug"])
+                smart_df = SmartDatalake(
+                    active_dfs,
+                    config={
+                        "llm": llm,
+                        "custom_whitelisted_dependencies": ["plotly"],
+                        "response_parser": StreamlitResponse.parser_class_factory(
+                            tabs[0]
+                        ),
+                    },
+                )
 
-    st.container(height=1, border=False)
-    with st.expander("Full Dataset", expanded=True):
+                with st.spinner("Analyzing..."):
+                    response = smart_df.chat(query)
+                    if response is not None:
+                        tabs[0].write(response)
+                    with tabs[1]:
+                        st.write("Prompt:")
+                        st.code(query, language="text")
+                        st.write("Code:")
+                        st.code(smart_df.last_code_generated)
+
+            except Exception as e:
+                st.error(f"Error analyzing data: {str(e)}")
+
+    with analysis_tabs[1]:
         if dataset == "Patients and Encounters":
             tabs = st.tabs(["Patients", "Encounters"])
             with tabs[0]:
