@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+streamlit = "*"
+plotly = "*"
+streamlit-aggrid = "*"
+sqlmodel = "*"
+openpyxl = "*"
+cryptography = "*"
+boto3 = "*"
+python-dotenv = "*"
+pyodbc = "*"
+
+[requires]
+python_version = "3"
