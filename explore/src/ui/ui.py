@@ -1,65 +1,17 @@
-import os
+"""
+Methods to show build streamlit UI
+"""
 import streamlit as st
-import pandas as pd
-from dataclasses import dataclass
-from pandasai import SmartDataframe, SmartDatalake
+from pandasai import SmartDatalake
 from pandasai.llm.openai import OpenAI
-from .model import source_data, app_data
-from pandasai.llm import OpenAI
-from pandasai.responses.response_parser import ResponseParser
-
-
-CHARTS_PATH = os.path.join(os.getcwd(), "charts")
-pd.options.plotting.backend = "plotly"
-
-
-@dataclass(eq=True, frozen=True)
-class Settings:
-    openai_api_key: str = st.secrets["PRH_EXPLORE_OPENAI_API_KEY"]
-
-
-class StreamlitResponse(ResponseParser):
-    @staticmethod
-    def parser_class_factory(container):
-        def factory(context):
-            return StreamlitResponse(container, context)
-
-        return factory
-
-    def __init__(self, container, context) -> None:
-        super().__init__(context)
-        self._container = container if container is not None else st
-
-    def format_dataframe(self, result):
-        self._container.dataframe(result["value"])
-        return None
-
-    def format_plot(self, result):
-        self._container.plotly_chart(result["value"])
-        return None
-
-    def format_other(self, result):
-        self._container.write(result["value"])
-        return None
-
-
-def show_home(src_data: source_data.SourceData):
-    # Get sidebar user settings. Settings embedded in the content handled by ui module.
-    settings = show_settings(src_data)
-
-    data = app_data.transform(src_data)
-
-    # Show main content
-    st_home_page(settings, data)
-
+from .streamlit_response import StreamlitResponse
+from ..model import source_data, app_data, settings
 
 def show_settings(src_data: source_data.SourceData):
-    return Settings()
+    return settings.Settings()
 
 
-def st_home_page(settings: Settings, data: app_data.AppData):
-    st.title("Data Explorer")
-
+def show_content(settings: settings.Settings, data: app_data.AppData):
     dataset = st.selectbox(
         "Choose a dataset to explore:",
         ["Patients and Encounters", "Volumes", "Financial"],
@@ -88,8 +40,8 @@ def st_home_page(settings: Settings, data: app_data.AppData):
 
         # Chat input and clear button in columns
         container = st.container()
-        query = container.chat_input(
-            "Ask a question, like how many patients were seen in 2023?"
+        query = container.text_input(
+            "Ask a question:", placeholder="e.g. How many patients were seen in 2023?", 
         )
         if query:
             container.chat_message("user").write(query)

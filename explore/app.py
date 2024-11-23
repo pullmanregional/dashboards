@@ -8,6 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 import streamlit as st
 from src import route, ui
 from src.model import source_data
+from src.ui import explore
 from common import auth, st_util
 
 
@@ -31,7 +32,7 @@ def run():
     elif not auth.authenticate():
         return st.stop()
     else:
-        return ui.show_home(src_data)
+        return explore.show(src_data)
 
 
 st.set_page_config(

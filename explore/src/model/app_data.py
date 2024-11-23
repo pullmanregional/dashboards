@@ -42,44 +42,27 @@ class AppData:
     finance: FinanceDataset = None
 
 
-def transform(src_data: source_data.SourceData) -> AppData:
+def process(src_data: source_data.SourceData) -> AppData:
     encounters = None
     if src_data.encounters is not None:
         # Create PandasConnector with field descriptions
         patients_connector = PandasConnector(
             {"original_df": src_data.encounters.patients_df},
-            field_descriptions={
-                "prw_id": "Unique patient identifier, used as a key for all patient data including encounters",
-                "sex": "Patient's biological sex",
-                "age": "Integer age in years",
-                "age_mo": "Integer age in months if age column is less than 2 years",
-                "age_display": "Formatted display combining age and age_mo appropriately",
-                "location": "Patient's city and state of residence",
-                "pcp": "Assigned primary care provider",
-                "panel_location": "Office name where patient receives care",
-                "panel_provider": "Actual primary care provider seen by patient, which may differ from assigned pcp",
-            },
+            field_descriptions=src_data.encounters.jsondata.get(
+                "patientsFieldDescriptions"
+            ),
         )
 
         # Create PandasConnector for encounters data
         encounters_connector = PandasConnector(
             {"original_df": src_data.encounters.encounters_df},
-            field_descriptions={
-                "prw_id": "Foreign key linking to patient record",
-                "location": "Unique office name where encounter took place",
-                "encounter_date": "Date when the encounter occurred, does not include time of day",
-                "encounter_age": "Patient's integer age in years at time of encounter",
-                "encounter_age_mo": "Patient's integer age in months at time of encounter if encounter_age column is less than 2 years",
-                "encounter_type": "Unique string identifying the type of encounter, such as Well visit, acute, etc.",
-                "service_provider": "Person who conducted the encounter",
-                "with_pcp": "0 or 1 indicating if encounter was with patient's primary care provider",
-                "diagnoses": "Semicolon separated list of diagnoses with their ICD codes associated with the encounter",
-                "level_of_service": "Complexity level of the encounter assigned by the provider, such as 1, 2, 3, 4, or 5",
-            },
+            field_descriptions=src_data.encounters.jsondata.get(
+                "encountersFieldDescriptions"
+            ),
         )
 
         encounters = EncountersDataset(
-            ai_prompt="Use all locations to answer questions, unless specifically asked to limit the answer to specified locations. If asked about Palouse Pediatrics, or just Pediatrics, this includes both encounter locations Palouse Pediatrics Pullman and Palouse Pediatrics Moscow. Well visits are encounter_type=Well.",
+            ai_prompt=src_data.encounters.jsondata.get("aiPrompt"),
             patients_df=patients_connector,
             encounters_df=encounters_connector,
         )
