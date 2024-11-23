@@ -63,7 +63,6 @@ def st_home_page(settings: Settings, data: app_data.AppData):
     dataset = st.selectbox(
         "Choose a dataset to explore:",
         ["Patients and Encounters", "Volumes", "Financial"],
-        label_visibility="collapsed",
     )
 
     st.subheader("Analysis")
