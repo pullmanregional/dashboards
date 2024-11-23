@@ -4,6 +4,7 @@ Run this file directly to print out a new randomly generated key.
 """
 
 import sys, os
+import argparse
 from cryptography.fernet import Fernet
 
 
@@ -31,7 +32,7 @@ def decrypt_file(file: str, outfile: str, key: str):
     with open(file, "rb") as f:
         data = f.read()
     decrypted = decrypt(data, key)
-    with open(f"{outfile}.dec", "wb") as f:
+    with open(f"{outfile}", "wb") as f:
         f.write(decrypted)
 
 
@@ -39,36 +40,48 @@ def decrypt_file(file: str, outfile: str, key: str):
 # and -encrypt <file> or -decrypt <file> to encrypt / decrypt a file to disk
 # Use -out <file> to specify output filename, otherwise will default to <file>.enc or <file>.dec
 if __name__ == "__main__":
-    if "-help" in sys.argv or "--help" in sys.argv:
-        print('Accepted parameters: -key, -encrypt <file>, -decrypt <file>, -out <file>.\nIf -out is not specified, will default to <file>.enc or <file>.dec')
-        exit(0)
+    parser = argparse.ArgumentParser(
+        description="Encrypt and decrypt files. Uses Fernet symmetric encryption."
+    )
+    parser.add_argument("file", help="File to encrypt/decrypt")
+    parser.add_argument(
+        "-k",
+        "--key",
+        help="Encryption key to use. If not provided, a new one will be generated",
+    )
+    parser.add_argument(
+        "-d",
+        "--decrypt",
+        action="store_true",
+        help="Decrypt file instead of encrypting",
+    )
+    parser.add_argument(
+        "-o",
+        "--out",
+        help="Output filename. Defaults to input filename with .enc or .dec extension",
+    )
+    args = parser.parse_args()
 
-    # Accept the -key parameter, or generate a new key
-    if "-key" in sys.argv:
-        key = sys.argv[sys.argv.index("-key") + 1]
+    if not os.path.exists(args.file):
+        print(f"File not found: {args.file}")
+        sys.exit(1)
+
+    # Use provided key or generate new one
+    if args.key:
+        key = args.key
         print("Using provided key")
     else:
         key = Fernet.generate_key().decode("utf-8")
-        print(key)
+        print(f"Using generated key: {key}")
 
-    # store output file from -out parameter
-    if "-out" in sys.argv:
-        out = sys.argv[sys.argv.index("-out") + 1]
+    # Handle encryption
+    if not args.decrypt:
+        out = args.out if args.out else args.file + ".enc"
+        encrypt_file(args.file, out, key)
+        print(f"Encrypted {args.file} -> {out}")
+
+    # Handle decryption
     else:
-        out = None
-
-    # if -encrypt <file> parameter, encrypt the specified file
-    if "-encrypt" in sys.argv:
-        file = sys.argv[sys.argv.index("-encrypt") + 1]
-        if os.path.exists(file):
-            out = out if out is not None else file + ".enc"
-            encrypt_file(file, out, key)
-            print(f"Encrypted {file} -> {out}")
-
-    # if -decrypt <file> parameter, decrypt the specified file
-    if "-decrypt" in sys.argv:
-        file = sys.argv[sys.argv.index("-decrypt") + 1]
-        if os.path.exists(file):
-            out = out if out is not None else file + ".dec"
-            decrypt_file(file, out, key)
-            print(f"Decrypted {file} -> {out}")
+        out = args.out if args.out else args.file + ".dec"
+        decrypt_file(args.file, out, key)
+        print(f"Decrypted {args.file} -> {out}")
