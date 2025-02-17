@@ -32,6 +32,7 @@ class EncountersDataset:
 class VolumesDataset:
     """Volumes data"""
 
+    jsondata: dict = None
     volumes_df: pd.DataFrame = None
     uos_df: pd.DataFrame = None
     hours_df: pd.DataFrame = None
@@ -42,6 +43,7 @@ class VolumesDataset:
 class FinanceDataset:
     """Financial data"""
 
+    jsondata: dict = None
     budget_df: pd.DataFrame = None
     income_stmt_df: pd.DataFrame = None
 
@@ -74,12 +76,14 @@ def from_s3() -> SourceData:
         r2_config, R2_BUCKET, "prh-dash.db.sqlite3.enc", PRH_DASH_DATA_KEY
     )
     volumes = VolumesDataset(
+        jsondata=jsondata,
         volumes_df=pd.read_sql_table("volumes", engine),
         uos_df=pd.read_sql_table("uos", engine),
         hours_df=pd.read_sql_table("hours", engine),
         contracted_hours_df=pd.read_sql_table("contracted_hours", engine),
     )
     finance = FinanceDataset(
+        jsondata=jsondata,
         budget_df=pd.read_sql_table("budget", engine),
         income_stmt_df=pd.read_sql_table("income_stmt", engine),
     )

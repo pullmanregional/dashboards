@@ -1,14 +1,19 @@
 """
 Methods to show build streamlit UI
 """
+
 import streamlit as st
-from pandasai import SmartDatalake
-from pandasai.llm.openai import OpenAI
-from .streamlit_response import StreamlitResponse
+import pandasai as pai
+from pandasai_openai import OpenAI
 from ..model import source_data, app_data, settings
 
-def show_settings(src_data: source_data.SourceData):
-    return settings.Settings()
+
+def show_settings(src_data: source_data.SourceData) -> settings.Settings:
+    # Get config from Streamlit
+    openai_model = st.secrets["openai_model"]
+    openai_api_key = st.secrets["PRH_EXPLORE_OPENAI_API_KEY"]
+
+    return settings.Settings(openai_model=openai_model, openai_api_key=openai_api_key)
 
 
 def show_content(settings: settings.Settings, data: app_data.AppData):
@@ -24,24 +29,25 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
     with analysis_tabs[0]:
 
         # Get the currently active dataframe based on dataset selection
-        active_dfs, dataset_prompt = None, ""
+        active_datasets, dataset_prompt = None, ""
         if dataset == "Patients and Encounters":
             dataset_prompt = data.encounters.ai_prompt
-            active_dfs = [data.encounters.patients_df, data.encounters.encounters_df]
+            active_datasets = [data.encounters.patients_dataset, data.encounters.encounters_dataset]
         elif dataset == "Volumes":
-            active_dfs = [
-                data.volumes.volumes_df,
-                data.volumes.uos_df,
-                data.volumes.hours_df,
-                data.volumes.contracted_hours_df,
+            active_datasets = [
+                data.volumes.volumes_dataset,
+                data.volumes.uos_dataset,
+                data.volumes.hours_dataset,
+                data.volumes.contracted_hours_dataset,
             ]
         else:
-            active_dfs = [data.finance.budget_df, data.finance.income_stmt_df]
+            active_datasets = [data.finance.budget_df, data.finance.income_stmt_df]
 
         # Chat input and clear button in columns
         container = st.container()
         query = container.text_input(
-            "Ask a question:", placeholder="e.g. How many patients were seen in 2023?", 
+            "Ask a question:",
+            placeholder="e.g. How many patients were seen in 2023?",
         )
         if query:
             container.chat_message("user").write(query)
@@ -50,30 +56,24 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
             query = construct_prompt("", dataset_prompt, query)
 
             try:
-                llm = OpenAI(
-                    api_token=settings.openai_api_key, model="gpt-4o-mini", verbose=True
-                )
                 tabs = container.tabs(["Result", "Debug"])
-                smart_df = SmartDatalake(
-                    active_dfs,
-                    config={
-                        "llm": llm,
-                        "custom_whitelisted_dependencies": ["plotly"],
-                        "response_parser": StreamlitResponse.parser_class_factory(
-                            tabs[0]
-                        ),
-                    },
-                )
 
                 with st.spinner("Analyzing..."):
-                    response = smart_df.chat(query)
+                    response = pai.chat(query, *active_datasets)
                     if response is not None:
-                        tabs[0].write(response)
+                        if response.type == "string":
+                            tabs[0].write(response.value)
+                        elif response.type == "dataframe":
+                            tabs[0].dataframe(response.value)
+                        elif response.type == "plot":
+                            tabs[0].plotly_chart(response.value)
+                        else:
+                            tabs[0].write(response)
                     with tabs[1]:
                         st.write("Prompt:")
                         st.code(query, language="text")
                         st.write("Code:")
-                        st.code(smart_df.last_code_generated)
+                        st.code(response.last_code_executed)
 
             except Exception as e:
                 st.error(f"Error analyzing data: {str(e)}")
@@ -83,7 +83,7 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
             tabs = st.tabs(["Patients", "Encounters"])
             with tabs[0]:
                 st.dataframe(
-                    data.encounters.patients_df.pandas_df,
+                    data.encounters.patients_dataset,
                     column_config={
                         "prw_id": st.column_config.NumberColumn(format="%d")
                     },
@@ -91,7 +91,7 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
                 )
             with tabs[1]:
                 st.dataframe(
-                    data.encounters.encounters_df.pandas_df,
+                    data.encounters.encounters_dataset,
                     column_config={
                         "prw_id": st.column_config.NumberColumn(format="%d"),
                         "encounter_date": st.column_config.DateColumn(
@@ -104,20 +104,32 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
         elif dataset == "Volumes":
             tabs = st.tabs(["Volumes", "Units of Service", "Hours", "Contracted Hours"])
             with tabs[0]:
-                st.dataframe(data.volumes.volumes_df)
+                st.dataframe(
+                    data.volumes.volumes_dataset,
+                )
             with tabs[1]:
-                st.dataframe(data.volumes.uos_df)
+                st.dataframe(
+                    data.volumes.uos_dataset,
+                )
             with tabs[2]:
-                st.dataframe(data.volumes.hours_df)
+                st.dataframe(
+                    data.volumes.hours_dataset,
+                )
             with tabs[3]:
-                st.dataframe(data.volumes.contracted_hours_df)
+                st.dataframe(
+                    data.volumes.contracted_hours_dataset,
+                )
 
         elif dataset == "Financial":
             tabs = st.tabs(["Budget", "Income Statement"])
             with tabs[0]:
-                st.dataframe(data.finance.budget_df)
+                st.dataframe(
+                    data.finance.budget_dataset,
+                )
             with tabs[1]:
-                st.dataframe(data.finance.income_stmt_df)
+                st.dataframe(
+                    data.finance.income_stmt_dataset,
+                )
 
 
 def construct_prompt(global_prompt, dataset_prompt, query):
