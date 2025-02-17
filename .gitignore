@@ -4,6 +4,7 @@
 # PandasAI
 charts/
 cache/
+datasets/
 
 # Ingest
 *.enc
