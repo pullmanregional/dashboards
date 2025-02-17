@@ -11,22 +11,22 @@ def st_clear_cache_page():
     )
 
 
-def st_sidebar_prh_logo(x: int = 55, y: int = 20):
+def st_sidebar_prh_logo(y: int = 20):
     """
     Add PRH Logo to side bar - https://discuss.streamlit.io/t/put-logo-and-title-above-on-top-of-page-navigation-in-sidebar-of-multipage-app/28213/5
     """
     st.markdown(
-        """
+        f"""
         <style>
-            [data-testid="stSidebar"] {
+            [data-testid="stSidebar"] {{
                 background-image: url(https://www.pullmanregional.org/hubfs/PullmanRegionalHospital_December2019/Image/logo.svg);
                 background-repeat: no-repeat;
                 padding-top: 0px;
-                background-position: {x}px {y}px;
-            }
-            .element-container iframe {
+                background-position: center {y}px;
+            }}
+            .element-container iframe {{
                 min-height: 810px;
-            }
+            }}
         </style>
         """,
         unsafe_allow_html=True,

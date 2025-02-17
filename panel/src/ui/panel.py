@@ -13,7 +13,6 @@ def show(src_data: source_data.SourceData):
     # Process the source data by filtering and generating the specifc metrics displayed in the UI
     data = app_data.process(user_settings, src_data)
 
-    st.write("# Panel Explorer (2024)")
     ui.st_patient_details(data.paneled_patients_df)
 
     st.write("## Patient List")

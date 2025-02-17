@@ -9,19 +9,31 @@ def show_settings(src_data: source_data.SourceData) -> dict:
     """
     Render the sidebar and return the dict with configuration options set by the user.
     """
-    with st.sidebar:
-        st_util.st_sidebar_prh_logo()
-        st.write("## Clinic")
-        clinic = st.selectbox(
-            "Select a clinic",
-            options=[
-                "All",
+    # with st.sidebar:
+    #     st_util.st_sidebar_prh_logo()
+    #     st.write("## Clinic")
+
+    col1, col2 = st.columns([10, 4])  # Make second column 50px by using relative widths
+    with col1:
+        st.markdown(
+            '<div style="display: flex; align-items: center; height: 100%"><h2>Patient Panel Dashboard</h2></div>',
+            unsafe_allow_html=True
+        )
+    with col2:
+        col_a, col_b = st.columns([3,10])
+        with col_a:
+            st.markdown('<div style="margin-top: 2.25em; text-align: right; margin-right: 0.5em">Clinic:</div>', unsafe_allow_html=True)
+        with col_b:
+            clinic = st.selectbox(
+                "Select a clinic",
+                options=[
+                "All", 
                 "Pullman Family Medicine",
                 "Residency",
                 "Palouse Pediatrics",
                 "Palouse Medical",
             ],
-            label_visibility="collapsed",
+            label_visibility="hidden",
         )
 
     return settings.Settings(clinic=clinic)
@@ -37,7 +49,7 @@ def st_patient_table(patients_df: pd.DataFrame):
     # columns prw_id, sex, age_display, city, state, panel_location
     # Display column headers Patient ID, Sex, Age, City, State, Panel
     selected_columns = ["prw_id", "sex", "age_display", "location", "panel_location"]
-    display_columns = ["Patient ID", "Sex", "Age", "City", "Panel"]
+    display_columns = ["ID", "Sex", "Age", "City", "Panel"]
 
     patients_df = patients_df[selected_columns]
     patients_df.columns = display_columns
@@ -45,7 +57,7 @@ def st_patient_table(patients_df: pd.DataFrame):
     event = st.dataframe(
         patients_df.style.format(
             {
-                "Patient ID": "{}",
+                "ID": "{}",
             }
         ),
         hide_index=True,
@@ -56,7 +68,7 @@ def st_patient_table(patients_df: pd.DataFrame):
 
     if event and event.selection and event.selection.rows:
         selected_row = event.selection.rows[0]
-        selected_prwid = patients_df.iloc[selected_row]["Patient ID"]
+        selected_prwid = patients_df.iloc[selected_row]["ID"]
         return selected_prwid
 
     return None
