@@ -5,16 +5,16 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
-pandas = "*"
 plotly = "*"
 cryptography = "*"
 boto3 = "*"
-numpy = "<2"
-pandasai = {extras = ["streamlit", "plotly", "seaborn"], version = "*"}
-sqlalchemy = "<2"
 pyyaml = "*"
+pandasai = ">=3.0.0b2"
+sqlmodel = "*"
+pandasai-openai = "*"
 
 [dev-packages]
 
 [requires]
+# Require <3.12 for compatibility with pandasai (https://docs.getpanda.ai/v3/getting-started)
 python_version = "3.11"
