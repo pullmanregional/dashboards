@@ -21,7 +21,7 @@ def show(src_data: source_data.SourceData):
     data = app_data.process(src_data)
 
     # Initialize pandasai globally
-    llm = OpenAI(api_token=settings.openai_api_key)
+    llm = OpenAI(api_token=settings.openai_api_key, model=settings.openai_model)
     pai.config.set({"llm": llm})
 
     # Show main content
