@@ -4,6 +4,13 @@
 [server]
 port = 8502
 
+# Don't launch browser on startup
+headless = true
+
+[client]
+# Remove top right menu
+toolbarMode = "minimal"
+
 [logger]
 # Level of logging: 'error', 'warning', 'info', or 'debug'.
 level = "info"
