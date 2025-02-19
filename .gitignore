@@ -9,6 +9,7 @@ datasets/
 # Ingest
 *.enc
 *.sqlite3
+kv.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
