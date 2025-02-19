@@ -58,6 +58,8 @@ def force_fetch_data():
     source_data.fetch_source_files_to_disk(
         source_data.DEFAULT_DB_FILE,
         st.secrets.get("data_url"),
+        source_data.DEFAULT_KV_FILE,
+        st.secrets.get("data_kv_url"),
         st.secrets.get("data_key"),
         force=True,
     )
