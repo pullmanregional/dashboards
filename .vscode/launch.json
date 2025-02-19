@@ -21,6 +21,26 @@
       "args": ["run", "app.py"],
       "console": "integratedTerminal",
       "justMyCode": false
+    },
+    {
+      "name": "Streamlit: finance",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "cwd": "${workspaceFolder}/finance",
+      "args": ["run", "app.py"],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Streamlit: panel",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "cwd": "${workspaceFolder}/panel",
+      "args": ["run", "app.py"],
+      "console": "integratedTerminal",
+      "justMyCode": false
     }
   ]
 }
