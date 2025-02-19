@@ -1,3 +1,8 @@
+# This is the Prefect flow that starts the datamart ingest process and uploads the completed artifacts.
+# Remember that this file is run outside of a virtualenv, so the only dependencies available
+# are the ones installed in the Prefect worker environment. The virtualenv created by ./Pipfile
+# will be available to ./ingest_datamart.py, but not to this Prefect flow.
+
 import os
 from dotenv import load_dotenv
 from prefect import flow, task
@@ -53,7 +58,7 @@ def prh_datamart_finance():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f"pipenv run python ingest_datamart.py --prw {PRW_DB_ODBC} --db {PRH_FINANCE_ENCRYPTED_DB_FILE} --kv {PRH_FINANCE_ENCRYPTED_JSON_FILE} --key {PRH_FINANCE_DATA_KEY}",
+            f"pipenv run python ingest_datamart.py --prw \"{PRW_DB_ODBC}\" --db \"{PRH_FINANCE_ENCRYPTED_DB_FILE}\" --kv \"{PRH_FINANCE_ENCRYPTED_JSON_FILE}\" --key \"{PRH_FINANCE_DATA_KEY}\"",
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",

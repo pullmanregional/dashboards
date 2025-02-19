@@ -13,5 +13,6 @@ python-dotenv = "*"
 prefect = {extras = ["aws", "shell"], version = "*"}
 cryptography = "*"
 pandas = "*"
+pyodbc = "*"
 
 [dev-packages]

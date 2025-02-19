@@ -3,6 +3,7 @@ Source data as in-memory copy of all DB tables as dataframes
 """
 
 import logging
+import json
 import os
 import pandas as pd
 import streamlit as st
@@ -27,6 +28,9 @@ from .model import (
 DEFAULT_DB_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "db.sqlite3"
 )
+DEFAULT_KV_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "kv.json"
+)
 
 
 @dataclass(eq=True, frozen=True)
@@ -47,7 +51,7 @@ class SourceData:
 
 
 @st.cache_data(show_spinner=False)
-def from_db(db_file: str) -> SourceData:
+def from_db(db_file: str, kv_file: str) -> SourceData:
     """
     Read all data from specified SQLite DB into memory and return as dataframes
     """
@@ -62,9 +66,6 @@ def from_db(db_file: str) -> SourceData:
             "last_updated": session.query(Metadata.last_updated)
             .order_by(Metadata.last_updated.desc())
             .scalar(),
-            "contracted_hours_updated_month": session.query(
-                Metadata.contracted_hours_updated_month
-            ).scalar(),
             "sources_updated": {
                 row.filename: row.modified for row in session.query(SourceMetadata)
             },
@@ -80,11 +81,16 @@ def from_db(db_file: str) -> SourceData:
         "income_stmt_df": pd.read_sql_table(IncomeStmt.__tablename__, engine),
     }
 
+    # Read KV file into memory
+    with open(kv_file, "r") as f:
+        kv = json.load(f)
+        contracted_hours_updated_month = kv.get("contracted_hours_updated_month")
+
     engine.dispose()
-    return SourceData(**metadata, **dfs)
+    return SourceData(**metadata, **dfs, contracted_hours_updated_month=contracted_hours_updated_month)
 
 
-def fetch_source_file_to_disk(file, url, key, force=False):
+def fetch_source_files_to_disk(file, url, file_kv, url_kv, key, force=False):
     """
     Fetch source data from URL, decrypt, and store to disk if not already present.
     If force is True, always fetch.
@@ -94,6 +100,8 @@ def fetch_source_file_to_disk(file, url, key, force=False):
             logging.info(f"Unable to fetch remote data file. URL and key required.")
             return
 
+        updated = False
+
         # Fetch source data from URL
         logging.info(f"Fetching data from {url}")
         res = requests.get(url)
@@ -102,8 +110,20 @@ def fetch_source_file_to_disk(file, url, key, force=False):
             data = encrypt.decrypt(res.content, key)
             with open(file, "wb") as f:
                 f.write(data)
-
-            # Force data module to reread data from disk on next run
-            st.cache_data.clear()
+            updated = True
         else:
             st.write(f"Unable to fetch data file, status code {res.status_code}.")
+
+        res = requests.get(url_kv)
+        if res.status_code == 200:
+            # Decrypt and write to disk
+            data = encrypt.decrypt(res.content, key)
+            with open(file_kv, "wb") as f:
+                f.write(data)
+            updated = True
+        else:
+            st.write(f"Unable to fetch data file, status code {res.status_code}.")
+
+        if updated:
+            # Force data module to reread data from disk on next run
+            st.cache_data.clear()
