@@ -48,7 +48,7 @@ def upload_files(bucket_name, files):
 
 @flow(
     retries=0,
-    name=PREFECT_FLOW_NAME + (f"{PRW_ENV}." if PRW_ENV != "prod" else ""),
+    name=PREFECT_FLOW_NAME + (f".{PRW_ENV}" if PRW_ENV != "prod" else ""),
 )
 def prh_datamart_finance():
     # Set working dir to path of this file
