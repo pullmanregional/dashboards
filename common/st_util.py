@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def st_clear_cache_page():
     """
     Clear Streamlit cache so source_data module will reread DB from disk on next request
@@ -28,6 +29,20 @@ def st_sidebar_prh_logo(y: int = 20):
                 min-height: 810px;
             }}
         </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def st_center_text(text: str):
+    """
+    Write text in the center of the page using markdown and centered styling
+    """
+    st.markdown(
+        f"""
+        <div style="text-align: center;">
+            {text}
+        </div>
         """,
         unsafe_allow_html=True,
     )

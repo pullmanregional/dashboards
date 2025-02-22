@@ -14,7 +14,11 @@ from common import auth, st_util
 
 def run():
     """Main streamlit app entry point"""
-    # Fetch source data - do this before auth to ensure all requests to app cause data refresh
+    # Authenticate user
+    user = auth.oidc_auth()
+    if not user:
+        return st.stop()
+
     # Read, parse, and cache (via @st.cache_data) source data
     with st.spinner("Initializing..."):
         src_data = source_data.from_s3()
@@ -28,14 +32,12 @@ def run():
 
     # Render page based on the route
     if src_data is None:
-        return st.write("No data available. Please contact administrator.")
-    elif not auth.authenticate():
-        return st.stop()
+        st_util.st_center_text("No data available. Please contact administrator.")
     else:
         return explore.show(src_data)
 
 
-st.set_page_config(
-    page_title="Data Explorer", layout="wide", initial_sidebar_state="auto"
-)
+# st.set_page_config(
+#     page_title="Data Explorer", layout="wide", initial_sidebar_state="auto"
+# )
 run()

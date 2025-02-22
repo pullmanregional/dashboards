@@ -28,7 +28,7 @@ def run():
     # Render page based on the route
     if src_data is None:
         return st.write("No data available. Please contact administrator.")
-    elif not auth.authenticate():
+    elif not auth.simple_auth():
         return st.stop()
     else:
         return panel.show(src_data)
