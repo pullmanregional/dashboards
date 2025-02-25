@@ -26,7 +26,7 @@ print(f"Using environment: {ENV_PATH}")
 load_dotenv(dotenv_path=ENV_PATH)
 
 # Load config from env vars into constants
-PRW_DB_ODBC = os.environ.get("PRW_DB_ODBC") or Secret.load("prw-db-url").get()
+PRW_CONN = os.environ.get("PRW_CONN") or Secret.load("prw-db-url").get()
 PRH_FINANCE_VENV_NAME = os.environ.get("PRH_FINANCE_VENV_NAME", "")
 PRH_FINANCE_CLOUDFLARE_R2_BUCKET = os.environ.get("PRH_FINANCE_CLOUDFLARE_R2_BUCKET")
 PRH_FINANCE_DATA_KEY = (
@@ -58,7 +58,7 @@ def prh_datamart_finance():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f"pipenv run python ingest_datamart.py --prw \"{PRW_DB_ODBC}\" --db \"{PRH_FINANCE_ENCRYPTED_DB_FILE}\" --kv \"{PRH_FINANCE_ENCRYPTED_JSON_FILE}\" --key \"{PRH_FINANCE_DATA_KEY}\"",
+            f"pipenv run python ingest_datamart.py --prw \"{PRW_CONN}\" --db \"{PRH_FINANCE_ENCRYPTED_DB_FILE}\" --kv \"{PRH_FINANCE_ENCRYPTED_JSON_FILE}\" --key \"{PRH_FINANCE_DATA_KEY}\"",
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",
