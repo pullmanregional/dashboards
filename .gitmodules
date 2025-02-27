@@ -1,0 +1,3 @@
+[submodule "prw_common"]
+	path = prw_common
+	url = https://github.com/pullmanregional/prw_common.git
