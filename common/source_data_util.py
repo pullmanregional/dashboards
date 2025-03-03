@@ -8,7 +8,7 @@ import boto3
 from dataclasses import dataclass
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from sqlalchemy import create_engine
-from . import encrypt
+from cryptography.fernet import Fernet
 
 
 # Temporary storage when loading DB from memory
@@ -50,12 +50,10 @@ def fetch_from_s3(
         response = s3_client.get_object(Bucket=bucket, Key=obj)
         remote_bytes = response["Body"].read()
 
-        # Decrypt the database file
+        # Decrypt the database file using provided Fernet key
         logging.info("Decrypting")
         decrypted_bytes = (
-            encrypt.decrypt(remote_bytes, data_key)
-            if data_key is not None
-            else remote_bytes
+            Fernet(data_key).decrypt(remote_bytes) if data_key is not None else remote_bytes
         )
 
         return decrypted_bytes
