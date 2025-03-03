@@ -4,26 +4,21 @@
 # will be available to ./ingest_datamart.py, but not to this Prefect flow.
 
 import os
+import sys, pathlib
 from dotenv import load_dotenv
 from prefect import flow, task
 from prefect_shell import ShellOperation
 from prefect_aws import AwsCredentials, S3Bucket
 from prefect.blocks.system import Secret
 
+# Add main repo directory to include path to access prw_common/ modules
+sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
+from prw_common.env_utils import load_prw_env
+
 PREFECT_FLOW_NAME = "prw-datamart-finance"
 
-# Load env vars from a .env file
-# load_dotenv() does NOT overwrite existing env vars that are set before running this script.
-# Look for the .env file in this file's directory
-# Actual .env file (eg .env.dev) depends on value of PRW_ENV. Default to prod.
-PRW_ENV = os.getenv("PRW_ENV", "prod")
-ENV_FILES = {
-    "dev": ".env.dev",
-    "prod": ".env.prod",
-}
-ENV_PATH = os.path.join(os.path.dirname(__file__), ENV_FILES.get(PRW_ENV))
-print(f"Using environment: {ENV_PATH}")
-load_dotenv(dotenv_path=ENV_PATH)
+# Load env vars from the .env file corresponding to PRW_ENV (dev/prod)
+PRW_ENV = load_prw_env(__file__)
 
 # Load config from env vars into constants
 PRW_CONN = os.environ.get("PRW_CONN") or Secret.load("prw-db-url").get()
@@ -58,7 +53,7 @@ def prh_datamart_finance():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f"pipenv run python ingest_datamart.py --prw \"{PRW_CONN}\" --db \"{PRH_FINANCE_ENCRYPTED_DB_FILE}\" --kv \"{PRH_FINANCE_ENCRYPTED_JSON_FILE}\" --key \"{PRH_FINANCE_DATA_KEY}\"",
+            f"pipenv run python ingest_datamart.py --prw '{PRW_CONN}' --db '{PRH_FINANCE_ENCRYPTED_DB_FILE}' --kv '{PRH_FINANCE_ENCRYPTED_JSON_FILE}' --key '{PRH_FINANCE_DATA_KEY}'",
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",
