@@ -22,7 +22,7 @@ from common import db_util
 load_dotenv()
 
 # Load security sensitive config from env vars. Default output to local SQLite DB.
-PRW_DB_ODBC = os.environ.get("PRW_DB_ODBC", "sqlite:///prw.sqlite3")
+PRW_CONN = os.environ.get("PRW_CONN", "sqlite:///prw.sqlite3")
 PANEL_DB_ODBC = os.environ.get("PANEL_DB_ODBC", "sqlite:///panel.sqlite3")
 
 
@@ -223,7 +223,7 @@ def parse_arguments():
         "-i",
         "--input",
         help='Connnection string to warehouse database, including credentials. Look for Azure SQL connection string in Settings > Connection strings, eg. "mssql+pyodbc:///?odbc_connect=Driver={ODBC Driver 18 for SQL Server};Server=tcp:{your server name},1433;Database={your db name};Uid={your user};Pwd={your password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"',
-        default=PRW_DB_ODBC,
+        default=PRW_CONN,
     )
     parser.add_argument(
         "-o",
