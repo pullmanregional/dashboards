@@ -52,7 +52,7 @@ def prh_datamart_sample():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f'pipenv run python ingest_datamart.py --prw "{PRW_CONN}" --db "{PRH_SAMPLE_ENCRYPTED_DB_FILE}" --kv "{PRH_SAMPLE_ENCRYPTED_JSON_FILE}" --key "{PRH_SAMPLE_DATA_KEY}"',
+            f'pipenv run python ingest_datamart.py --prw "{PRW_CONN}" --out "{PRH_SAMPLE_ENCRYPTED_DB_FILE}" --kv "{PRH_SAMPLE_ENCRYPTED_JSON_FILE}" --key "{PRH_SAMPLE_DATA_KEY}"',
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",
