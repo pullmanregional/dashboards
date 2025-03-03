@@ -12,7 +12,11 @@ from sqlmodel import Session
 from dotenv import load_dotenv
 from sqlmodel import SQLModel, Session
 from model import panel_model
-from common import db_util
+
+# Add project root and repo roots so we can import common modules and from ../src/
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+from prw_common import db_utils
 
 
 # -------------------------------------------------------
@@ -242,10 +246,10 @@ def main():
     args = parse_arguments()
     input_odbc = args.input
     output_odbc = args.output
-    logging.info(f"Input: {input_odbc}, output: {db_util.mask_pw(output_odbc)}")
+    logging.info(f"Input: {input_odbc}, output: {db_utils.mask_pw(output_odbc)}")
 
     # Get connection to input DB
-    in_engine = db_util.get_db_connection(input_odbc)
+    in_engine = db_utils.get_db_connection(input_odbc)
     if in_engine is None:
         error_exit("ERROR: cannot open warehouse DB (see above)")
 
@@ -258,7 +262,7 @@ def main():
     out = transform(src)
 
     # Get connection to output DB
-    out_engine = db_util.get_db_connection(output_odbc)
+    out_engine = db_utils.get_db_connection(output_odbc)
     if out_engine is None:
         error_exit("ERROR: cannot open output DB (see above)")
 
@@ -267,16 +271,16 @@ def main():
 
     # Write into DB
     session = Session(out_engine)
-    db_util.clear_tables_and_insert_data(
+    db_utils.clear_tables_and_insert_data(
         session,
         [
-            db_util.TableData(table=panel_model.Patient, df=out.patients_df),
-            db_util.TableData(table=panel_model.Encounter, df=out.encounters_df),
+            db_utils.TableData(table=panel_model.Patient, df=out.patients_df),
+            db_utils.TableData(table=panel_model.Encounter, df=out.encounters_df),
         ],
     )
 
     # Update last ingest time and modified times for source data files
-    db_util.write_meta(session, panel_model.Meta)
+    db_utils.write_meta(session, panel_model.Meta)
     session.commit()
 
     # Cleanup
