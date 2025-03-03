@@ -11,7 +11,7 @@ from sqlmodel import Session, select, text, create_engine
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.model import db
-from common import db_util
+from prw_common import db_utils
 from prw_common.cli_utils import cli_parser
 from prw_common.encrypt import encrypt_file
 
@@ -103,12 +103,12 @@ def main():
 
     # Write tables to datamart
     session = Session(out_engine)
-    db_util.clear_tables_and_insert_data(
-        session, [db_util.TableData(table=db.DataTable, df=out.data_df)]
+    db_utils.clear_tables_and_insert_data(
+        session, [db_utils.TableData(table=db.DataTable, df=out.data_df)]
     )
 
     # Update last ingest time and modified times for source data files
-    db_util.write_meta(session, db.Meta)
+    db_utils.write_meta(session, db.Meta)
     session.commit()
 
     # Write to the output key/value file as JSON
