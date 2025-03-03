@@ -32,7 +32,10 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
         active_datasets, dataset_prompt = None, ""
         if dataset == "Patients and Encounters":
             dataset_prompt = data.encounters.ai_prompt
-            active_datasets = [data.encounters.patients_dataset, data.encounters.encounters_dataset]
+            active_datasets = [
+                data.encounters.patients_dataset,
+                data.encounters.encounters_dataset,
+            ]
         elif dataset == "Volumes":
             active_datasets = [
                 data.volumes.volumes_dataset,
@@ -70,8 +73,8 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
                         else:
                             tabs[0].write(response)
                     with tabs[1]:
-                        st.write("Prompt:")
-                        st.code(query, language="text")
+                        with st.expander("Prompt"):
+                            st.code(query, language="text")
                         st.write("Code:")
                         st.code(response.last_code_executed)
 
