@@ -14,20 +14,19 @@ from prefect.blocks.system import Secret
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 from prw_common.env_utils import load_prw_env
 
-PREFECT_FLOW_NAME = "prw-datamart-sample"
+PREFECT_FLOW_NAME = "prw-datamart-marketing"
 
 # Load env vars from the .env file corresponding to PRW_ENV (dev/prod)
 PRW_ENV = load_prw_env(__file__)
 
 # Load config from env vars into constants
 PRW_CONN = os.environ.get("PRW_CONN") or Secret.load("prw-db-url").get()
-PRH_SAMPLE_VENV_NAME = os.environ.get("PRH_SAMPLE_VENV_NAME", "")
-PRH_SAMPLE_CLOUDFLARE_R2_BUCKET = os.environ.get("PRH_SAMPLE_CLOUDFLARE_R2_BUCKET")
-PRH_SAMPLE_DATA_KEY = (
-    os.environ.get("PRH_SAMPLE_DATA_KEY") or Secret.load("prh-sample-data-key").get()
+PRH_MARKETING_VENV_NAME = os.environ.get("PRH_MARKETING_VENV_NAME", "")
+PRH_MARKETING_CLOUDFLARE_R2_BUCKET = os.environ.get("PRH_MARKETING_CLOUDFLARE_R2_BUCKET")
+PRH_MARKETING_DATA_KEY = (
+    os.environ.get("PRH_MARKETING_DATA_KEY") or Secret.load("prh-marketing-data-key").get()
 )
-PRH_SAMPLE_ENCRYPTED_DB_FILE = os.environ.get("PRH_SAMPLE_ENCRYPTED_DB_FILE")
-PRH_SAMPLE_ENCRYPTED_JSON_FILE = os.environ.get("PRH_SAMPLE_ENCRYPTED_JSON_FILE")
+PRH_MARKETING_ENCRYPTED_DB_FILE = os.environ.get("PRH_MARKETING_ENCRYPTED_DB_FILE")
 
 
 @task
@@ -52,11 +51,11 @@ def prh_datamart_sample():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f'pipenv run python ingest_datamart.py --prw "{PRW_CONN}" --db "{PRH_SAMPLE_ENCRYPTED_DB_FILE}" --kv "{PRH_SAMPLE_ENCRYPTED_JSON_FILE}" --key "{PRH_SAMPLE_DATA_KEY}"',
+            f'pipenv run python ingest_datamart.py --prw "{PRW_CONN}" --out "{PRH_MARKETING_ENCRYPTED_DB_FILE}" --key "{PRH_MARKETING_DATA_KEY}"',
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",
-            "PIPENV_CUSTOM_VENV_NAME": PRH_SAMPLE_VENV_NAME,
+            "PIPENV_CUSTOM_VENV_NAME": PRH_MARKETING_VENV_NAME,
         },
         stream_output=True,
     ) as op:
@@ -66,10 +65,10 @@ def prh_datamart_sample():
             raise Exception(f"Failed, exit code {proc.return_code}")
 
     # Upload encrypted output to S3
-    if PRH_SAMPLE_CLOUDFLARE_R2_BUCKET:
+    if PRH_MARKETING_CLOUDFLARE_R2_BUCKET:
         upload_files(
-            PRH_SAMPLE_CLOUDFLARE_R2_BUCKET,
-            [PRH_SAMPLE_ENCRYPTED_DB_FILE, PRH_SAMPLE_ENCRYPTED_JSON_FILE],
+            PRH_MARKETING_CLOUDFLARE_R2_BUCKET,
+            [PRH_MARKETING_ENCRYPTED_DB_FILE],
         )
 
 
