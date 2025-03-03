@@ -9,6 +9,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import List
 from sqlmodel import SQLModel, Session, create_engine, delete
+from sqlalchemy import inspect
 
 
 @dataclass
@@ -65,8 +66,10 @@ def clear_tables_and_insert_data(session: Session, tables_data: List[TableData])
     for table_data in tables_data:
         logging.info(f"Writing data to table: {table_data.table.__tablename__}")
 
-        # Clear data in DB
-        session.exec(delete(table_data.table))
+        # Clear data in DB if table exists
+        inspector = inspect(session.bind)
+        if inspector.has_table(table_data.table.__tablename__):
+            session.exec(delete(table_data.table))
 
         # Select columns from dataframe that match table columns, except "id" column
         table_columns = list(table_data.table.__table__.columns.keys())
@@ -93,5 +96,7 @@ def write_meta(session: Session, meta_table: SQLModel):
     logging.info("Writing metadata")
 
     # Clear and reset last ingest time
-    session.exec(delete(meta_table))
+    inspector = inspect(session.bind)
+    if inspector.has_table(meta_table.__tablename__):
+        session.exec(delete(meta_table))
     session.add(meta_table(modified=datetime.now()))
