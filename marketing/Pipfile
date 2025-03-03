@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+streamlit = "*"
+streamlit-shadcn-ui = "*"
+plotly = "*"
+cryptography = "*"
+boto3 = "*"
+sqlmodel = "*"
+authlib = "*"
+
+[dev-packages]
