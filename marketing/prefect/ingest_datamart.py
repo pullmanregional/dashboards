@@ -112,11 +112,11 @@ def main():
     tmp_db_file = "datamart.sqlite3"
 
     # Create the sqlite output database and create the tables as defined in ../src/model/db.py
-    out_engine = create_engine(f"sqlite:///{tmp_db_file}")
+    out_engine = db_utils.get_db_connection(f"sqlite:///{tmp_db_file}")
     db.DatamartModel.metadata.create_all(out_engine)
 
     # Read from PRW warehouse (MSSQL in prod, sqlite in dev)
-    prw_engine = create_engine(prw_db_url)
+    prw_engine = db_utils.get_db_connection(prw_db_url)
     src = read_source_tables(prw_engine)
     if src is None:
         error_exit("ERROR: failed to read source data (see above)")
