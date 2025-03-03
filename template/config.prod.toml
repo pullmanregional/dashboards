@@ -1,0 +1,22 @@
+# This file should be copied to .streamlit/config.toml in prod
+# Additionally, create a .streamlit/secrets.toml file with permissions 0600 to contain keys
+
+[server]
+port = 8502
+baseUrlPath = ""
+
+# Don't launch browser on startup
+headless = true
+
+[client]
+# Remove top right menu
+toolbarMode = "minimal"
+
+[logger]
+# Level of logging: 'error', 'warning', 'info', or 'debug'.
+level = "info"
+
+[browser]
+serverAddress = "data.prh.app"
+serverPort = 443
+gatherUsageStats = false
