@@ -34,14 +34,45 @@ def st_sidebar_prh_logo(y: int = 20):
     )
 
 
-def st_center_text(text: str):
+def st_center_text(text: str, style: str = ""):
     """
     Write text in the center of the page using markdown and centered styling
     """
     st.markdown(
         f"""
-        <div style="text-align: center;">
+        <div style="text-align: center; {style}">
             {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def st_card(title: str, content: str, description: str):
+    st.markdown(
+        f"""
+        <div style="
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 0.5rem 0;
+        ">
+            <h3 style="
+                font-size: 1.2rem;
+                margin: 0 0 0.2rem 0;
+                padding: 0;
+                color: #333;
+            ">{title}</h3>
+            <p style="
+                font-size: 1.1rem;
+                margin: 0 0 0.2rem 0;
+                font-weight: 500;
+            ">{content}</p>
+            <p style="
+                font-size: 0.75rem;
+                margin: 0;
+                color: #666;
+            ">{description}</p>
         </div>
         """,
         unsafe_allow_html=True,

@@ -38,6 +38,6 @@ def run():
 
 
 st.set_page_config(
-    page_title="Marketing Dashboard", initial_sidebar_state="auto", menu_items=None
+    page_title="Marketing Dashboard", initial_sidebar_state="auto", menu_items=None, 
 )
 run()

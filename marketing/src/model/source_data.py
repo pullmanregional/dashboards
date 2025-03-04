@@ -23,6 +23,7 @@ class SourceData:
     """In-memory copy of DB tables"""
 
     encounters_df: pd.DataFrame = None
+    no_shows_df: pd.DataFrame = None
     patients_df: pd.DataFrame = None
 
 
@@ -34,7 +35,8 @@ def from_s3() -> SourceData:
         r2_config, R2_BUCKET, "prh-marketing.sqlite3.enc", DATA_KEY
     )
     encounters_df = pd.read_sql_table("encounters", engine, index_col="id")
+    no_shows_df = pd.read_sql_table("no_shows", engine, index_col="id")
     patients_df = pd.read_sql_table("patients", engine, index_col="id")
     engine.dispose()
     source_data_util.cleanup()
-    return SourceData(encounters_df=encounters_df, patients_df=patients_df)
+    return SourceData(encounters_df=encounters_df, no_shows_df=no_shows_df, patients_df=patients_df)

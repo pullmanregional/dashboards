@@ -28,7 +28,7 @@ class SrcData:
 class OutData:
     patients_df: pd.DataFrame
     encounters_df: pd.DataFrame
-
+    no_shows_df: pd.DataFrame
 
 # -------------------------------------------------------
 # Extract
@@ -54,9 +54,10 @@ def read_source_tables(prw_engine) -> SrcData:
             text("encounter_date"),
             text("encounter_age"),
             text("encounter_type"),
+            text("appt_status"),
         )
         .select_from(text("prw_encounters"))
-        .where(text("appt_status = 'Completed'")),
+        .where(text("appt_status = 'Completed' or appt_status = 'No Show'")),
         prw_engine,
     )
 
@@ -77,9 +78,16 @@ def transform(src: SrcData) -> OutData:
     encounters_df = src.encounters_df.copy()
     encounters_df["encounter_date"] = encounters_df["encounter_date"].dt.strftime("%Y%m%d")
 
+    # No shows encounters
+    no_shows_df = encounters_df[encounters_df["appt_status"] == "No Show"]
+
+    # Completed encounters
+    completed_df = encounters_df[encounters_df["appt_status"] == "Completed"]
+
     return OutData(
         patients_df=src.patients_df,
-        encounters_df=encounters_df,
+        encounters_df=completed_df,
+        no_shows_df=no_shows_df,
     )
 
 
@@ -131,6 +139,7 @@ def main():
         [
             db_utils.TableData(table=db.Patients, df=out.patients_df),
             db_utils.TableData(table=db.Encounters, df=out.encounters_df),
+            db_utils.TableData(table=db.NoShows, df=out.no_shows_df),
         ],
     )
 

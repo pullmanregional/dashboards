@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
-streamlit-shadcn-ui = "*"
 plotly = "*"
 cryptography = "*"
 boto3 = "*"
 sqlmodel = "*"
 authlib = "*"
+streamlit-extras = "*"
 
 [dev-packages]

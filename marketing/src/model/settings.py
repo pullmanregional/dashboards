@@ -6,4 +6,4 @@ from dataclasses import dataclass
 
 @dataclass(eq=True, frozen=True)
 class Settings:
-    pass
+    selected_month: str = ""
