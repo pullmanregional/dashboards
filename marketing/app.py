@@ -15,7 +15,7 @@ from common import auth, st_util
 def run():
     """Main streamlit app entry point"""
     # Authenticate user
-    user = auth.simple_auth()
+    user = auth.oidc_auth()
     if not user:
         return st.stop()
 
