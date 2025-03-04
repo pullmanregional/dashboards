@@ -28,12 +28,21 @@ def show_settings(
             "%b %Y"
         )
         months = months[::-1]
-        selected_month = st.selectbox(
-            "Select Month",
-            options=months,
-            index=list(months).index(default_month) if default_month in months else 0,
-            label_visibility="collapsed",
-        )
+
+        cols = st.columns([1.5, 1])
+        with cols[0]:
+            selected_month = st.selectbox(
+                "Select Month",
+                options=months,
+                index=list(months).index(default_month) if default_month in months else 0,
+                label_visibility="collapsed",
+            )
+
+        with cols[1]:
+            # Add a Logout button
+            if st.button("Logout"):
+                st.logout()
+                st.rerun()
 
     return settings.Settings(selected_month=selected_month)
 
