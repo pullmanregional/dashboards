@@ -13,4 +13,5 @@ def show_settings(src_data: source_data.SourceData) -> settings.Settings:
 
 def show_content(settings: settings.Settings, data: app_data.AppData):
     st.subheader("Section")
-    st.write(data.data)
+    st.write(data.encounters_df)
+    st.write(data.patients_df)

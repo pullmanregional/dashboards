@@ -1,12 +1,12 @@
 # Add main repo directory to include path to access common/ modules
 import sys
-from pathlib import Path
+import os
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 import streamlit as st
-from src import route, ui
+from src import route
 from src.model import source_data
 from src.ui import dashboard
 from common import auth, st_util
@@ -15,7 +15,7 @@ from common import auth, st_util
 def run():
     """Main streamlit app entry point"""
     # Authenticate user
-    user = auth.oidc_auth()
+    user = auth.simple_auth()
     if not user:
         return st.stop()
 
@@ -38,6 +38,6 @@ def run():
 
 
 st.set_page_config(
-    page_title="Sample App", layout="wide", initial_sidebar_state="auto"
+    page_title="Marketing Dashboard", initial_sidebar_state="auto", menu_items=None
 )
 run()

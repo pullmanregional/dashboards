@@ -41,6 +41,16 @@
       "args": ["run", "app.py"],
       "console": "integratedTerminal",
       "justMyCode": false
+    },
+    {
+      "name": "Streamlit: marketing",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "cwd": "${workspaceFolder}/marketing",
+      "args": ["run", "app.py"],
+      "console": "integratedTerminal",
+      "justMyCode": false
     }
   ]
 }

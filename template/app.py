@@ -1,12 +1,12 @@
 # Add main repo directory to include path to access common/ modules
 import sys
-from pathlib import Path
+import os
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 import streamlit as st
-from src import route, ui
+from src import route
 from src.model import source_data
 from src.ui import dashboard
 from common import auth, st_util
@@ -37,7 +37,5 @@ def run():
         return dashboard.show(src_data)
 
 
-st.set_page_config(
-    page_title="Sample App", layout="wide", initial_sidebar_state="auto"
-)
+st.set_page_config(page_title="Sample App", layout="wide", initial_sidebar_state="auto")
 run()

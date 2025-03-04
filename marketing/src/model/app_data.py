@@ -5,15 +5,13 @@ from . import source_data
 
 @dataclass(eq=True, frozen=True)
 class AppData:
-    data: pd.DataFrame = None
-    stats: dict = None
+    encounters_df: pd.DataFrame = None
+    patients_df: pd.DataFrame = None
 
 
 def process(src_data: source_data.SourceData) -> AppData:
-    src_df, src_kvdata = src_data.df, src_data.kvdata
+    encounters_df = src_data.encounters_df
+    patients_df = src_data.patients_df
 
     # Transform source data into dashboard specific representation
-    data = src_df
-    stats = src_kvdata
-
-    return AppData(data=data, stats=stats)
+    return AppData(encounters_df=encounters_df, patients_df=patients_df)

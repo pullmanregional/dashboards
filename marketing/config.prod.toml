@@ -16,6 +16,9 @@ toolbarMode = "minimal"
 # Level of logging: 'error', 'warning', 'info', or 'debug'.
 level = "info"
 
+[theme]
+base = "dark"
+
 [browser]
 serverAddress = "data.prh.app"
 serverPort = 443
