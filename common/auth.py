@@ -52,26 +52,30 @@ def simple_auth():
         return True
 
 
-def oidc_auth():
+def oidc_auth(auto_redirect=False):
     """OpenID Connect (OIDC) authentication using streamlit's built-in OIDC implementation"""
     if not st.experimental_user.is_logged_in:
-        st.markdown(
-            """
-            <h3 style='text-align: center;'>Sign in with your organization</h3>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            """
-            <style>
-                div.st-key-sign-in {
-                    text-align: center;
-                }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.button("Sign In", key="sign-in", on_click=st.login)
+        if auto_redirect:
+            st.login()
+        else:
+            st.markdown(
+                """
+                <h3 style='text-align: center;'>Sign in with your organization</h3>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                """
+                <style>
+                    div.st-key-sign-in {
+                        text-align: center;
+                    }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.button("Pullman Regional Hospital", key="sign-in", on_click=st.login)
+    
         return False
-
-    return st.experimental_user
+    else:
+        return st.experimental_user
