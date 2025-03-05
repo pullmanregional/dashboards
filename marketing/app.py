@@ -21,7 +21,7 @@ def run():
 
     # Read, parse, and cache (via @st.cache_data) source data
     with st.spinner("Initializing..."):
-        src_data = source_data.from_s3()
+        src_data = source_data.read()
 
     # Handle routing based on query parameters
     route_id = route.route_by_query(st.query_params)

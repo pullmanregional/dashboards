@@ -21,6 +21,7 @@ from prw_common.encrypt import encrypt_file
 @dataclass
 class SrcData:
     patients_df: pd.DataFrame
+    mychart_df: pd.DataFrame
     encounters_df: pd.DataFrame
 
 
@@ -47,6 +48,15 @@ def read_source_tables(prw_engine) -> SrcData:
         prw_engine,
     )
 
+    mychart_df = pd.read_sql_query(
+        select(
+            text("prw_id"),
+            text("mychart_status"),
+            text("mychart_activation_date"),
+        ).select_from(text("prw_mychart")),
+        prw_engine,
+    )
+
     encounters_df = pd.read_sql_query(
         select(
             text("prw_id"),
@@ -62,9 +72,10 @@ def read_source_tables(prw_engine) -> SrcData:
     )
 
     # Set datetime column types
-    encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"])
+    mychart_df["mychart_activation_date"] = pd.to_datetime(mychart_df["mychart_activation_date"], format="%Y%m%d")
+    encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"], format="%Y%m%d")
 
-    return SrcData(patients_df=patients_df, encounters_df=encounters_df)
+    return SrcData(patients_df=patients_df, mychart_df=mychart_df, encounters_df=encounters_df)
 
 
 # -------------------------------------------------------
@@ -74,18 +85,17 @@ def transform(src: SrcData) -> OutData:
     """
     Transform source data into datamart tables
     """
-    # Convert datetime encounter_date column to an int in the format YYYYMMDD
-    encounters_df = src.encounters_df.copy()
-    encounters_df["encounter_date"] = encounters_df["encounter_date"].dt.strftime("%Y%m%d")
-
     # No shows encounters
-    no_shows_df = encounters_df[encounters_df["appt_status"] == "No Show"]
+    no_shows_df = src.encounters_df[src.encounters_df["appt_status"] == "No Show"]
 
     # Completed encounters
-    completed_df = encounters_df[encounters_df["appt_status"] == "Completed"]
+    completed_df = src.encounters_df[src.encounters_df["appt_status"] == "Completed"]
+
+    # Add mychart status to patients_df
+    patients_df = src.patients_df.merge(src.mychart_df, on="prw_id", how="left")
 
     return OutData(
-        patients_df=src.patients_df,
+        patients_df=patients_df,
         encounters_df=completed_df,
         no_shows_df=no_shows_df,
     )
