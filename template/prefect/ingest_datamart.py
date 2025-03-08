@@ -124,9 +124,12 @@ def main():
         shutil.copy(tmp_db_file, output_db_file)
         shutil.copy(tmp_kv_file, output_kv_file)
 
-    # Clean up tmp files
+    # Cleanup
     os.remove(tmp_db_file)
     os.remove(tmp_kv_file)
+    prw_engine.dispose()
+    out_engine.dispose()
+    print("Done")
 
 
 if __name__ == "__main__":

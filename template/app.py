@@ -1,6 +1,5 @@
 # Add main repo directory to include path to access common/ modules
-import sys
-import os
+import sys, os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -21,7 +20,7 @@ def run():
 
     # Read, parse, and cache (via @st.cache_data) source data
     with st.spinner("Initializing..."):
-        src_data = source_data.from_s3()
+        src_data = source_data.read()
 
     # Handle routing based on query parameters
     route_id = route.route_by_query(st.query_params)

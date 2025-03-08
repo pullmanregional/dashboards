@@ -1,33 +1,19 @@
-# Add main repo directory to include path to access common/ modules
-import sys, pathlib
-
-sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
-
+import sys
 import os
+import shutil
+import json
 import logging
-import argparse
 import pandas as pd
 from dataclasses import dataclass
-from sqlmodel import Session
-from dotenv import load_dotenv
-from sqlmodel import SQLModel, Session
-from panel.src.model import db
+from sqlmodel import Session, select, text, create_engine
 
 # Add project root and repo roots so we can import common modules and from ../src/
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+from src.model import db
 from prw_common import db_utils
-
-
-# -------------------------------------------------------
-# Config
-# -------------------------------------------------------
-# Load environment from .env file, does not overwrite existing env variables
-load_dotenv()
-
-# Load security sensitive config from env vars. Default output to local SQLite DB.
-PRW_CONN = os.environ.get("PRW_CONN", "sqlite:///prw.sqlite3")
-PANEL_DB_ODBC = os.environ.get("PANEL_DB_ODBC", "sqlite:///panel.sqlite3")
+from prw_common.cli_utils import cli_parser
+from prw_common.encrypt import encrypt_file
 
 
 # -------------------------------------------------------
@@ -48,15 +34,14 @@ class OutData:
 # -------------------------------------------------------
 # Extract
 # -------------------------------------------------------
-def read_source_tables(engine) -> SrcData:
+def read_source_tables(prw_engine) -> SrcData:
     """
     Read source tables from the warehouse DB
     """
     logging.info("Reading source tables")
-    with Session(engine) as session:
-        patients_df = pd.read_sql_table("prw_patients", session.bind)
-        encounters_df = pd.read_sql_table("prw_encounters", session.bind)
 
+    patients_df = pd.read_sql_table("prw_patients", prw_engine)
+    encounters_df = pd.read_sql_table("prw_encounters", prw_engine)
     return SrcData(patients_df=patients_df, encounters_df=encounters_df)
 
 
@@ -119,7 +104,7 @@ ENCOUNTER_TYPES = {
 
 def transform(src: SrcData) -> OutData:
     """
-    Transform source data into panel data
+    Transform source data into datamart tables
     """
     logging.info("Transforming data")
     # Patients
@@ -211,65 +196,47 @@ def transform(src: SrcData) -> OutData:
 
 
 # -------------------------------------------------------
-# Utilities
+# Main entry point
 # -------------------------------------------------------
+def parse_arguments():
+    parser = cli_parser(
+        description="Ingest data from PRW warehouse to datamart.",
+        require_prw=True,
+        require_out=True,
+    )
+    parser.add_argument(
+        "--key",
+        help="Encrypt with given key. Defaults to no encryption if not specified.",
+    )
+    return parser.parse_args()
+
+
 def error_exit(msg):
     logging.error(msg)
     exit(1)
 
 
-# -------------------------------------------------------
-# Main entry point
-# -------------------------------------------------------
-def parse_arguments():
-    parser = argparse.ArgumentParser(description="Ingest raw data into PRH warehouse.")
-    parser.add_argument(
-        "-i",
-        "--input",
-        help='Connnection string to warehouse database, including credentials. Look for Azure SQL connection string in Settings > Connection strings, eg. "mssql+pyodbc:///?odbc_connect=Driver={ODBC Driver 18 for SQL Server};Server=tcp:{your server name},1433;Database={your db name};Uid={your user};Pwd={your password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"',
-        default=PRW_CONN,
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        help="Output DB connection string, including credentials",
-        default=PANEL_DB_ODBC,
-    )
-    return parser.parse_args()
-
-
 def main():
-    # Logging configuration
-    logging.basicConfig(level=logging.INFO)
-
-    # Load config from cmd line
     args = parse_arguments()
-    input_odbc = args.input
-    output_odbc = args.output
-    logging.info(f"Input: {input_odbc}, output: {db_utils.mask_pw(output_odbc)}")
+    prw_db_url = args.prw
+    output_db_file = args.out
+    encrypt_key = args.key
+    tmp_db_file = "datamart.sqlite3"
 
-    # Get connection to input DB
-    in_engine = db_utils.get_db_connection(input_odbc)
-    if in_engine is None:
-        error_exit("ERROR: cannot open warehouse DB (see above)")
+    # Create the sqlite output database and create the tables as defined in ../src/model/db.py
+    out_engine = db_utils.get_db_connection(f"sqlite:///{tmp_db_file}")
+    db.DatamartModel.metadata.create_all(out_engine)
 
-    # Extract source tables into memory
-    src = read_source_tables(in_engine)
+    # Read from PRW warehouse (MSSQL in prod, sqlite in dev)
+    prw_engine = db_utils.get_db_connection(prw_db_url)
+    src = read_source_tables(prw_engine)
     if src is None:
         error_exit("ERROR: failed to read source data (see above)")
 
     # Transform data
     out = transform(src)
 
-    # Get connection to output DB
-    out_engine = db_utils.get_db_connection(output_odbc)
-    if out_engine is None:
-        error_exit("ERROR: cannot open output DB (see above)")
-
-    # Create tables if they do not exist
-    SQLModel.metadata.create_all(out_engine)
-
-    # Write into DB
+    # Write tables to datamart
     session = Session(out_engine)
     db_utils.clear_tables_and_insert_data(
         session,
@@ -283,10 +250,17 @@ def main():
     db_utils.write_meta(session, db.Meta)
     session.commit()
 
-    # Cleanup
-    in_engine.dispose()
+    # Finally encrypt output files, or just copy if no encryption key is provided
+    if encrypt_key and encrypt_key.lower() != "none":
+        encrypt_file(tmp_db_file, output_db_file, encrypt_key)
+    else:
+        shutil.copy(tmp_db_file, output_db_file)
+
+    # Clean up tmp files
+    os.remove(tmp_db_file)
+    prw_engine.dispose()
     out_engine.dispose()
-    logging.info("Done")
+    print("Done")
 
 
 if __name__ == "__main__":

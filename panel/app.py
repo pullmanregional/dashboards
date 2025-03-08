@@ -1,7 +1,7 @@
 # Add main repo directory to include path to access common/ modules
-import sys, pathlib
+import sys, os
 
-sys.path.append(str(pathlib.Path(__file__).parent.parent))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 import streamlit as st
@@ -13,10 +13,14 @@ from common import auth, st_util
 
 def run():
     """Main streamlit app entry point"""
-    # Fetch source data - do this before auth to ensure all requests to app cause data refresh
+    # Authenticate user
+    user = auth.oidc_auth()
+    if not user:
+        return st.stop()
+
     # Read, parse, and cache (via @st.cache_data) source data
     with st.spinner("Initializing..."):
-        src_data = source_data.from_s3()
+        src_data = source_data.read()
 
     # Handle routing based on query parameters
     route_id = route.route_by_query(st.query_params)
@@ -27,14 +31,12 @@ def run():
 
     # Render page based on the route
     if src_data is None:
-        return st.write("No data available. Please contact administrator.")
-    elif not auth.simple_auth():
-        return st.stop()
+        st_util.st_center_text("No data available. Please contact administrator.")
     else:
         return panel.show(src_data)
 
 
 st.set_page_config(
-    page_title="PRH Panel Explorer", layout="wide", initial_sidebar_state="auto"
+    page_title="Patient Panels", layout="wide", initial_sidebar_state="auto"
 )
 run()
