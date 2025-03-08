@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 streamlit = "*"
 plotly = "*"
-streamlit-aggrid = "*"
 sqlmodel = "*"
 openpyxl = "*"
 cryptography = "*"
