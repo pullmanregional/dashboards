@@ -48,8 +48,8 @@ def st_patient_table(patients_df: pd.DataFrame):
     # Display a dataframe with selectable rows (one at a time) with only
     # columns prw_id, sex, age_display, city, state, panel_location
     # Display column headers Patient ID, Sex, Age, City, State, Panel
-    selected_columns = ["prw_id", "sex", "age_display", "location", "panel_location"]
-    display_columns = ["ID", "Sex", "Age", "City", "Panel"]
+    selected_columns = ["prw_id", "sex", "age_display", "location", "panel_location", "panel_provider"]
+    display_columns = ["ID", "Sex", "Age", "City", "Panel", "Provider"]
 
     patients_df = patients_df[selected_columns]
     patients_df.columns = display_columns
