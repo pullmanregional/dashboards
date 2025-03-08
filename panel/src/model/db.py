@@ -17,7 +17,12 @@ class Meta(DatamartModel, table=True):
 class Patient(DatamartModel, table=True):
     __tablename__ = "patients"
 
-    prw_id: int | None = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
+    prw_id: str = Field(
+        unique=True,
+        index=True,
+        max_length=24,
+    )
     sex: str = Field(regex="^[MFO]$")
     age: int | None = Field(ge=0)
     age_in_mo_under_3: int | None
@@ -27,14 +32,15 @@ class Patient(DatamartModel, table=True):
     panel_location: str | None = None
     panel_provider: str | None = None
 
-    encounters: List["Encounter"] = Relationship(back_populates="patient")
-
 
 class Encounter(DatamartModel, table=True):
     __tablename__ = "encounters"
 
     id: int | None = Field(default=None, primary_key=True)
-    prw_id: int = Field(foreign_key="patients.prw_id")
+    prw_id: str = Field(
+        index=True,
+        max_length=24,
+    )
     location: str
     encounter_date: date
     encounter_age: int | None
@@ -44,5 +50,3 @@ class Encounter(DatamartModel, table=True):
     with_pcp: bool | None = None
     diagnoses: str | None = None
     level_of_service: str | None = None
-
-    patient: Patient | None = Relationship(back_populates="encounters")

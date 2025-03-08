@@ -13,6 +13,9 @@ cryptography = "*"
 boto3 = "*"
 python-dotenv = "*"
 pyodbc = "*"
+authlib = "*"
 
 [requires]
 python_version = "3"
+
+[dev-packages]

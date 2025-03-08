@@ -3,6 +3,7 @@
 
 [server]
 port = 8503
+baseUrlPath = "/panel"
 
 # Don't launch browser on startup
 headless = true

@@ -41,9 +41,9 @@ def read_source_tables(prw_engine) -> SrcData:
     """
     logging.info("Reading source tables")
 
-    patients_df = pd.read_sql_table("prw_patients", prw_engine)
-    patient_panel_df = pd.read_sql_table("prw_patient_panels", prw_engine)
-    encounters_df = pd.read_sql_table("prw_encounters", prw_engine)
+    patients_df = pd.read_sql_table("prw_patients", prw_engine, index_col="id")
+    patient_panel_df = pd.read_sql_table("prw_patient_panels", prw_engine, index_col="id")
+    encounters_df = pd.read_sql_table("prw_encounters", prw_engine, index_col="id")
     return SrcData(patients_df=patients_df, patient_panel_df=patient_panel_df, encounters_df=encounters_df)
 
 
@@ -109,7 +109,7 @@ def transform(src: SrcData) -> OutData:
     # Force date columns to be date only, no time
     encounters_df["encounter_date"] = pd.to_datetime(
         encounters_df["encounter_date"].astype(str), format="%Y%m%d"
-    ).dt.date
+    )
     # Map encounter location to clinic IDs
     encounters_df["location"] = encounters_df["dept"].map(CLINIC_IDS)
 

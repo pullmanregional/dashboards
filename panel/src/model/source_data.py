@@ -71,8 +71,10 @@ def from_db(db_engine) -> SourceData:
         modified = session.exec(text("select max(modified) from meta")).fetchone()[0]
 
     # Read dashboard data into dataframes
+    encounters_df = pd.read_sql_query("select * from encounters", db_engine, index_col="id")
+    encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"])
     return SourceData(
         modified=modified,
         patients_df=pd.read_sql_table("patients", db_engine),
-        encounters_df=pd.read_sql_table("encounters", db_engine),
+        encounters_df=encounters_df
     )
