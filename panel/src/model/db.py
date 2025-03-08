@@ -1,43 +1,48 @@
+from sqlalchemy.orm import registry
 from sqlmodel import Field, SQLModel, Relationship
 from typing import List, Optional
 from datetime import date, datetime
 
 
-class Meta(SQLModel, table=True):
+class DatamartModel(SQLModel, registry=registry()):
+    pass
+
+
+class Meta(DatamartModel, table=True):
     __tablename__ = "meta"
     id: Optional[int] = Field(default=None, primary_key=True)
     modified: datetime
 
 
-class Patient(SQLModel, table=True):
+class Patient(DatamartModel, table=True):
     __tablename__ = "patients"
 
-    prw_id: Optional[int] = Field(default=None, primary_key=True)
+    prw_id: int | None = Field(default=None, primary_key=True)
     sex: str = Field(regex="^[MFO]$")
-    age: Optional[int] = Field(ge=0)
-    age_mo: Optional[int] = Field(ge=0)
-    age_display: Optional[str] = None
-    location: Optional[str] = None
-    pcp: Optional[str] = None
-    panel_location: Optional[str] = None
-    panel_provider: Optional[str] = None
+    age: int | None = Field(ge=0)
+    age_in_mo_under_3: int | None
+    age_display: str | None = None
+    location: str | None = None
+    pcp: str | None = None
+    panel_location: str | None = None
+    panel_provider: str | None = None
 
     encounters: List["Encounter"] = Relationship(back_populates="patient")
 
 
-class Encounter(SQLModel, table=True):
+class Encounter(DatamartModel, table=True):
     __tablename__ = "encounters"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     prw_id: int = Field(foreign_key="patients.prw_id")
     location: str
     encounter_date: date
-    encounter_age: Optional[int] = Field(ge=0)
-    encounter_age_mo: Optional[int] = Field(ge=0)
+    encounter_age: int | None
+    encounter_age_in_mo_under_3: int | None
     encounter_type: str
-    service_provider: Optional[str] = None
-    with_pcp: Optional[bool] = None
-    diagnoses: Optional[str] = None
-    level_of_service: Optional[str] = None
+    service_provider: str | None = None
+    with_pcp: bool | None = None
+    diagnoses: str | None = None
+    level_of_service: str | None = None
 
-    patient: Optional[Patient] = Relationship(back_populates="encounters")
+    patient: Patient | None = Relationship(back_populates="encounters")
