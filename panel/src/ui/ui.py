@@ -13,30 +13,30 @@ def show_settings(src_data: source_data.SourceData) -> dict:
     #     st_util.st_sidebar_prh_logo()
     #     st.write("## Clinic")
 
-    col1, col2 = st.columns([10, 4])  # Make second column 50px by using relative widths
-    with col1:
-        st.markdown(
-            '<div style="display: flex; align-items: center; height: 100%"><h2>Patient Panel Dashboard</h2></div>',
-            unsafe_allow_html=True
-        )
-    with col2:
-        col_a, col_b = st.columns([3,10])
-        with col_a:
-            st.markdown('<div style="margin-top: 2.25em; text-align: right; margin-right: 0.5em">Clinic:</div>', unsafe_allow_html=True)
-        with col_b:
-            clinic = st.selectbox(
-                "Select a clinic",
-                options=[
-                "All", 
+    st.header("Patient Panels")
+
+    col_1, col_2 = st.columns([1, 1])
+    with col_1:
+        clinic = st.selectbox(
+            "Clinic:",
+            options=[
+                "All Primary Care Clinics",
                 "Pullman Family Medicine",
                 "Residency",
                 "Palouse Pediatrics",
                 "Palouse Medical",
+                "Unassigned",
             ],
-            label_visibility="hidden",
+        )
+    with col_2:
+        provider = st.selectbox(
+            "Provider:",
+            options=[
+                "All Providers",
+            ],
         )
 
-    return settings.Settings(clinic=clinic)
+    return settings.Settings(clinic=clinic, provider=provider)
 
 
 def st_patient_table(patients_df: pd.DataFrame):
@@ -48,8 +48,15 @@ def st_patient_table(patients_df: pd.DataFrame):
     # Display a dataframe with selectable rows (one at a time) with only
     # columns prw_id, sex, age_display, city, state, panel_location
     # Display column headers Patient ID, Sex, Age, City, State, Panel
-    selected_columns = ["prw_id", "sex", "age_display", "location", "panel_location", "panel_provider"]
-    display_columns = ["ID", "Sex", "Age", "City", "Panel", "Provider"]
+    selected_columns = [
+        "prw_id",
+        "sex",
+        "age_display",
+        "location",
+        "panel_location",
+        "panel_provider",
+    ]
+    display_columns = ["ID", "Sex", "Age", "City", "Panel", "Paneled Provider"]
 
     patients_df = patients_df[selected_columns]
     patients_df.columns = display_columns
@@ -74,31 +81,14 @@ def st_patient_table(patients_df: pd.DataFrame):
     return None
 
 
-def st_patient_details(patients_df: pd.DataFrame):
-    st.write(f"#### Number of patients: {len(patients_df)}")
+def st_demographics(patients_df: pd.DataFrame):
+    st.subheader("Demographics")
 
-    col1, col2 = st.columns(2)
-    with col2:
-        sex_counts = patients_df["sex"].value_counts()
+    col_1, col_2 = st.columns([1, 3])
+    with col_1:
+        st_util.st_card("Total Patients", f"{len(patients_df)}", "")
 
-        fig = px.pie(
-            sex_counts,
-            values=sex_counts.values,
-            names=sex_counts.index,
-            title="Sex",
-            hole=0.3,
-        )
-        fig.update_layout(
-            title={
-                "text": "Sex",
-                "x": 0.43,
-                "xanchor": "center",
-                "yanchor": "top",
-                "font": {"size": 22, "weight": "normal"},
-            }
-        )
-        st.plotly_chart(fig)
-
+    col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
         age_bins = [0, 1, 18, 65, float("inf")]
         age_labels = ["<1y", "<18y", "18-65y", ">65y"]
@@ -112,46 +102,89 @@ def st_patient_details(patients_df: pd.DataFrame):
             age_group_counts,
             values=age_group_counts.values,
             names=age_group_counts.index,
-            title="Age Group",
-            hole=0.3,
+            title="Age Groups",
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Set1,
         )
         fig.update_layout(
             title={
-                "text": "Age Group",
+                "text": "Age Groups",
                 "x": 0.4,
+                "xanchor": "center",
+                "yanchor": "top",
+                "font": {"size": 22, "weight": "normal"},
+            },
+            legend={
+                "orientation": "h",
+                "yanchor": "bottom",
+                "y": -0.25,
+                "xanchor": "center",
+                "x": 0.5
+            }
+        )
+
+        # Place the chart inside a styleable container with card-like border
+        with st_util.st_card_container("age_chart_container"):
+            st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        sex_counts = patients_df["sex"].value_counts()
+
+        fig = px.pie(
+            sex_counts,
+            values=sex_counts.values,
+            names=sex_counts.index,
+            title="Sex",
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Set2,
+        )
+        fig.update_layout(
+            title={
+                "text": "Sex",
+                "x": 0.43,
+                "xanchor": "center",
+                "yanchor": "top",
+                "font": {"size": 22, "weight": "normal"},
+            },
+            legend={
+                "orientation": "h",
+                "yanchor": "bottom",
+                "y": -0.3,
+                "xanchor": "center",
+                "x": 0.5
+            }
+        )
+        with st_util.st_card_container("sex_chart_container"):
+            st.plotly_chart(fig, use_container_width=True)
+
+    with col3:
+        location_counts = patients_df["location"].value_counts()
+        location_counts["Other"] = location_counts[location_counts < 20].sum()
+        location_counts = pd.concat(
+            [
+                location_counts[location_counts >= 20],
+                pd.Series({"Other": location_counts["Other"]}),
+            ]
+        )
+
+        fig = px.bar(
+            location_counts,
+            x=location_counts.index,
+            y=location_counts.values,
+            title="Locations",
+            labels={"y": "", "index": ""},
+        )
+        fig.update_layout(
+            title={
+                "text": "Locations",
+                "x": 0.5,
                 "xanchor": "center",
                 "yanchor": "top",
                 "font": {"size": 22, "weight": "normal"},
             }
         )
-        st.plotly_chart(fig)
-
-    location_counts = patients_df["location"].value_counts()
-    location_counts["Other"] = location_counts[location_counts < 20].sum()
-    location_counts = pd.concat(
-        [
-            location_counts[location_counts >= 20],
-            pd.Series({"Other": location_counts["Other"]}),
-        ]
-    )
-
-    fig = px.bar(
-        location_counts,
-        x=location_counts.index,
-        y=location_counts.values,
-        title="Locations",
-        labels={"y": "Count", "index": ""},
-    )
-    fig.update_layout(
-        title={
-            "text": "Locations",
-            "x": 0.5,
-            "xanchor": "center",
-            "yanchor": "top",
-            "font": {"size": 22, "weight": "normal"},
-        }
-    )
-    st.plotly_chart(fig)
+        with st_util.st_card_container("location_chart_container"):
+            st.plotly_chart(fig)
 
 
 def st_encounter_table(encounters_df: pd.DataFrame, selected_prwid):

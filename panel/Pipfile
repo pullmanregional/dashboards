@@ -13,6 +13,7 @@ boto3 = "*"
 python-dotenv = "*"
 pyodbc = "*"
 authlib = "*"
+streamlit-extras = "*"
 
 [requires]
 python_version = "3"

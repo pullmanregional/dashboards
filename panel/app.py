@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import streamlit as st
 from src import route
 from src.model import source_data
-from src.ui import panel
+from panel.src.ui import dashboard
 from common import auth, st_util
 
 
@@ -33,7 +33,7 @@ def run():
     if src_data is None:
         st_util.st_center_text("No data available. Please contact administrator.")
     else:
-        return panel.show(src_data)
+        return dashboard.show(src_data)
 
 
 st.set_page_config(

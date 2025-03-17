@@ -9,3 +9,4 @@ import streamlit as st
 @dataclass(eq=True, frozen=True)
 class Settings:
     clinic: str
+    provider: str

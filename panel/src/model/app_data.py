@@ -31,7 +31,7 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
     clinic = settings.clinic
 
     # Filter patients by clinic
-    if (clinic == "All") or (clinic is None):
+    if (clinic == "All Primary Care Clinics") or (clinic is None):
         paneled_patients_df = src.patients_df
     else:
         paneled_patients_df = src.patients_df[
