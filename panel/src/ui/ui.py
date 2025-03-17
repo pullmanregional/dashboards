@@ -104,7 +104,7 @@ def st_demographics(patients_df: pd.DataFrame):
             names=age_group_counts.index,
             title="Age Groups",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Set1,
+            color_discrete_sequence=px.colors.qualitative.Set2,
         )
         fig.update_layout(
             title={
@@ -136,7 +136,7 @@ def st_demographics(patients_df: pd.DataFrame):
             names=sex_counts.index,
             title="Sex",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Set2,
+            color_discrete_sequence=px.colors.qualitative.Set1,
         )
         fig.update_layout(
             title={
