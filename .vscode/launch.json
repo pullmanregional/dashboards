@@ -13,6 +13,16 @@
       "justMyCode": true
     },
     {
+      "name": "Ingest: panel",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/panel/prefect/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/panel/prefect",
+      "args": ["--prw", "sqlite:///../../../prh-warehouse/prw.sqlite3", "--out", "prh-panel.sqlite3"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "Streamlit: explore",
       "type": "debugpy",
       "request": "launch",
