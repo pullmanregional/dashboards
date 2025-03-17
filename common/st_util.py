@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_extras.stylable_container import stylable_container
 
 
 def st_clear_cache_page():
@@ -77,3 +78,17 @@ def st_card(title: str, content: str, description: str):
         """,
         unsafe_allow_html=True,
     )
+
+def st_card_container(key: str):
+    with stylable_container(
+        key=key,
+        css_styles="""
+            {
+                padding: 0px 16px;
+                border-radius: 8px;
+                border: 1px solid #e0e0e0;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin: 0.5rem 0;                }
+            """,
+    ):
+        return st.container()
