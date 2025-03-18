@@ -31,9 +31,7 @@ class SrcData:
 class OutData:
     patients_df: pd.DataFrame
     encounters_df: pd.DataFrame
-    monthly_volumes_by_location: pd.DataFrame
-    monthly_volumes_by_panel_location: pd.DataFrame
-    monthly_volumes_by_panel_provider: pd.DataFrame
+    new_patients_by_month: pd.DataFrame
 
     kv: dict
 
@@ -139,10 +137,9 @@ def transform(src: SrcData) -> OutData:
     ]
     patients_df = patients_df[patients_df["prw_id"].isin(encounters_df["prw_id"])]
 
-    # Calculate monthly volumes:
-    # 1. Only look at office visits, which include encounter types listed below, not encounters like CC NURSE VISIT or CC LAB
-    # 2. Only count one encounter per patient per day
-    # 3. Group by month, and retain dept, panel_location, and panel_provider so we can calculate both total and paneled volumes
+    # --------------------------------------------------------------------------
+    # Filter to only include office visits
+    # --------------------------------------------------------------------------
     office_visit_types = [
         "CC OFFICE VISIT",
         "CC FOLLOW UP",
@@ -172,55 +169,92 @@ def transform(src: SrcData) -> OutData:
         "CC MEDICARE WELCOME",
         "CC FAA PHYSICAL",
     ]
-
-    # Filter to only include office visits
     office_visits_df = encounters_df[
         encounters_df["encounter_type"].isin(office_visit_types)
-    ].copy()
+    ]
 
-    # Get panel_location and panel_provider from patients_df
-    patient_panel_info = patients_df[["prw_id", "panel_location", "panel_provider"]]
-    office_visits_df = office_visits_df.merge(
-        patient_panel_info, how="left", on="prw_id"
+    # --------------------------------------------------------------------------
+    # Calculate monthly new patient volumes
+    # --------------------------------------------------------------------------
+    # Combine visit counts for Palouse Pediatrics locations and Pullman Family Medicine locations
+    peds_locations = ["Palouse Pediatrics Pullman", "Palouse Pediatrics Moscow"]
+    pfm_locations = [
+        "Pullman Family Medicine",
+        "Pullman Family Medicine (Palouse Health Center)",
+    ]
+    combined_clinic_visits_df = office_visits_df.copy()
+    combined_clinic_visits_df["clinic"] = combined_clinic_visits_df["location"].map(
+        lambda x: "Palouse Pediatrics" if x in peds_locations else x
+    )
+    combined_clinic_visits_df = combined_clinic_visits_df.map(
+        lambda x: "Pullman Family Medicine" if x in pfm_locations else x
     )
 
-    # Add year and month columns for grouping
-    office_visits_df["year"] = office_visits_df["encounter_date"].dt.year
-    office_visits_df["month"] = office_visits_df["encounter_date"].dt.month
-    office_visits_df["year_month"] = office_visits_df["encounter_date"].dt.strftime(
-        "%Y-%m"
-    )
-
-    # Create a unique key of patient + date to deduplicate (one visit per patient per day)
-    office_visits_df["patient_day"] = (
-        office_visits_df["prw_id"]
+    # Deduplicate visits to one per location per day. Use a key with {id}_{clinic}_{date} to group.
+    combined_clinic_visits_df["patient_day"] = (
+        combined_clinic_visits_df["prw_id"]
         + "_"
-        + office_visits_df["encounter_date"].dt.strftime("%Y%m%d")
+        + combined_clinic_visits_df["clinic"]
+        + "_"
+        + combined_clinic_visits_df["encounter_date"].dt.strftime("%Y%m%d")
     )
-    deduplicated_visits = office_visits_df.drop_duplicates(subset=["patient_day"])
+    deduplicated_visits = combined_clinic_visits_df.drop_duplicates(
+        subset=["patient_day"]
+    )
+    deduplicated_visits["year_month"] = deduplicated_visits[
+        "encounter_date"
+    ].dt.strftime("%Y-%m")
 
-    # Calculate total monthly volumes by department
-    monthly_volumes_by_location = (
-        deduplicated_visits.groupby(["year_month", "location"])
+    # Get the first visit date for each patient
+    first_visits = (
+        deduplicated_visits.sort_values("encounter_date")
+        .groupby("prw_id")
+        .first()
+        .reset_index()
+    )
+
+    # Group by clinic and year_month to count new patients
+    new_patients_by_month = (
+        first_visits.groupby(["clinic", "year_month"])
         .size()
-        .reset_index(name="visit_count")
+        .reset_index(name="new_count")
     )
 
-    # Calculate total monthly volumes by panel location
-    monthly_volumes_by_panel_location = (
-        deduplicated_visits.groupby(["year_month", "panel_location"])
+    # Count total visits per clinic and month
+    total_visits_by_month = (
+        deduplicated_visits.groupby(["clinic", "year_month"])
         .size()
-        .reset_index(name="panel_location_visit_count")
+        .reset_index(name="total_count")
     )
 
-    # Calculate total monthly volumes by panel provider
-    monthly_volumes_by_panel_provider = (
-        deduplicated_visits.groupby(["year_month", "panel_provider"])
-        .size()
-        .reset_index(name="panel_provider_visit_count")
+    # Merge new patient counts with total visit counts
+    new_patients_by_month = pd.merge(
+        new_patients_by_month,
+        total_visits_by_month,
+        on=["clinic", "year_month"],
+        how="outer",
+    ).fillna(0)
+
+    # Add a "Total" row that sums across all clinics for each month
+    total_by_month = (
+        new_patients_by_month.groupby("year_month")
+        .agg({"new_count": "sum", "total_count": "sum"})
+        .reset_index()
+    )
+    total_by_month["clinic"] = "Total"
+
+    # Combine the clinic-specific data with the totals
+    new_patients_by_month = pd.concat([new_patients_by_month, total_by_month])
+
+    # Convert count columns to integers
+    new_patients_by_month["new_count"] = new_patients_by_month["new_count"].astype(int)
+    new_patients_by_month["total_count"] = new_patients_by_month["total_count"].astype(
+        int
     )
 
+    # --------------------------------------------------------------------------
     # Get list of unique panel locations and providers per location
+    # --------------------------------------------------------------------------
     clinics = [
         clinic
         for clinic in patients_df["panel_location"].unique()
@@ -238,10 +272,8 @@ def transform(src: SrcData) -> OutData:
 
     return OutData(
         patients_df=patients_df,
-        encounters_df=encounters_df,
-        monthly_volumes_by_location=monthly_volumes_by_location,
-        monthly_volumes_by_panel_location=monthly_volumes_by_panel_location,
-        monthly_volumes_by_panel_provider=monthly_volumes_by_panel_provider,
+        encounters_df=office_visits_df,
+        new_patients_by_month=new_patients_by_month,
         kv={
             "clinics": list(clinics),
             "providers": providers_by_clinic,
@@ -309,6 +341,7 @@ def main():
         [
             db_utils.TableData(table=db.Patient, df=out.patients_df),
             db_utils.TableData(table=db.Encounter, df=out.encounters_df),
+            db_utils.TableData(table=db.NewPatients, df=out.new_patients_by_month),
         ],
     )
 
@@ -318,7 +351,7 @@ def main():
 
     # Write to the output key/value file as JSON
     with open(tmp_kv_file, "w") as f:
-        json.dump(out.kv, f)
+        json.dump(out.kv, f, indent=2)
 
     # Finally encrypt output files, or just copy if no encryption key is provided
     if encrypt_key and encrypt_key.lower() != "none":

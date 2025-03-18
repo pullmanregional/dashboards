@@ -30,6 +30,7 @@ class SourceData:
 
     patients_df: pd.DataFrame = None
     encounters_df: pd.DataFrame = None
+    new_visits_by_month: pd.DataFrame = None
 
     modified: datetime = None
 
@@ -45,6 +46,7 @@ def read() -> SourceData:
     return src_data
 
 
+@st.cache_data
 def from_file(file: str, json_file: str) -> SourceData:
     engine = source_data_util.sqlite_engine_from_file(file)
     src_data = from_db(engine)
@@ -85,9 +87,11 @@ def from_db(db_engine) -> SourceData:
         "select * from encounters", db_engine, index_col="id"
     )
     encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"])
+    new_visits_by_month = pd.read_sql_table("new_patients", db_engine)
 
     return SourceData(
         modified=modified,
         patients_df=patients_df,
         encounters_df=encounters_df,
+        new_visits_by_month=new_visits_by_month,
     )

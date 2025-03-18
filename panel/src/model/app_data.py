@@ -20,6 +20,9 @@ class AppData:
     # All encounters
     encounters_df: pd.DataFrame
 
+    # New patients
+    new_visits_by_month: pd.DataFrame
+
     # Stats
     n_total_selected_patients: int = 0
     n_paneled_patients: int = 0
@@ -49,16 +52,27 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
                 (encounters_df["location"] == "Palouse Pediatrics Pullman")
                 | (encounters_df["location"] == "Palouse Pediatrics Moscow")
             ]
+        elif clinic == "Pullman Family Medicine":
+            encounters_df = encounters_df[
+                (encounters_df["location"] == "Pullman Family Medicine")
+                | (
+                    encounters_df["location"]
+                    == "Pullman Family Medicine (Palouse Health Center)"
+                )
+            ]
         else:
             encounters_df = encounters_df[encounters_df["location"] == clinic]
         patients_df = patients_df[patients_df["prw_id"].isin(encounters_df["prw_id"])]
+
+    x = paneled_patients_df[~paneled_patients_df["prw_id"].isin(patients_df["prw_id"])]
+    y = patients_df[~patients_df["prw_id"].isin(paneled_patients_df["prw_id"])]
 
     # Filter patients/encounters by provider
     if provider != "All Providers":
         encounters_df = encounters_df[encounters_df["service_provider"] == provider]
         patients_df = patients_df[patients_df["prw_id"].isin(encounters_df["prw_id"])]
         paneled_patients_df = paneled_patients_df[
-            paneled_patients_df["prw_id"].isin(encounters_df["prw_id"])
+            paneled_patients_df["panel_provider"] == provider
         ]
 
     # Calculate stats
@@ -73,6 +87,7 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
         provider=provider,
         paneled_patients_df=paneled_patients_df,
         encounters_df=src.encounters_df,
+        new_visits_by_month=src.new_visits_by_month,
         n_total_selected_patients=n_total_selected_patients,
         n_paneled_patients=n_paneled_patients,
         n_encounters_last_12_months=n_encounters_last_12_months,

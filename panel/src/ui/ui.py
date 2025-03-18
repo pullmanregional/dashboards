@@ -38,48 +38,6 @@ def show_settings(src_data: source_data.SourceData) -> dict:
     return settings.Settings(clinic=clinic, provider=provider)
 
 
-def st_patient_table(patients_df: pd.DataFrame):
-    """
-    Display patient table
-    """
-    patients_df = patients_df.copy()
-
-    # Display a dataframe with selectable rows (one at a time) with only
-    # columns prw_id, sex, age_display, city, state, panel_location
-    # Display column headers Patient ID, Sex, Age, City, State, Panel
-    selected_columns = [
-        "prw_id",
-        "sex",
-        "age_display",
-        "location",
-        "panel_location",
-        "panel_provider",
-    ]
-    display_columns = ["ID", "Sex", "Age", "City", "Panel", "Paneled Provider"]
-
-    patients_df = patients_df[selected_columns]
-    patients_df.columns = display_columns
-
-    event = st.dataframe(
-        patients_df.style.format(
-            {
-                "ID": "{}",
-            }
-        ),
-        hide_index=True,
-        use_container_width=True,
-        selection_mode="single-row",
-        on_select="rerun",
-    )
-
-    if event and event.selection and event.selection.rows:
-        selected_row = event.selection.rows[0]
-        selected_prwid = patients_df.iloc[selected_row]["ID"]
-        return selected_prwid
-
-    return None
-
-
 def st_patient_stats(data: app_data.AppData):
     col_1, col_2, col_3 = st.columns([1, 1, 1])
     with col_1:
@@ -164,7 +122,7 @@ def st_demographics(data: app_data.AppData):
             names=sex_counts.index,
             title="Sex",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Set1,
+            color_discrete_sequence=px.colors.qualitative.Plotly,
         )
         fig.update_layout(
             title={
@@ -216,38 +174,124 @@ def st_demographics(data: app_data.AppData):
 
 
 def st_new_patients(data: app_data.AppData):
-    df = pd.DataFrame(
-        {"Category": ["A", "B", "C", "D", "E"], "Values": [20, 14, 23, 25, 22]}
+    df = data.new_visits_by_month
+
+    # Convert year_month to datetime for proper sorting
+    df["date"] = pd.to_datetime(df["year_month"])
+
+    # Sort by date
+    df = df.sort_values("date")
+
+    # Filter for clinic data
+    if data.clinic == "All Clinics" or data.clinic == "Unassigned":
+        total_df = df[df["clinic"] == "Total"]
+    else:
+        total_df = df[df["clinic"] == data.clinic]
+
+    # Create line chart for total_count
+    fig = px.line(
+        total_df,
+        x="date",
+        y="total_count",
+        labels={"value": "Count"},
+        markers=True,
+        color_discrete_sequence=[
+            px.colors.qualitative.Set1[1]
+        ],  # Use the "Total" color
     )
 
-    # Create bar chart
-    fig = px.bar(
-        df,
-        x="Category",
-        y="Values",
-        title="Example Bar Chart",
-        labels={"Values": "Count", "Category": "Group"},
+    # Add total_count as an area chart
+    fig.add_scatter(
+        x=total_df["date"],
+        y=total_df["total_count"],
+        mode="lines+markers",
+        name="Total Visits",
+        line=dict(color=px.colors.qualitative.Plotly[0]),
+        fill="tozeroy",  # This creates the area effect
     )
 
+    # Add new_count as a separate area chart
+    fig.add_scatter(
+        x=total_df["date"],
+        y=total_df["new_count"],
+        mode="lines+markers",
+        name="New Patients",
+        line=dict(color=px.colors.qualitative.Plotly[1]),
+        fill="tozeroy",  # This creates the area effect
+    )
+
+    # Remove the initial line trace since we've added it as an area
+    fig.data = fig.data[1:]
+
+    # Remove axis labels and update layout
     fig.update_layout(
-        title={
-            "text": "",
-            "x": 0.5,
-            "xanchor": "center",
-            "yanchor": "top",
-            "font": {"size": 22, "weight": "normal"},
-        }
+        xaxis_title=None,
+        yaxis_title=None,
+        hovermode="x unified",
+        legend_title_text=None,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5
+        ),
     )
+
+    # Set custom hover template
+    fig.update_traces(hovertemplate="%{fullData.name}: %{y}<extra></extra>")
+
+    # Format x-axis to show month and year
+    fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
+
+    # Format the hover date to show as MMM YYYY
+    fig.update_layout(hoverlabel_font_size=12, xaxis=dict(hoverformat="%b %Y"))
 
     with st_util.st_card_container("new_patients_chart_container"):
         st.plotly_chart(fig, use_container_width=True)
+
+
+def st_patient_table(patients_df: pd.DataFrame):
+    """
+    Display patient table
+    """
+    # Display a dataframe with selectable rows (one at a time) with only
+    # columns prw_id, sex, age_display, city, state, panel_location
+    # Display column headers Patient ID, Sex, Age, City, State, Panel
+    selected_columns = [
+        "prw_id",
+        "sex",
+        "age_display",
+        "location",
+        "panel_location",
+        "panel_provider",
+    ]
+    event = st.dataframe(
+        patients_df,
+        key="patient_table",
+        column_order=selected_columns,
+        column_config={
+            "prw_id": st.column_config.TextColumn("Anonymized ID"),
+            "sex": st.column_config.TextColumn("Sex"),
+            "age_display": st.column_config.TextColumn("Age"),
+            "location": st.column_config.TextColumn("City"),
+            "panel_location": st.column_config.TextColumn("Panel"),
+            "panel_provider": st.column_config.TextColumn("Paneled Provider"),
+        },
+        hide_index=True,
+        use_container_width=True,
+        selection_mode="single-row",
+        on_select="rerun",
+    )
+
+    if event and event.selection and event.selection.rows:
+        selected_row = event.selection.rows[0]
+        selected_prwid = patients_df.iloc[selected_row]["prw_id"]
+        return selected_prwid
+
+    return None
 
 
 def st_encounter_table(encounters_df: pd.DataFrame, selected_prwid):
     if selected_prwid is None:
         return st.write("Select a patient to view encounters")
 
-    encounters_df = encounters_df.copy()
     encounters_df = encounters_df[encounters_df["prw_id"] == selected_prwid]
 
     selected_columns = [
@@ -258,23 +302,17 @@ def st_encounter_table(encounters_df: pd.DataFrame, selected_prwid):
         "level_of_service",
         "location",
     ]
-    display_columns = [
-        "Date",
-        "Provider",
-        "Diagnoses",
-        "Type",
-        "LOS",
-        "Location",
-    ]
-    encounters_df = encounters_df[selected_columns]
-    encounters_df.columns = display_columns
-
-    # Keep only
     st.dataframe(
-        encounters_df.style.format(
-            {
-                "Date": "{:%m/%d/%Y}",
-            },
-        ),
+        encounters_df,
+        column_order=selected_columns,
+        column_config={
+            "encounter_date": st.column_config.DateColumn("Date", format="M/D/yyyy"),
+            "service_provider": st.column_config.TextColumn("Provider"),
+            "diagnoses": st.column_config.TextColumn("Diagnoses"),
+            "encounter_type": st.column_config.TextColumn("Type"),
+            "level_of_service": st.column_config.TextColumn("LOS"),
+            "location": st.column_config.TextColumn("Location"),
+        },
         hide_index=True,
+        use_container_width=True,
     )

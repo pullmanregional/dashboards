@@ -52,28 +52,11 @@ class Encounter(DatamartModel, table=True):
     level_of_service: str | None = None
 
 
-class MonthlyVolumeByLocation(DatamartModel, table=True):
-    __tablename__ = "monthly_volume_by_location"
+class NewPatients(DatamartModel, table=True):
+    __tablename__ = "new_patients"
 
     id: int | None = Field(default=None, primary_key=True)
     year_month: str
-    location: str
-    visit_count: int
-
-
-class MonthlyVolumeByPanelLocation(DatamartModel, table=True):
-    __tablename__ = "monthly_volume_by_panel_location"
-
-    id: int | None = Field(default=None, primary_key=True)
-    year_month: str
-    panel_location: str
-    visit_count: int
-
-
-class MonthlyVolumeByPanelProvider(DatamartModel, table=True):
-    __tablename__ = "monthly_volume_by_panel_provider"  
-
-    id: int | None = Field(default=None, primary_key=True)
-    year_month: str
-    panel_provider: str
-    visit_count: int
+    clinic: str
+    new_count: int
+    total_count: int
