@@ -3,7 +3,7 @@
 
 [server]
 port = 8502
-baseUrlPath = ""
+baseUrlPath = "/template"
 
 # Don't launch browser on startup
 headless = true
@@ -17,6 +17,4 @@ toolbarMode = "minimal"
 level = "info"
 
 [browser]
-serverAddress = "data.prh.app"
-serverPort = 443
 gatherUsageStats = false

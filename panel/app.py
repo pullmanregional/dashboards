@@ -18,6 +18,11 @@ def run():
     if not user:
         return st.stop()
 
+    # Add a logout link with an icon
+    if st.sidebar.button("Log out", icon=":material/logout:", use_container_width=True):
+        st.logout()
+        st.rerun()
+
     # Read, parse, and cache (via @st.cache_data) source data
     with st.spinner("Initializing..."):
         src_data = source_data.read()
@@ -39,8 +44,9 @@ def run():
 # App config
 st.set_page_config(
     page_title="Patient Panels",
+    page_icon=":material/analytics:",
     layout="wide",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="collapsed",
     menu_items=None,
 )
 hide_streamlit_style = """

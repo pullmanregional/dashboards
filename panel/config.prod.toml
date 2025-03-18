@@ -2,7 +2,7 @@
 # Additionally, create a .streamlit/secrets.toml file with permissions 0600 to contain keys
 
 [server]
-port = 8503
+port = 8504
 baseUrlPath = "/panel"
 
 # Don't launch browser on startup
@@ -17,13 +17,4 @@ toolbarMode = "minimal"
 level = "info"
 
 [browser]
-serverAddress = "data.prh.app"
-serverPort = 443
 gatherUsageStats = false
-
-[theme]
-primaryColor = "#4e8855"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#ebf1e2"
-textColor = "#4e524c"
-font = "sans serif"
