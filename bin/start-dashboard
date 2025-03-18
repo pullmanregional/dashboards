@@ -1,0 +1,37 @@
+#!/bin/bash
+
+INTERACTIVE=false
+
+# Parse options
+while getopts "i" opt; do
+  case $opt in
+    i)
+      INTERACTIVE=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+# Shift to remove processed options
+shift $((OPTIND-1))
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 [-i] <dashboard_name>"
+    echo "  -i: Run in interactive mode"
+    exit 1
+fi
+
+DASHBOARD_NAME=$1
+
+cd "$DASHBOARD_NAME" || { echo "Dashboard directory not found: $DASHBOARD_NAME"; exit 1; }
+
+if [ "$INTERACTIVE" = true ]; then
+    # Interactive mode
+    pipenv run streamlit run app.py
+else
+    # Background mode
+    nohup pipenv run streamlit run app.py &> nohup.out & echo $! > streamlit.pid
+    echo "Dashboard started in background. PID saved to streamlit.pid"
+fi
