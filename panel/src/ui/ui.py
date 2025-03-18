@@ -77,7 +77,7 @@ def st_demographics(data: app_data.AppData):
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
         age_bins = [0, 1, 18, 65, float("inf")]
-        age_labels = ["<1y", "<18y", "18-65y", ">65y"]
+        age_labels = ["<1y", "1-18y", "18-65y", ">65y"]
         patients_df["age_group"] = pd.cut(
             patients_df["age"], bins=age_bins, labels=age_labels, right=False
         )
@@ -108,6 +108,7 @@ def st_demographics(data: app_data.AppData):
                 "x": 0.5,
             },
         )
+        fig.update_traces(hovertemplate="%{label}<br>%{value} patients")
 
         # Place the chart inside a styleable container with card-like border
         with st_util.st_card_container("age_chart_container"):
@@ -116,13 +117,38 @@ def st_demographics(data: app_data.AppData):
     with col2:
         sex_counts = patients_df["sex"].value_counts()
 
+        # Create a custom color map to ensure Male is set1[0], Female is set1[1]
+        sex_categories = sex_counts.index.tolist()
+        color_map = {}
+        color_sequence = []
+
+        # Assign specific colors to Male and Female
+        for category in sex_categories:
+            if category.lower() == "male":
+                color_map[category] = px.colors.qualitative.Set1[1]
+            elif category.lower() == "female":
+                color_map[category] = px.colors.qualitative.Set1[0]
+
+        # Assign remaining colors to other categories
+        other_color_index = 2
+        for category in sex_categories:
+            if category.lower() not in ["male", "female"]:
+                color_map[category] = px.colors.qualitative.Set1[
+                    other_color_index % len(px.colors.qualitative.Set1)
+                ]
+                other_color_index += 1
+
+        # Create color sequence in the order of sex_counts.index
+        for category in sex_counts.index:
+            color_sequence.append(color_map[category])
+
         fig = px.pie(
             sex_counts,
             values=sex_counts.values,
             names=sex_counts.index,
             title="Sex",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Plotly,
+            color_discrete_sequence=color_sequence,
         )
         fig.update_layout(
             title={
@@ -140,9 +166,10 @@ def st_demographics(data: app_data.AppData):
                 "x": 0.5,
             },
         )
+        fig.update_traces(hovertemplate="%{label}<br>%{value} patients")
+
         with st_util.st_card_container("sex_chart_container"):
             st.plotly_chart(fig, use_container_width=True)
-
     with col3:
         location_counts = patients_df["location"].value_counts()
         location_counts["Other"] = location_counts[location_counts < 20].sum()
@@ -167,10 +194,13 @@ def st_demographics(data: app_data.AppData):
                 "xanchor": "center",
                 "yanchor": "top",
                 "font": {"size": 22, "weight": "normal"},
-            }
+            },
+            hovermode="x",
         )
+        fig.update_traces(hovertemplate="%{y} patients")
+
         with st_util.st_card_container("location_chart_container"):
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
 
 
 def st_new_patients(data: app_data.AppData):
