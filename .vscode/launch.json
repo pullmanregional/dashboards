@@ -18,7 +18,14 @@
       "request": "launch",
       "program": "${workspaceFolder}/panel/prefect/ingest_datamart.py",
       "cwd": "${workspaceFolder}/panel/prefect",
-      "args": ["--prw", "sqlite:///../../../prh-warehouse/prw.sqlite3", "--out", "prh-panel.sqlite3"],
+      "args": [
+        "--prw",
+        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "--out",
+        "prh-panel.sqlite3",
+        "--kv",
+        "prh-panel.json"
+      ],
       "console": "integratedTerminal",
       "justMyCode": true
     },
@@ -28,7 +35,10 @@
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/explore",
-      "args": ["run", "app.py"],
+      "args": [
+        "run",
+        "app.py"
+      ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -38,7 +48,10 @@
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/finance",
-      "args": ["run", "app.py"],
+      "args": [
+        "run",
+        "app.py"
+      ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -48,7 +61,10 @@
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/panel",
-      "args": ["run", "app.py"],
+      "args": [
+        "run",
+        "app.py"
+      ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -58,7 +74,10 @@
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/marketing",
-      "args": ["run", "app.py"],
+      "args": [
+        "run",
+        "app.py"
+      ],
       "console": "integratedTerminal",
       "justMyCode": false
     }

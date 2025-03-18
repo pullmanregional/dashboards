@@ -53,7 +53,9 @@ def fetch_from_s3(
         # Decrypt the database file using provided Fernet key
         logging.info("Decrypting")
         decrypted_bytes = (
-            Fernet(data_key).decrypt(remote_bytes) if data_key is not None else remote_bytes
+            Fernet(data_key).decrypt(remote_bytes)
+            if data_key is not None
+            else remote_bytes
         )
 
         return decrypted_bytes
@@ -64,17 +66,6 @@ def fetch_from_s3(
     except Exception as e:
         logging.error("Failed to fetch and load remote object: %s", e)
         raise
-
-
-def json_from_s3(
-    s3_config: S3Config, bucket: str, obj: str, data_key: str = None
-) -> dict:
-    """
-    Fetches a json file from a remote S3-compatible storage, decrypts it,
-    and loads it into a dictionary.
-    """
-    data = fetch_from_s3(s3_config, bucket, obj, data_key)
-    return json.loads(data)
 
 
 def sqlite_engine_from_s3(
@@ -93,6 +84,27 @@ def sqlite_engine_from_s3(
     return create_engine(f"sqlite://", creator=lambda: conn)
 
 
+def json_from_s3(
+    s3_config: S3Config, bucket: str, obj: str, data_key: str = None
+) -> dict:
+    """
+    Fetches a json file from a remote S3-compatible storage, decrypts it,
+    and loads it into a dictionary.
+    """
+    data = fetch_from_s3(s3_config, bucket, obj, data_key)
+    return json.loads(data)
+
+
+def cleanup():
+    """
+    Delete any temporary file
+    """
+    os.remove(TMP_DB_FILE)
+
+
+# -------------------------------------------------------
+# File utilities
+# -------------------------------------------------------
 def sqlite_engine_from_file(file):
     """
     Reads the specified SQLite database file and returns a SQLAlchemy engine.
@@ -101,8 +113,27 @@ def sqlite_engine_from_file(file):
     return create_engine(f"sqlite://", creator=lambda: conn)
 
 
-def cleanup():
+def json_from_file(file):
     """
-    Delete any temporary file
+    Reads the specified JSON file and returns a dictionary.
+    Returns an empty dictionary if the file does not exist or invalid.
     """
-    os.remove(TMP_DB_FILE)
+    try:
+        with open(file, "r") as f:
+            return json.loads(f.read())
+    except Exception as e:
+        logging.error("Failed to read JSON file: %s", e)
+        return {}
+
+
+# -------------------------------------------------------
+# General utilities
+# -------------------------------------------------------
+def dedup_ignore_case(items: list) -> list:
+    seen = set()
+    deduped = []
+    for item in items:
+        if item.lower() not in seen:
+            deduped.append(item)
+            seen.add(item.lower())
+    return deduped

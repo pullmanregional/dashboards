@@ -21,7 +21,7 @@ DATA_FILE = st.secrets.get("DATA_FILE")
 DATA_KEY = st.secrets.get("DATA_KEY")
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass(eq=True)
 class SourceData:
     """In-memory copy of DB tables"""
 

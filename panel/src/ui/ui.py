@@ -1,39 +1,38 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from common import st_util
-from ..model import source_data, settings
+from common import st_util, source_data_util
+from ..model import source_data, settings, app_data
 
 
 def show_settings(src_data: source_data.SourceData) -> dict:
     """
     Render the sidebar and return the dict with configuration options set by the user.
     """
-    # with st.sidebar:
-    #     st_util.st_sidebar_prh_logo()
-    #     st.write("## Clinic")
-
-    st.header("Patient Panels")
+    clinics = src_data.kvdata.get("clinics", [])
 
     col_1, col_2 = st.columns([1, 1])
     with col_1:
         clinic = st.selectbox(
             "Clinic:",
-            options=[
-                "All Primary Care Clinics",
-                "Pullman Family Medicine",
-                "Residency",
-                "Palouse Pediatrics",
-                "Palouse Medical",
-                "Unassigned",
-            ],
+            options=["All Clinics"] + clinics + ["Unassigned"],
         )
     with col_2:
+        providers_by_clinic = src_data.kvdata.get("providers", {})
+        if clinic == "All Clinics":
+            providers = source_data_util.dedup_ignore_case(
+                [
+                    provider
+                    for clinic_providers in providers_by_clinic.values()
+                    for provider in clinic_providers
+                ]
+            )
+        else:
+            providers = providers_by_clinic.get(clinic, [])
+
         provider = st.selectbox(
-            "Provider:",
-            options=[
-                "All Providers",
-            ],
+            "Paneled Provider:",
+            options=["All Providers"] + providers,
         )
 
     return settings.Settings(clinic=clinic, provider=provider)
@@ -81,12 +80,41 @@ def st_patient_table(patients_df: pd.DataFrame):
     return None
 
 
-def st_demographics(patients_df: pd.DataFrame):
-    st.subheader("Demographics")
-
-    col_1, col_2 = st.columns([1, 3])
+def st_patient_stats(data: app_data.AppData):
+    col_1, col_2, col_3 = st.columns([1, 1, 1])
     with col_1:
-        st_util.st_card("Total Patients", f"{len(patients_df)}", "")
+        title = "All Primary Care Patients"
+        if data.provider != "All Providers":
+            title = f"All Patients for {data.provider}"
+        elif data.clinic != "All Clinics" and data.clinic != "Unassigned":
+            title = f"All Patients at {data.clinic}"
+
+        st_util.st_card(title, f"{data.n_total_selected_patients}", "Last 3 years")
+    with col_2:
+        title = "Paneled Patients"
+        if data.provider != "All Providers":
+            title = f"Paneled Patients for {data.provider}"
+        elif data.clinic == "Unassigned":
+            title = "Unpaneled Patients"
+        elif data.clinic != "All Clinics":
+            title = f"Paneled Patients at {data.clinic}"
+
+        pct_paneled = data.n_paneled_patients / data.n_total_selected_patients * 100
+
+        st_util.st_card(
+            title, f"{data.n_paneled_patients}", f"{pct_paneled:.0f}% of total"
+        )
+
+    with col_3:
+        st_util.st_card(
+            "Encounters Last 12 Months",
+            f"{data.n_encounters_last_12_months}",
+            "All paneled and not paneled",
+        )
+
+
+def st_demographics(data: app_data.AppData):
+    patients_df = data.paneled_patients_df
 
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
@@ -119,8 +147,8 @@ def st_demographics(patients_df: pd.DataFrame):
                 "yanchor": "bottom",
                 "y": -0.25,
                 "xanchor": "center",
-                "x": 0.5
-            }
+                "x": 0.5,
+            },
         )
 
         # Place the chart inside a styleable container with card-like border
@@ -151,8 +179,8 @@ def st_demographics(patients_df: pd.DataFrame):
                 "yanchor": "bottom",
                 "y": -0.3,
                 "xanchor": "center",
-                "x": 0.5
-            }
+                "x": 0.5,
+            },
         )
         with st_util.st_card_container("sex_chart_container"):
             st.plotly_chart(fig, use_container_width=True)
@@ -187,6 +215,34 @@ def st_demographics(patients_df: pd.DataFrame):
             st.plotly_chart(fig)
 
 
+def st_new_patients(data: app_data.AppData):
+    df = pd.DataFrame(
+        {"Category": ["A", "B", "C", "D", "E"], "Values": [20, 14, 23, 25, 22]}
+    )
+
+    # Create bar chart
+    fig = px.bar(
+        df,
+        x="Category",
+        y="Values",
+        title="Example Bar Chart",
+        labels={"Values": "Count", "Category": "Group"},
+    )
+
+    fig.update_layout(
+        title={
+            "text": "",
+            "x": 0.5,
+            "xanchor": "center",
+            "yanchor": "top",
+            "font": {"size": 22, "weight": "normal"},
+        }
+    )
+
+    with st_util.st_card_container("new_patients_chart_container"):
+        st.plotly_chart(fig, use_container_width=True)
+
+
 def st_encounter_table(encounters_df: pd.DataFrame, selected_prwid):
     if selected_prwid is None:
         return st.write("Select a patient to view encounters")
@@ -195,22 +251,20 @@ def st_encounter_table(encounters_df: pd.DataFrame, selected_prwid):
     encounters_df = encounters_df[encounters_df["prw_id"] == selected_prwid]
 
     selected_columns = [
-        "location",
         "encounter_date",
-        "encounter_type",
         "service_provider",
-        "with_pcp",
         "diagnoses",
+        "encounter_type",
         "level_of_service",
+        "location",
     ]
     display_columns = [
-        "Location",
         "Date",
-        "Type",
         "Provider",
-        "With PCP",
         "Diagnoses",
+        "Type",
         "LOS",
+        "Location",
     ]
     encounters_df = encounters_df[selected_columns]
     encounters_df.columns = display_columns
@@ -219,7 +273,7 @@ def st_encounter_table(encounters_df: pd.DataFrame, selected_prwid):
     st.dataframe(
         encounters_df.style.format(
             {
-                "Date": "{:%Y-%m-%d}",
+                "Date": "{:%m/%d/%Y}",
             },
         ),
         hide_index=True,

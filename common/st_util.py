@@ -48,7 +48,8 @@ def st_center_text(text: str, style: str = ""):
         unsafe_allow_html=True,
     )
 
-def st_card(title: str, content: str, description: str):
+
+def st_card(title: str, content: str, description: str = ""):
     st.markdown(
         f"""
         <div style="
@@ -79,16 +80,18 @@ def st_card(title: str, content: str, description: str):
         unsafe_allow_html=True,
     )
 
-def st_card_container(key: str):
+
+def st_card_container(key: str, padding_css: str = "0px 16px"):
     with stylable_container(
         key=key,
-        css_styles="""
-            {
-                padding: 0px 16px;
+        css_styles=f"""
+            {{
+                padding: {padding_css};
                 border-radius: 8px;
                 border: 1px solid #e0e0e0;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                margin: 0.5rem 0;                }
+                margin: 0.5rem 0;
+            }}
             """,
     ):
         return st.container()

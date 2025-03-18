@@ -36,7 +36,19 @@ def run():
         return dashboard.show(src_data)
 
 
+# App config
 st.set_page_config(
-    page_title="Patient Panels", layout="wide", initial_sidebar_state="auto"
+    page_title="Patient Panels",
+    layout="wide",
+    initial_sidebar_state="auto",
+    menu_items=None,
 )
+hide_streamlit_style = """
+            <style>
+                /* Hide the Streamlit header and menu, see https://discuss.streamlit.io/t/hiding-the-header-in-1-31-1/63398/2 */
+                header {visibility: hidden;}
+                .stMainBlockContainer {padding-top: 2rem;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 run()

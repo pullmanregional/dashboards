@@ -10,7 +10,7 @@ class DatamartModel(SQLModel, registry=registry()):
 
 class Meta(DatamartModel, table=True):
     __tablename__ = "meta"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     modified: datetime
 
 
@@ -50,3 +50,30 @@ class Encounter(DatamartModel, table=True):
     with_pcp: bool | None = None
     diagnoses: str | None = None
     level_of_service: str | None = None
+
+
+class MonthlyVolumeByLocation(DatamartModel, table=True):
+    __tablename__ = "monthly_volume_by_location"
+
+    id: int | None = Field(default=None, primary_key=True)
+    year_month: str
+    location: str
+    visit_count: int
+
+
+class MonthlyVolumeByPanelLocation(DatamartModel, table=True):
+    __tablename__ = "monthly_volume_by_panel_location"
+
+    id: int | None = Field(default=None, primary_key=True)
+    year_month: str
+    panel_location: str
+    visit_count: int
+
+
+class MonthlyVolumeByPanelProvider(DatamartModel, table=True):
+    __tablename__ = "monthly_volume_by_panel_provider"  
+
+    id: int | None = Field(default=None, primary_key=True)
+    year_month: str
+    panel_provider: str
+    visit_count: int
