@@ -52,7 +52,7 @@ def show(src_data: source_data.SourceData):
         # Show patient and enconters lists
         col1, col2 = st.columns([2, 1], gap="medium")
         with col1:
-            st.write(f"**Patient List**")
+            st.write(f"**Patient List ({len(patients_df)} total)**")
             with st.spinner("Loading..."):
                 selected_mrn = ui.st_patient_table(patients_df)
 

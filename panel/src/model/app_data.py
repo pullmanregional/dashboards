@@ -55,8 +55,6 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
         paneled_patients_df = patients_df[patients_df["panel_location"].isna()]
         unpaneled_patients_df = pd.DataFrame(columns=patients_df.columns)
     else:
-        paneled_patients_df = patients_df[patients_df["panel_location"] == clinic]
-
         # Filter encounters for this clinic
         if clinic == "Palouse Pediatrics":
             encounters_df = encounters_df[
@@ -76,6 +74,9 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
 
         patients_df = patients_df[patients_df["prw_id"].isin(encounters_df["prw_id"])]
 
+        # Patients paneled to this clinic
+        paneled_patients_df = patients_df[patients_df["panel_location"] == clinic]
+
         # Patients seen in this clinic but paneled elsewhere or not paneled
         unpaneled_patients_df = patients_df[
             (
@@ -84,9 +85,6 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
             )
             & patients_df["prw_id"].isin(encounters_df["prw_id"])
         ]
-
-    x = paneled_patients_df[~paneled_patients_df["prw_id"].isin(patients_df["prw_id"])]
-    y = patients_df[~patients_df["prw_id"].isin(paneled_patients_df["prw_id"])]
 
     # Filter patients/encounters by provider
     if provider != "All Providers":
