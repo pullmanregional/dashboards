@@ -2,13 +2,16 @@
 Utilities for fetching and loading data from remote storage.
 """
 
-import os, logging, json
+import sys, os, logging, json
 import sqlite3
 import boto3
 from dataclasses import dataclass
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from sqlalchemy import create_engine
-from cryptography.fernet import Fernet
+
+# Import common modules from repo root
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from prw_common import encrypt
 
 
 # Temporary storage when loading DB from memory
@@ -53,7 +56,7 @@ def fetch_from_s3(
         # Decrypt the database file using provided Fernet key
         logging.info("Decrypting")
         decrypted_bytes = (
-            Fernet(data_key).decrypt(remote_bytes)
+            encrypt.decrypt(remote_bytes, data_key)
             if data_key is not None
             else remote_bytes
         )
