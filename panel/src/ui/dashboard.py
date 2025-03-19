@@ -25,14 +25,36 @@ def show(src_data: source_data.SourceData):
     st.subheader("New Patients")
     ui.st_new_patients(data)
 
-    st.subheader("Paneled Patients")
+    st.subheader("Patients")
     with st_util.st_card_container("patient_list_container", padding_css="10px 16px"):
-        col1, col2 = st.columns([2, 1], gap="medium")
+        # Add select box to choose patients paneled vs unpaneled by seen in clinic
+        if data.clinic != "Unassigned" and data.clinic != "All Clinics":
+            st.write("**Show**")
+            user_settings.patient_list_type = st.selectbox(
+                "Show:",
+                key="patient_list_type",
+                options=[
+                    "Paneled patients",
+                    "Patients seen but not paneled to this clinic",
+                ],
+                label_visibility="collapsed",
+            )
 
+        # Select the appropriate dataframe
+        if (
+            user_settings.patient_list_type
+            == "Patients seen but not paneled to this clinic"
+        ):
+            patients_df = data.unpaneled_patients_df
+        else:
+            patients_df = data.paneled_patients_df
+
+        # Show patient and enconters lists
+        col1, col2 = st.columns([2, 1], gap="medium")
         with col1:
-            st.write("**Patient List**")
+            st.write(f"**Patient List**")
             with st.spinner("Loading..."):
-                selected_mrn = ui.st_patient_table(data.paneled_patients_df)
+                selected_mrn = ui.st_patient_table(patients_df)
 
         with col2:
             st.write("**Encounters for Selected Patient**")

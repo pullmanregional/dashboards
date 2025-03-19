@@ -17,6 +17,9 @@ class AppData:
     # Patients assigned to this clinic's panel
     paneled_patients_df: pd.DataFrame
 
+    # Patients seen in clinic but not paneled to that clinic
+    unpaneled_patients_df: pd.DataFrame
+
     # All encounters
     encounters_df: pd.DataFrame
 
@@ -43,10 +46,18 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
     # Filter patients/encounters by clinic
     if clinic == "All Clinics":
         paneled_patients_df = patients_df[~patients_df["panel_location"].isna()]
+        # Unpaneled patients with any encounter
+        unpaneled_patients_df = patients_df[
+            patients_df["panel_location"].isna()
+            & patients_df["prw_id"].isin(encounters_df["prw_id"])
+        ]
     elif clinic == "Unassigned":
         paneled_patients_df = patients_df[patients_df["panel_location"].isna()]
+        unpaneled_patients_df = pd.DataFrame(columns=patients_df.columns)
     else:
         paneled_patients_df = patients_df[patients_df["panel_location"] == clinic]
+
+        # Filter encounters for this clinic
         if clinic == "Palouse Pediatrics":
             encounters_df = encounters_df[
                 (encounters_df["location"] == "Palouse Pediatrics Pullman")
@@ -62,7 +73,17 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
             ]
         else:
             encounters_df = encounters_df[encounters_df["location"] == clinic]
+
         patients_df = patients_df[patients_df["prw_id"].isin(encounters_df["prw_id"])]
+
+        # Patients seen in this clinic but paneled elsewhere or not paneled
+        unpaneled_patients_df = patients_df[
+            (
+                (patients_df["panel_location"] != clinic)
+                | patients_df["panel_location"].isna()
+            )
+            & patients_df["prw_id"].isin(encounters_df["prw_id"])
+        ]
 
     x = paneled_patients_df[~paneled_patients_df["prw_id"].isin(patients_df["prw_id"])]
     y = patients_df[~patients_df["prw_id"].isin(paneled_patients_df["prw_id"])]
@@ -73,6 +94,9 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
         patients_df = patients_df[patients_df["prw_id"].isin(encounters_df["prw_id"])]
         paneled_patients_df = paneled_patients_df[
             paneled_patients_df["panel_provider"] == provider
+        ]
+        unpaneled_patients_df = unpaneled_patients_df[
+            unpaneled_patients_df["prw_id"].isin(encounters_df["prw_id"])
         ]
 
     # Calculate stats
@@ -86,6 +110,7 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
         clinic=clinic,
         provider=provider,
         paneled_patients_df=paneled_patients_df,
+        unpaneled_patients_df=unpaneled_patients_df,
         encounters_df=src.encounters_df,
         new_visits_by_month=src.new_visits_by_month,
         n_total_selected_patients=n_total_selected_patients,

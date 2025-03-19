@@ -6,7 +6,8 @@ from dataclasses import dataclass
 import streamlit as st
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass(eq=True)
 class Settings:
     clinic: str
     provider: str
+    patient_list_type: str = None

@@ -5,7 +5,7 @@ from common import st_util, source_data_util
 from ..model import source_data, settings, app_data
 
 
-def show_settings(src_data: source_data.SourceData) -> dict:
+def show_settings(src_data: source_data.SourceData) -> settings.Settings:
     """
     Render the sidebar and return the dict with configuration options set by the user.
     """
@@ -279,7 +279,7 @@ def st_new_patients(data: app_data.AppData):
 
 def st_patient_table(patients_df: pd.DataFrame):
     """
-    Display patient table
+    Display patient table with filter options
     """
     # Display a dataframe with selectable rows (one at a time) with only
     # columns prw_id, sex, age_display, city, state, panel_location
