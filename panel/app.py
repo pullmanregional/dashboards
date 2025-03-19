@@ -24,8 +24,7 @@ def run():
         st.rerun()
 
     # Read, parse, and cache (via @st.cache_data) source data
-    with st.spinner("Initializing..."):
-        src_data = source_data.read()
+    src_data = source_data.read()
 
     # Handle routing based on query parameters
     route_id = route.route_by_query(st.query_params)

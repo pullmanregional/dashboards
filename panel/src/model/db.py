@@ -49,6 +49,7 @@ class Encounter(DatamartModel, table=True):
     service_provider: str | None = None
     with_pcp: bool | None = None
     diagnoses: str | None = None
+    diagnoses_icd: str | None = None
     level_of_service: str | None = None
 
 
