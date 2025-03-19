@@ -46,7 +46,7 @@ def read() -> SourceData:
     return src_data
 
 
-@st.cache_data
+@st.cache_data(ttl=timedelta(minutes=2))
 def from_file(file: str, json_file: str) -> SourceData:
     engine = source_data_util.sqlite_engine_from_file(file)
     src_data = from_db(engine)
@@ -55,7 +55,7 @@ def from_file(file: str, json_file: str) -> SourceData:
     return src_data
 
 
-@st.cache_data
+@st.cache_data(ttl=timedelta(hours=6), show_spinner="Loading...")
 def from_s3() -> SourceData:
     r2_config = source_data_util.S3Config(R2_ACCT_ID, R2_ACCT_KEY, R2_URL)
     engine = source_data_util.sqlite_engine_from_s3(
@@ -77,9 +77,9 @@ def from_db(db_engine) -> SourceData:
     """
     logging.info("Reading DB tables")
 
-    # Read the largest last_updated value from Meta
-    with Session(db_engine) as session:
-        modified = session.exec(text("select max(modified) from meta")).fetchone()[0]
+    # Get the latest time data was updated from meta table
+    result = pd.read_sql_query("SELECT MAX(modified) FROM meta", db_engine)
+    modified = result.iloc[0, 0] if result.size > 0 else None
 
     # Read dashboard data into dataframes
     patients_df = pd.read_sql_table("patients", db_engine)
