@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -16,6 +17,15 @@ def show(src_data: source_data.SourceData):
 
     # Process the source data by filtering and generating the specifc metrics displayed in the UI
     data = app_data.process(user_settings, src_data)
+
+    # Information text
+    with st.expander("Paneling Information", expanded=False):
+        # Read the panel process markdown file
+        panel_process_txt_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "panel-process.md"
+        )
+        with open(panel_process_txt_path, "r") as f:
+            st.markdown(f.read())
 
     # Build UI by section
     st.subheader("Demographics")
