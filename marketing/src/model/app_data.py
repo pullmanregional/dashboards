@@ -18,7 +18,7 @@ CLINIC_DEPT_TO_NAME = {
     "CC WPL PALOUSE PEDIATRICS MOSCOW": "Palouse Pediatrics",
     "CC WPL PULLMAN FAMILY MEDICINE": "Pullman Family Medicine",
     "CC WPL PALOUSE MED PRIMARY CARE": "Palouse Medical",
-    "CC WPL FM RESIDENCY CLINIC": "Residency Clinic",
+    "CC WPL FM RESIDENCY CLINIC": "Residency",
     "CC WPL PALOUSE HEALTH CTR PRIM CARE": "Pullman Family Medicine",
 }
 

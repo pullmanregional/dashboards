@@ -4,8 +4,9 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import pandas as pd
-import streamlit as st
 import plotly.graph_objects as go
+import plotly.express as px
+import streamlit as st
 from common import st_util
 from ..model import source_data, app_data, settings
 
@@ -129,7 +130,7 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
 
             # Convert dates to datetime
             clinic_data["date"] = clinic_data["encounter_date"]
-            clinic_no_shows["date"] =clinic_no_shows["encounter_date"]
+            clinic_no_shows["date"] = clinic_no_shows["encounter_date"]
 
             # Find first visit dates
             patient_first_visits = clinic_data.groupby("prw_id")["date"].min()
@@ -205,6 +206,7 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
             )
 
             fig.update_layout(
+                title="Visits",
                 showlegend=True,
                 legend=dict(
                     orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
@@ -224,3 +226,50 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
 
             # Display the graph
             st.plotly_chart(fig, use_container_width=True)
+
+            # Create monthly MyChart activations graph
+            mychart_activations = data.patients_df[
+                (data.patients_df["panel_location"] == clinic)
+                & (data.patients_df["mychart_activation_date"].notna())
+            ].copy()
+            mychart_activations["activation_month"] = mychart_activations[
+                "mychart_activation_date"
+            ].dt.to_period("M")
+            monthly_activations = (
+                mychart_activations.groupby("activation_month").size().reset_index()
+            )
+            monthly_activations["activation_month"] = monthly_activations[
+                "activation_month"
+            ].dt.to_timestamp()
+
+            # Create the figure
+            fig = go.Figure()
+
+            fig.add_trace(
+                go.Scatter(
+                    x=monthly_activations["activation_month"],
+                    y=monthly_activations[0],
+                    name="MyChart Activations",
+                    mode="lines+markers",
+                    line=dict(width=2, color=px.colors.qualitative.Set2[1]),
+                    marker=dict(size=8, color=px.colors.qualitative.Set2[1]),
+                    hovertemplate="%{y:.0f} Activations<extra></extra>",
+                )
+            )
+
+            fig.update_layout(
+                title="MyChart Activations",
+                showlegend=False,
+                yaxis_title=None,
+                hovermode="x unified",
+                xaxis_range=[x_min, x_max],
+                height=250,
+                margin=dict(t=40),
+                hoverlabel=dict(
+                    bgcolor="white",
+                    font_size=14,
+                ),
+                xaxis=dict(hoverformat="<b>%b %Y</b>"),
+            )
+
+            st.plotly_chart(fig, key=f"mychart_{clinic}", use_container_width=True)

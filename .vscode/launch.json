@@ -22,6 +22,21 @@
       "justMyCode": true
     },
     {
+      "name": "Ingest: marketing",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/marketing/prefect/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/marketing/prefect",
+      "args": [
+        "--prw",
+        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "--out",
+        "prh-marketing.sqlite3"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "Streamlit: explore",
       "type": "debugpy",
       "request": "launch",

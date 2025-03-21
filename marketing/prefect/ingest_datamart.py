@@ -21,6 +21,7 @@ from prw_common.encrypt import encrypt_file
 @dataclass
 class SrcData:
     patients_df: pd.DataFrame
+    panel_df: pd.DataFrame
     mychart_df: pd.DataFrame
     encounters_df: pd.DataFrame
 
@@ -30,6 +31,7 @@ class OutData:
     patients_df: pd.DataFrame
     encounters_df: pd.DataFrame
     no_shows_df: pd.DataFrame
+
 
 # -------------------------------------------------------
 # Extract
@@ -45,6 +47,15 @@ def read_source_tables(prw_engine) -> SrcData:
             text("prw_id"),
             text("age"),
         ).select_from(text("prw_patients")),
+        prw_engine,
+    )
+
+    panel_df = pd.read_sql_query(
+        select(
+            text("prw_id"),
+            text("panel_location"),
+            text("panel_provider"),
+        ).select_from(text("prw_patient_panels")),
         prw_engine,
     )
 
@@ -72,10 +83,19 @@ def read_source_tables(prw_engine) -> SrcData:
     )
 
     # Set datetime column types
-    mychart_df["mychart_activation_date"] = pd.to_datetime(mychart_df["mychart_activation_date"], format="%Y%m%d")
-    encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"], format="%Y%m%d")
+    mychart_df["mychart_activation_date"] = pd.to_datetime(
+        mychart_df["mychart_activation_date"], format="%Y%m%d"
+    )
+    encounters_df["encounter_date"] = pd.to_datetime(
+        encounters_df["encounter_date"], format="%Y%m%d"
+    )
 
-    return SrcData(patients_df=patients_df, mychart_df=mychart_df, encounters_df=encounters_df)
+    return SrcData(
+        patients_df=patients_df,
+        panel_df=panel_df,
+        mychart_df=mychart_df,
+        encounters_df=encounters_df,
+    )
 
 
 # -------------------------------------------------------
@@ -91,8 +111,9 @@ def transform(src: SrcData) -> OutData:
     # Completed encounters
     completed_df = src.encounters_df[src.encounters_df["appt_status"] == "Completed"]
 
-    # Add mychart status to patients_df
-    patients_df = src.patients_df.merge(src.mychart_df, on="prw_id", how="left")
+    # Add panel and mychart info to patients_df
+    patients_df = src.patients_df.merge(src.panel_df, on="prw_id", how="left")
+    patients_df = patients_df.merge(src.mychart_df, on="prw_id", how="left")
 
     return OutData(
         patients_df=patients_df,
