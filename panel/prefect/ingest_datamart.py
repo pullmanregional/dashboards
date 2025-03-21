@@ -98,6 +98,12 @@ def transform(src: SrcData) -> OutData:
     patients_df["panel_provider"] = patients_df["prw_id"].map(
         src.patient_panel_df.set_index("prw_id")["panel_provider"]
     )
+    patients_df["panel_assignment_rule"] = patients_df["prw_id"].map(
+        src.patient_panel_df.set_index("prw_id")["assignment_details"]
+        .fillna("")
+        .str.split(":", n=1)
+        .str[0]
+    )
 
     # Delete unused columns
     patients_df.drop(

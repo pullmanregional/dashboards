@@ -292,6 +292,7 @@ def st_patient_table(patients_df: pd.DataFrame):
         "panel_location",
         "panel_provider",
         "avg_encounters_per_year",
+        "panel_assignment_rule",
     ]
     event = st.dataframe(
         patients_df,
@@ -307,6 +308,7 @@ def st_patient_table(patients_df: pd.DataFrame):
             "avg_encounters_per_year": st.column_config.NumberColumn(
                 "Encounters/Year", format="%.1f"
             ),
+            "panel_assignment_rule": st.column_config.TextColumn("Assignment Rule"),
         },
         hide_index=True,
         use_container_width=True,

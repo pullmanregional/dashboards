@@ -31,6 +31,7 @@ class Patient(DatamartModel, table=True):
     pcp: str | None = None
     panel_location: str | None = None
     panel_provider: str | None = None
+    panel_assignment_rule: str | None = None
 
 
 class Encounter(DatamartModel, table=True):
