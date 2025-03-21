@@ -291,6 +291,7 @@ def st_patient_table(patients_df: pd.DataFrame):
         "location",
         "panel_location",
         "panel_provider",
+        "avg_encounters_per_year",
     ]
     event = st.dataframe(
         patients_df,
@@ -303,6 +304,9 @@ def st_patient_table(patients_df: pd.DataFrame):
             "location": st.column_config.TextColumn("City"),
             "panel_location": st.column_config.TextColumn("Panel"),
             "panel_provider": st.column_config.TextColumn("Paneled Provider"),
+            "avg_encounters_per_year": st.column_config.NumberColumn(
+                "Encounters/Year", format="%.1f"
+            ),
         },
         hide_index=True,
         use_container_width=True,

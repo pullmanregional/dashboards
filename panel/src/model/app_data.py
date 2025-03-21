@@ -5,6 +5,7 @@ Transform source data into department specific data that can be displayed on das
 import pandas as pd
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import numpy as np
 from . import source_data, settings
 
 
@@ -42,6 +43,49 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
     provider = settings.provider
     patients_df = src.patients_df
     encounters_df = src.encounters_df
+
+    # Calculate average encounters per year for each patient
+    # Get first encounter date for each patient
+    first_encounters = (
+        encounters_df.groupby("prw_id")["encounter_date"].min().reset_index()
+    )
+    first_encounters.rename(
+        columns={"encounter_date": "first_encounter_date"}, inplace=True
+    )
+
+    # Get count of encounters for each patient
+    encounter_counts = (
+        encounters_df.groupby("prw_id").size().reset_index(name="encounter_count")
+    )
+
+    # Merge the first encounter date and counts with patients_df
+    patients_df = patients_df.merge(first_encounters, on="prw_id", how="left")
+    patients_df = patients_df.merge(encounter_counts, on="prw_id", how="left")
+
+    # Calculate years since first encounter (or set to NaN if no encounters)
+    current_date = datetime.now()
+    patients_df["years_as_patient"] = (
+        current_date - patients_df["first_encounter_date"]
+    ).dt.days / 365.25
+
+    # Calculate average encounters per year
+    # For patients with less than 1 year history, use actual encounter count
+    # otherwise divide by years_as_patient
+    patients_df["avg_encounters_per_year"] = np.where(
+        patients_df["years_as_patient"] >= 1,
+        patients_df["encounter_count"] / patients_df["years_as_patient"],
+        patients_df["encounter_count"],
+    )
+
+    # Handle NaN values (patients with no encounters)
+    patients_df["avg_encounters_per_year"] = patients_df[
+        "avg_encounters_per_year"
+    ].fillna(0)
+
+    # Round to 1 decimal place
+    patients_df["avg_encounters_per_year"] = patients_df[
+        "avg_encounters_per_year"
+    ].round(1)
 
     # Filter patients/encounters by clinic
     if clinic == "All Clinics":
