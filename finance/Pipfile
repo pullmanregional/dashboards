@@ -5,13 +5,15 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
-xlrd = "*"
 plotly = "*"
-openpyxl = "*"
-streamlit-aggrid = "*"
-sqlalchemy = "*"
+sqlmodel = "*"
 cryptography = "*"
-requests = "*"
+boto3 = "*"
+python-dotenv = "*"
+pyodbc = "*"
+authlib = "*"
+streamlit-aggrid = "*"
+streamlit-extras = "*"
 
 [requires]
 python_version = "3"

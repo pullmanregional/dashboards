@@ -1,88 +1,96 @@
+# Add main repo directory to include path to access common/ modules
+import sys, os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 import streamlit as st
-from src import auth, route, source_data, dept, update
+from streamlit_extras.floating_button import floating_button
+from src import route
+from src.model import source_data
+from src.dept import base
+from common import auth, st_util
 
 
 def run():
     """Main streamlit app entry point"""
-    # Fetch source data - do this before auth to ensure all requests to app cause data refresh
+    # Authenticate user
+    user = auth.oidc_auth()
+    if not user:
+        return st.stop()
+
     # Read, parse, and cache (via @st.cache_data) source data
-    with st.spinner("Initializing..."):
-        source_data.fetch_source_files_to_disk(
-            source_data.DEFAULT_DB_FILE,
-            st.secrets.get("data_url"),
-            source_data.DEFAULT_KV_FILE,
-            st.secrets.get("data_kv_url"),
-            st.secrets.get("data_key"),
-        )
-        src_data = source_data.from_db(source_data.DEFAULT_DB_FILE, source_data.DEFAULT_KV_FILE)
+    src_data = source_data.read()
 
     # Handle routing based on query parameters
     route_id = route.route_by_query(st.query_params)
 
-    # Check for access to update / API resources first
-    if route_id == route.UPDATE:
-        return update.show_page()
-    elif route_id == route.FETCH:
-        return force_fetch_data()
-    elif route_id == route.CLEAR_CACHE:
-        return clear_cache()
+    # Check for API resources first
+    if route_id == route.CLEAR_CACHE:
+        return st_util.st_clear_cache_page()
 
     # Render page based on the route
     if src_data is None:
-        return st.write("No data available. Please contact administrator.")
+        st_util.st_center_text("No data available. Please contact administrator.")
     elif route_id in route.DEPTS:
-        # Interactive user authentication for access to dashboard pages
-        if not auth.authenticate():
-            return st.stop()
-
-        return dept.base.dept_page(src_data, route_id)
+        return base.dept_page(src_data, route_id)
     else:
         return show_index()
 
 
-def clear_cache():
-    """
-    Clear Streamlit cache so source_data module will reread DB from disk on next request
-    """
-    st.cache_data.clear()
-    return st.markdown(
-        'Cache cleared. <a href="/" target="_self">Return to dashboard.</a>',
-        unsafe_allow_html=True,
-    )
-
-
-def force_fetch_data():
-    """
-    Force re-fetch of source data from remote URL
-    """
-    source_data.fetch_source_files_to_disk(
-        source_data.DEFAULT_DB_FILE,
-        st.secrets.get("data_url"),
-        source_data.DEFAULT_KV_FILE,
-        st.secrets.get("data_kv_url"),
-        st.secrets.get("data_key"),
-        force=True,
-    )
-    return st.markdown(
-        'Data re-fetched. <a href="/" target="_self">Return to dashboard.</a>',
-        unsafe_allow_html=True,
-    )
-
-
 def show_index():
     """
-    Show links to the various dashboards
+    Select and navigate to dashboards
     """
-    links = []
-    for r in route.DEPTS:
-        dept_name = dept.base.configs.DEPT_CONFIG[r].name
-        links.append(f'* <a href="/?dept={r}" target="_self">{dept_name}</a>')
+    # Add a logout link with an icon
+    if floating_button("Log out", key="logout", icon=":material/logout:"):
+        st.logout()
+        st.rerun()
 
-    st.header("Dashboards")
-    st.markdown("\n".join(links), unsafe_allow_html=True)
+    # Create a dictionary mapping department names to their route IDs
+    dept_options = {base.configs.DEPT_CONFIG[r].name: r for r in route.DEPTS}
+
+    # Create a centered container for the UI elements
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    with col2:
+        st.title("Pullman Regional Hospital")
+        st.markdown("#### Select a Dashboard")
+        # Create a combo box with all department options
+        selected_dept_name = st.selectbox(
+            "Select Dashboard",
+            options=sorted(dept_options.keys()),
+            label_visibility="collapsed",
+        )
+
+        # Get the route ID for the selected department
+        selected_dept_id = dept_options[selected_dept_name]
+
+        # Create a Go to Dashboard button
+        if st.button("Go to Dashboard", use_container_width=True, type="primary"):
+            # Set the query parameter and rerun the app
+            st.query_params["dept"] = selected_dept_id
+            st.rerun()
+
+        # Generate the direct link URL with full current URL
+        st.markdown(
+            f"Link to share: https://data.prh.org/finance/?dept={selected_dept_id}"
+        )
 
 
+# App config
 st.set_page_config(
-    page_title="PRH Dashboard", layout="wide", initial_sidebar_state="auto"
+    page_title="PRH Finance Dashboard",
+    page_icon=":material/analytics:",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items=None,
 )
+hide_streamlit_style = """
+            <style>
+                /* Hide the Streamlit header and menu, see https://discuss.streamlit.io/t/hiding-the-header-in-1-31-1/63398/2 */
+                header {visibility: hidden;}
+                .stMainBlockContainer {padding-top: 2rem;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 run()

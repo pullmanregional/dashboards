@@ -5,13 +5,12 @@
 
 import os
 import sys, pathlib
-from dotenv import load_dotenv
 from prefect import flow, task
 from prefect_shell import ShellOperation
 from prefect_aws import AwsCredentials, S3Bucket
 from prefect.blocks.system import Secret
 
-# Add main repo directory to include path to access prw_common/ modules
+# Import common modules from repo root
 sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
 from prw_common.env_utils import load_prw_env
 
@@ -25,7 +24,7 @@ PRW_CONN = os.environ.get("PRW_CONN") or Secret.load("prw-db-url").get()
 PRH_FINANCE_VENV_NAME = os.environ.get("PRH_FINANCE_VENV_NAME", "")
 PRH_FINANCE_CLOUDFLARE_R2_BUCKET = os.environ.get("PRH_FINANCE_CLOUDFLARE_R2_BUCKET")
 PRH_FINANCE_DATA_KEY = (
-    os.environ.get("PRH_FINANCE_DATA_KEY") or Secret.load("prh-dash-data-key").get()
+    os.environ.get("PRH_FINANCE_DATA_KEY") or Secret.load("prh-finance-data-key").get()
 )
 PRH_FINANCE_ENCRYPTED_DB_FILE = os.environ.get("PRH_FINANCE_ENCRYPTED_DB_FILE")
 PRH_FINANCE_ENCRYPTED_JSON_FILE = os.environ.get("PRH_FINANCE_ENCRYPTED_JSON_FILE")
@@ -53,7 +52,7 @@ def prh_datamart_finance():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f"pipenv run python ingest_datamart.py --prw '{PRW_CONN}' --db '{PRH_FINANCE_ENCRYPTED_DB_FILE}' --kv '{PRH_FINANCE_ENCRYPTED_JSON_FILE}' --key '{PRH_FINANCE_DATA_KEY}'",
+            f"pipenv run python ingest_datamart.py --prw '{PRW_CONN}' --out '{PRH_FINANCE_ENCRYPTED_DB_FILE}' --kv '{PRH_FINANCE_ENCRYPTED_JSON_FILE}' --key '{PRH_FINANCE_DATA_KEY}'",
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",

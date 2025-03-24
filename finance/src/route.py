@@ -73,7 +73,6 @@ SURGICAL_SVC = "surgical_svc"
 UROLOGY = "urology"
 DEPTS = (
     ALL_CLINICS,
-    ADMIN,
     ANESTHESIOLOGY,
     ATHLETIC_TRAINER,
     BEHAVIORAL_HEALTH,

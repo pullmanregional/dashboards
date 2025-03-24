@@ -1,6 +1,6 @@
 import streamlit as st
-from ... import source_data
 from . import configs, data, ui, figs
+from ...model import source_data
 
 
 def dept_page(src_data: source_data.SourceData, route_id: str):

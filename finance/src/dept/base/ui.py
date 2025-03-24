@@ -1,9 +1,17 @@
+# Add main repo directory to include path to access common/ modules
+import sys, os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+
 import pandas as pd
 import streamlit as st
+from streamlit_extras.add_vertical_space import add_vertical_space
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from . import configs, data, figs
-from ... import util, static_data, source_data
+from ... import util
+from ...model import static_data, source_data
+from common import st_util
 
 
 def show_settings(config: configs.DeptConfig, src_data: source_data.SourceData) -> dict:
@@ -11,7 +19,7 @@ def show_settings(config: configs.DeptConfig, src_data: source_data.SourceData) 
     Render the sidebar and return the dict with configuration options set by the user.
     """
     with st.sidebar:
-        util.st_sidebar_prh_logo()
+        st_util.st_sidebar_prh_logo()
 
         if len(config.wd_ids) > 1:
             dept_id = st.selectbox(
@@ -51,6 +59,21 @@ def show_settings(config: configs.DeptConfig, src_data: source_data.SourceData) 
             )
         )
 
+        # Add a logout link with an icon
+        add_vertical_space(2)
+        if st.button(
+            "Back to Dashboard List",
+            icon=":material/arrow_back:",
+            use_container_width=True,
+        ):
+            st.query_params.clear()
+            st.rerun()
+        if st.button(
+            "Log out", key="logout", icon=":material/logout:", use_container_width=True
+        ):
+            st.logout()
+            st.rerun()
+
     return {"dept_id": dept_id, "month": month}
 
 
@@ -76,7 +99,12 @@ def show(config: configs.DeptConfig, settings: dict, data: data.DeptData):
     st.caption("\* Unit of Service (UOS) is " + s["uos_unit"])
     _show_kpi(settings, data)
     st.header("Volumes", anchor="volumes", divider="gray")
-    st.caption("\* Volume unit is " + s["volume_unit"] + "  \n\* Unit of Service (UOS) is " + s["uos_unit"])
+    st.caption(
+        "\* Volume unit is "
+        + s["volume_unit"]
+        + "  \n\* Unit of Service (UOS) is "
+        + s["uos_unit"]
+    )
     _show_volumes(settings, data)
     st.header("Hours and FTE", anchor="hours", divider="gray")
     _show_hours(settings, data)
@@ -101,9 +129,17 @@ def _show_kpi(settings: dict, data: data.DeptData):
     ):
         return st.write("No data for department")
 
-    col1, col2, col3, col4 = st.columns([2, 2, 2, 8])
+    card = st_util.st_card_container("rev_container", padding_css="18px 16px 0px 16px")
+    col1, col2, col3, col4 = card.columns([4, 4, 2, 8])
     with col3:
-        figs.kpi_gauge("% Variance", s["variance_revenue_per_volume"], 5, 10, 12, key="variance_revenue_per_volume")
+        figs.kpi_gauge(
+            "% Variance",
+            s["variance_revenue_per_volume"],
+            5,
+            10,
+            12,
+            key="variance_revenue_per_volume",
+        )
     col1.metric(
         "Revenue per UOS",
         f"${s['revenue_per_volume']:,.0f}",
@@ -113,9 +149,16 @@ def _show_kpi(settings: dict, data: data.DeptData):
         f"${s['target_revenue_per_volume']:,.0f}",
     )
 
-    col1, col2, col3, col4 = st.columns([2, 2, 2, 8])
+    col1, col2, col3, col4 = card.columns([4, 4, 2, 8])
     with col3:
-        figs.kpi_gauge("% Variance", s["variance_expense_per_volume"], 5, 10, 12, key="variance_expense_per_volume")
+        figs.kpi_gauge(
+            "% Variance",
+            s["variance_expense_per_volume"],
+            5,
+            10,
+            12,
+            key="variance_expense_per_volume",
+        )
     col1.metric(
         "Expense per UOS",
         f"${s['expense_per_volume']:,.0f}",
@@ -126,13 +169,23 @@ def _show_kpi(settings: dict, data: data.DeptData):
     )
 
     st.subheader("Productivity")
-    col1, col2, col3, col4 = st.columns([2, 2, 2, 8])
+    card = st_util.st_card_container(
+        "hours_var_container", padding_css="18px 16px 10px 16px"
+    )
+    col1, col2, col3, col4 = card.columns([4, 4, 2, 8])
     with col3:
-        figs.kpi_gauge("% Variance", s["variance_hours_per_volume_pct"], 5, 10, 12, key="variance_hours_per_volume_pct")
+        figs.kpi_gauge(
+            "% Variance",
+            s["variance_hours_per_volume_pct"],
+            5,
+            10,
+            12,
+            key="variance_hours_per_volume_pct",
+        )
     col1.metric("Hours per UOS", f"{s['hours_per_volume']:,.2f}")
     col2.metric("Target Hours per UOS", f"{s['target_hours_per_volume']:,.2f}")
 
-    col1, col2, col3, col4 = st.columns([2, 2, 2, 8])
+    col1, col2, col3, col4 = card.columns([4, 4, 2, 8])
     col1.metric("FTE Variance", f"{s['fte_variance']:,.2f}")
 
     v = round(s["fte_variance_dollars"])
@@ -161,8 +214,14 @@ def _show_volumes(settings: dict, data: data.DeptData):
     prior_year_month = util.YYYY_MM_to_month_str(data.stats["month_in_prior_year"])
 
     col1, col2 = st.columns(2)
-    col1 = col1.container(border=True)
-    col2 = col2.container(border=True)
+    with col1:
+        col1 = st_util.st_card_container(
+            "vol_container", padding_css="10px 16px 16px 18px"
+        )
+    with col2:
+        col2 = st_util.st_card_container(
+            "uos_container", padding_css="10px 16px 16px 18px"
+        )
     col1.subheader("Volume")
     col2.subheader("UOS")
 

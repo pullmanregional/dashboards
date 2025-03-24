@@ -6,10 +6,9 @@ import pandas as pd
 import math
 from dataclasses import dataclass
 from datetime import date, datetime
-from dateutil.relativedelta import relativedelta
 from .configs import DeptConfig
-from ... import source_data, income_statment, static_data
 from ... import util
+from ...model import source_data, static_data, income_statement
 
 
 @dataclass(frozen=True)
@@ -182,7 +181,8 @@ def _calc_hours_ytm(df: pd.DataFrame, month: str) -> pd.DataFrame:
         month_num = int(month_num)
         if month_num > 1:
             ret["total_fte"] = ret["total_hrs"] / (
-                util.fte_hrs_in_year(int(year_num)) * util.pct_of_year_through_date(month)
+                util.fte_hrs_in_year(int(year_num))
+                * util.pct_of_year_through_date(month)
             )
         return ret
     else:
@@ -216,7 +216,7 @@ def _calc_contracted_hours(df: pd.DataFrame) -> pd.DataFrame:
 def _calc_income_stmt_for_month(stmt: pd.DataFrame, month: str) -> pd.DataFrame:
     # Filter data for given month
     stmt = stmt[stmt["month"] == month]
-    ret = income_statment.generate_income_stmt(stmt)
+    ret = income_statement.generate_income_stmt(stmt)
     return ret
 
 
@@ -269,7 +269,9 @@ def _calc_stats(
             uos["month"] == month_in_prior_year, "volume"
         ].sum()
         ytm_uos_in_prior_year = uos.loc[
-            uos["month"].str.startswith(str(prior_year))& (uos["month"] <= month_in_prior_year), "volume"
+            uos["month"].str.startswith(str(prior_year))
+            & (uos["month"] <= month_in_prior_year),
+            "volume",
         ].sum()
         ytm_uos = uos.loc[
             uos["month"].str.startswith(str(sel_year)) & (uos["month"] <= sel_month),
@@ -327,8 +329,12 @@ def _calc_stats(
     # Contracted hours data. This is separate from the hours data in the hours dataframe, which represents employee-only hours.
     # This table has has one row per department per year.
     year_for_contracted_hours = date.today().year
-    month_num_for_contracted_hours = datetime.strptime(src.contracted_hours_updated_month[:10], "%Y-%m-%d").month
-    month_for_contracted_hours = f"{year_for_contracted_hours:4d}-{month_num_for_contracted_hours:02d}"
+    month_num_for_contracted_hours = datetime.strptime(
+        src.contracted_hours_updated_month[:10], "%Y-%m-%d"
+    ).month
+    month_for_contracted_hours = (
+        f"{year_for_contracted_hours:4d}-{month_num_for_contracted_hours:02d}"
+    )
 
     prior_year_for_contracted_hours = year_for_contracted_hours - 1
     contracted_hours_this_year_df = contracted_hours_df.loc[
@@ -339,8 +345,13 @@ def _calc_stats(
         contracted_hours_df["year"] == prior_year_for_contracted_hours,
         ["hrs"],
     ].sum()
-    contracted_fte_this_year = contracted_hours_this_year_df["hrs"] / (util.fte_hrs_in_year(year_for_contracted_hours) * util.pct_of_year_through_date(month_for_contracted_hours))
-    contracted_fte_prior_year = contracted_hours_prior_year_df["hrs"] / util.fte_hrs_in_year(prior_year_for_contracted_hours)
+    contracted_fte_this_year = contracted_hours_this_year_df["hrs"] / (
+        util.fte_hrs_in_year(year_for_contracted_hours)
+        * util.pct_of_year_through_date(month_for_contracted_hours)
+    )
+    contracted_fte_prior_year = contracted_hours_prior_year_df[
+        "hrs"
+    ] / util.fte_hrs_in_year(prior_year_for_contracted_hours)
 
     # Hours data - table has one row per department with columns for types of hours,
     # eg. productive, non-productive, overtime, ...
@@ -356,7 +367,7 @@ def _calc_stats(
     # First, generate income statment for the latest month available in the data. The "month"
     # column is in the format "YYYY-MM".
     latest_income_stmt_df = income_stmt_df[income_stmt_df["month"] == month_max]
-    income_stmt_ytd = income_statment.generate_income_stmt(latest_income_stmt_df)
+    income_stmt_ytd = income_statement.generate_income_stmt(latest_income_stmt_df)
     # Pull the YTD Actual and YTD Budget totals for revenue and expenses
     # Those columns can change names, so index them as the second to last, or -2 column (YTD Actual),
     # and last, or -1 column (YTD Budget)
