@@ -44,7 +44,7 @@ def upload_files(bucket_name, files):
     retries=0,
     name=PREFECT_FLOW_NAME + (f".{PRW_ENV}" if PRW_ENV != "prod" else ""),
 )
-def prh_datamart_finance():
+def prw_datamart_finance():
     # Set working dir to path of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     print("Running from:", os.getcwd())
@@ -74,4 +74,4 @@ def prh_datamart_finance():
 
 
 if __name__ == "__main__":
-    prh_datamart_finance()
+    prw_datamart_finance()
