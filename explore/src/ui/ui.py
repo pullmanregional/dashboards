@@ -5,6 +5,7 @@ Methods to show build streamlit UI
 import streamlit as st
 import pandasai as pai
 from pandasai_openai import OpenAI
+from .streamlit_response import StreamlitResponseParser
 from ..model import source_data, app_data, settings
 
 
@@ -62,7 +63,9 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
                 tabs = container.tabs(["Result", "Debug"])
 
                 with st.spinner("Analyzing..."):
-                    response = pai.chat(query, *active_datasets)
+                    pai._current_agent = pai.Agent(active_datasets)
+                    pai._current_agent._response_parser = StreamlitResponseParser()
+                    response = pai.follow_up(query)
                     if response is not None:
                         if response.type == "string":
                             tabs[0].write(response.value)

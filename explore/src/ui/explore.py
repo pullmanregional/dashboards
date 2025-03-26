@@ -25,5 +25,5 @@ def show(src_data: source_data.SourceData):
     pai.config.set({"llm": llm})
 
     # Show main content
-    st.title("Data Explorer")
+    st.title("Data Analytics Home")
     ui.show_content(settings, data)

@@ -3,30 +3,20 @@ Custom response parser to display appropriate components in Streamlit based on r
 """
 
 import streamlit as st
-from pandasai.responses.response_parser import ResponseParser
+from pandasai.core.response.parser import ResponseParser, BaseResponse
 
 
-class StreamlitResponse(ResponseParser):
-    
-    @staticmethod
-    def parser_class_factory(container):
-        def factory(context):
-            return StreamlitResponse(container, context)
+class StreamlitResponseParser(ResponseParser):
+    def _generate_response(self, result: dict, last_code_executed: str = None):
+        if result["type"] == "plot":
+            return BaseResponse(
+                result["value"], type="plot", last_code_executed=last_code_executed
+            )
+        else:
+            return super()._generate_response(result, last_code_executed)
 
-        return factory
+    def _validate_response(self, result: dict):
+        if "type" in result and result["type"] == "plot":
+            return True
 
-    def __init__(self, container, context) -> None:
-        super().__init__(context)
-        self._container = container if container is not None else st
-
-    def format_dataframe(self, result):
-        self._container.dataframe(result["value"])
-        return None
-
-    def format_plot(self, result):
-        self._container.plotly_chart(result["value"])
-        return None
-
-    def format_other(self, result):
-        self._container.write(result["value"])
-        return None
+        return super()._validate_response(result)

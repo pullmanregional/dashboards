@@ -1,8 +1,7 @@
 # Add main repo directory to include path to access common/ modules
-import sys
-from pathlib import Path
+import sys, os
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 import streamlit as st
@@ -20,8 +19,7 @@ def run():
         return st.stop()
 
     # Read, parse, and cache (via @st.cache_data) source data
-    with st.spinner("Initializing..."):
-        src_data = source_data.from_s3()
+    src_data = source_data.read()
 
     # Handle routing based on query parameters
     route_id = route.route_by_query(st.query_params)
@@ -36,6 +34,23 @@ def run():
     else:
         return explore.show(src_data)
 
+
+# App config
+st.set_page_config(
+    page_title="Data Analytics Home",
+    page_icon=":material/graph_6:",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+    menu_items=None,
+)
+hide_streamlit_style = """
+            <style>
+                /* Hide the Streamlit header and menu, see https://discuss.streamlit.io/t/hiding-the-header-in-1-31-1/63398/2 */
+                header {visibility: hidden;}
+                .stMainBlockContainer {padding-top: 2rem;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # st.set_page_config(
 #     page_title="Data Explorer", layout="wide", initial_sidebar_state="auto"
