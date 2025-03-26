@@ -5,6 +5,7 @@ Utilities for fetching and loading data from remote storage.
 import sys, os, logging, json
 import sqlite3
 import boto3
+from datetime import datetime
 from dataclasses import dataclass
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from sqlalchemy import create_engine
@@ -15,7 +16,7 @@ from prw_common import encrypt
 
 
 # Temporary storage when loading DB from memory
-TMP_DB_FILE = "tmp.sqlite3"
+TMP_DB_FILES = []
 
 
 @dataclass(eq=True, frozen=True)
@@ -82,8 +83,10 @@ def sqlite_engine_from_s3(
     data = fetch_from_s3(s3_config, bucket, obj, data_key)
     # Write the decrypted database to a temporary SQLite database
     logging.info("Reading DB to memory")
-    open(TMP_DB_FILE, "wb").write(data)
-    conn = sqlite3.connect(TMP_DB_FILE)
+    # Create a temporary file in the current directory
+    TMP_DB_FILES.append(f"db_{datetime.now().strftime('%Y%m%d%H%M%S%f')}.sqlite3")
+    open(TMP_DB_FILES[-1], "wb").write(data)
+    conn = sqlite3.connect(TMP_DB_FILES[-1])
     return create_engine(f"sqlite://", creator=lambda: conn)
 
 
@@ -102,7 +105,9 @@ def cleanup():
     """
     Delete any temporary file
     """
-    os.remove(TMP_DB_FILE)
+    for file in TMP_DB_FILES:
+        os.remove(file)
+    TMP_DB_FILES.clear()
 
 
 # -------------------------------------------------------
