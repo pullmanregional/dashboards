@@ -8,7 +8,9 @@ from ... import util
 
 
 # Display a gauge chart with 0% variance in the middle
-def kpi_gauge(title, variance_pct, yellow_threshold, red_threshold, gauge_max, key=None):
+def kpi_gauge(
+    title, variance_pct, yellow_threshold, red_threshold, gauge_max, key=None
+):
     color = "#238823"
     textcolor = color
     if abs(variance_pct) >= red_threshold:
@@ -196,7 +198,15 @@ def volumes_fig(src, group_by_month):
         df = df.rename(columns={"month": "Month", "volume": "Volume"})
         color = None
 
-    fig = px.bar(df, x="Month", y="Volume", text="Volume", color=color, barmode="group")
+    fig = px.bar(
+        df,
+        x="Month",
+        y="Volume",
+        text="Volume",
+        color=color,
+        barmode="group",
+        color_discrete_sequence=px.colors.qualitative.Vivid,
+    )
     fig.update_traces(
         hovertemplate="%{y} exams",
         texttemplate="%{text:,}",
@@ -236,31 +246,28 @@ def hours_table(month, hours_for_month, hours_ytd):
 
     # Create borders and row bolding
     left_margin = 25
-    styled_df = (
-        df.style.hide(axis=0)
-        .set_table_styles(
-            [
-                {"selector": "", "props": [("margin-left", str(left_margin) + "px")]},
-                {"selector": "tr", "props": [("border-top", "0px")]},
-                {
-                    "selector": "th, td",
-                    "props": [("border", "0px"), ("text-align", "right")],
-                },
-                {"selector": "td", "props": [("padding", "3px 13px")]},
-                {
-                    "selector": "td:nth-child(2), td:nth-child(3)",
-                    "props": [("border-bottom", "1px solid black")],
-                },
-                {
-                    "selector": "tr:last-child td:nth-child(2), tr:last-child td:nth-child(3)",
-                    "props": [("border-bottom", "2px solid black")],
-                },
-                {
-                    "selector": "tr:last-child, tr:nth-last-child(2)",
-                    "props": [("font-weight", "bold")],
-                },
-            ]
-        )
+    styled_df = df.style.hide(axis=0).set_table_styles(
+        [
+            {"selector": "", "props": [("margin-left", str(left_margin) + "px")]},
+            {"selector": "tr", "props": [("border-top", "0px")]},
+            {
+                "selector": "th, td",
+                "props": [("border", "0px"), ("text-align", "right")],
+            },
+            {"selector": "td", "props": [("padding", "3px 13px")]},
+            {
+                "selector": "td:nth-child(2), td:nth-child(3)",
+                "props": [("border-bottom", "1px solid black")],
+            },
+            {
+                "selector": "tr:last-child td:nth-child(2), tr:last-child td:nth-child(3)",
+                "props": [("border-bottom", "2px solid black")],
+            },
+            {
+                "selector": "tr:last-child, tr:nth-last-child(2)",
+                "props": [("font-weight", "bold")],
+            },
+        ]
     )
     st.markdown(styled_df.to_html(), unsafe_allow_html=True)
 
@@ -340,6 +347,7 @@ def fte_fig(src, budget_fte, group_by_month):
         barmode="group",
         text="FTE",
         text_auto=".1f",
+        color_discrete_sequence=px.colors.qualitative.D3,
     )
     # Horizontal budget line
     fig.add_hline(
@@ -394,7 +402,13 @@ def hours_fig(src):
     # Stacked bar graph, one color for each unique value in Type (prod vs non-prod)
     # Also pass the actual Hours in as customdata to use in the hovertemplate
     fig = px.bar(
-        df, x="Month", y="Percent", color="Type", text_auto=".1%", custom_data="Hours"
+        df,
+        x="Month",
+        y="Percent",
+        color="Type",
+        text_auto=".1%",
+        custom_data="Hours",
+        color_discrete_sequence=px.colors.qualitative.D3,
     )
     fig.update_yaxes(title_text="Hours")
     fig.update_layout(

@@ -90,6 +90,9 @@ def transform(src: SrcData) -> OutData:
     contracted_hours_df = src.contracted_hours_df
     income_stmt_df = src.income_stmt_df
 
+    # Only keep latest year of budget data
+    budget_df = budget_df[budget_df["year"] == budget_df["year"].max()]
+
     contracted_hours_updated_month = src.contracted_hours_meta_df.iloc[0][
         "contracted_hours_updated_month"
     ]
