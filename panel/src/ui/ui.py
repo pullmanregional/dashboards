@@ -32,23 +32,15 @@ def show_settings(src_data: source_data.SourceData) -> settings.Settings:
 
         provider = st.selectbox(
             "Paneled Provider:",
-            options=["All Providers"] + providers,
+            options=["All Providers"] + sorted(providers),
         )
 
     return settings.Settings(clinic=clinic, provider=provider)
 
 
 def st_patient_stats(data: app_data.AppData):
-    col_1, col_2, col_3 = st.columns([1, 1, 1])
+    col_1, col_2 = st.columns([1, 1])
     with col_1:
-        title = "All Primary Care Patients"
-        if data.provider != "All Providers":
-            title = f"All Patients for {data.provider}"
-        elif data.clinic != "All Clinics" and data.clinic != "Unassigned":
-            title = f"All Patients at {data.clinic}"
-
-        st_util.st_card(title, f"{data.n_total_selected_patients}", "Last 3 years")
-    with col_2:
         title = "Paneled Patients"
         if data.provider != "All Providers":
             title = f"Paneled Patients for {data.provider}"
@@ -62,13 +54,14 @@ def st_patient_stats(data: app_data.AppData):
         st_util.st_card(
             title, f"{data.n_paneled_patients}", f"{pct_paneled:.0f}% of total"
         )
+    with col_2:
+        title = "Total Primary Care Patients"
+        if data.provider != "All Providers":
+            title = f"Total Patients for {data.provider}"
+        elif data.clinic != "All Clinics" and data.clinic != "Unassigned":
+            title = f"Total Patients at {data.clinic}"
 
-    with col_3:
-        st_util.st_card(
-            "Encounters Last 12 Months",
-            f"{data.n_encounters_last_12_months}",
-            "All paneled and not paneled",
-        )
+        st_util.st_card(title, f"{data.n_total_selected_patients}", "Last 3 years")
 
 
 def st_demographics(data: app_data.AppData):
@@ -275,6 +268,54 @@ def st_new_patients(data: app_data.AppData):
 
     with st_util.st_card_container("new_patients_chart_container"):
         st.plotly_chart(fig, use_container_width=True)
+
+
+def st_provider_continuity_stats(data: app_data.AppData):
+    col_1, col_2 = st.columns([1, 1])
+    with col_1:
+        st_util.st_card(
+            "Visits with Paneled Provider",
+            f"{(data.n_paneled_encounters_last_12_months / data.n_encounters_last_12_months * 100):.1f}%",
+            f"{data.n_paneled_encounters_last_12_months} / {data.n_encounters_last_12_months} visits",
+        )
+    with col_2:
+        title = f"Total Visits"
+        if data.provider != "All Providers":
+            title = f"Total Visits for {data.provider}"
+        elif data.clinic != "All Clinics" and data.clinic != "Unassigned":
+            title = f"Total Visits at {data.clinic}"
+
+        st_util.st_card(
+            title,
+            f"{data.n_encounters_last_12_months}",
+            "Last 12 Months",
+        )
+
+
+def st_provider_continuity_table(data: app_data.AppData):
+    st.dataframe(
+        data.provider_continuity_df,
+        column_order=[
+            "provider",
+            "pct_paneled_encounters_last_12_months",
+            "paneled_encounters_last_12_months",
+            "encounters_last_12_months",
+        ],
+        column_config={
+            "provider": st.column_config.TextColumn("Provider"),
+            "pct_paneled_encounters_last_12_months": st.column_config.NumberColumn(
+                "Percent of Visits with Panel", format="%.1f%%"
+            ),
+            "paneled_encounters_last_12_months": st.column_config.NumberColumn(
+                "Visits with Panel"
+            ),
+            "encounters_last_12_months": st.column_config.NumberColumn(
+                "Total Visits (12 Months)"
+            ),
+        },
+        hide_index=True,
+        use_container_width=True,
+    )
 
 
 def st_patient_table(patients_df: pd.DataFrame):

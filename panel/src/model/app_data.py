@@ -24,6 +24,9 @@ class AppData:
     # All encounters
     encounters_df: pd.DataFrame
 
+    # Table of provider continuity: how many encounters each provider has had with paneled patients
+    provider_continuity_df: pd.DataFrame
+
     # New patients
     new_visits_by_month: pd.DataFrame
 
@@ -31,6 +34,7 @@ class AppData:
     n_total_selected_patients: int = 0
     n_paneled_patients: int = 0
     n_encounters_last_12_months: int = 0
+    n_paneled_encounters_last_12_months: int = 0
 
 
 def process(settings: settings.Settings, src: source_data.SourceData) -> AppData:
@@ -141,6 +145,89 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
             unpaneled_patients_df["prw_id"].isin(encounters_df["prw_id"])
         ]
 
+    # Provider continuity
+    # Get pediatric providers
+    peds_encounters = encounters_df[
+        (encounters_df["location"] == "Palouse Pediatrics Pullman")
+        | (encounters_df["location"] == "Palouse Pediatrics Moscow")
+    ]
+    peds_providers = peds_encounters["service_provider"].dropna().unique()
+    peds_providers = [p for p in peds_providers if p != "MANDERVILLE, TRACY"]
+
+    # First calculate how many patient visits were with their paneled provider. For
+    # encounters at the locations Palouse Pediatrics Pullman or Moscow, just make sure
+    # the paneled location is Palouse Pediatrics
+    encounters_with_patient_info = encounters_df.merge(
+        patients_df, on="prw_id", suffixes=("", "_patient")
+    )
+    encounters_with_paneled_provider = encounters_with_patient_info[
+        (
+            encounters_with_patient_info["panel_provider"]
+            == encounters_with_patient_info["service_provider"]
+        )
+        | (
+            (encounters_with_patient_info["panel_location"] == "Palouse Pediatrics")
+            & (
+                (
+                    encounters_with_patient_info["location"]
+                    == "Palouse Pediatrics Pullman"
+                )
+                | (
+                    encounters_with_patient_info["location"]
+                    == "Palouse Pediatrics Moscow"
+                )
+            )
+        )
+    ]
+    n_paneled_encounters_last_12_months = encounters_with_paneled_provider[
+        encounters_with_paneled_provider["encounter_date"]
+        >= (datetime.now() - timedelta(days=365))
+    ].shape[0]
+
+    # Get the unique providers to show in list
+    if clinic == "Palouse Pediatrics":
+        continuity_providers = peds_providers
+    elif clinic == "All Clinics" or clinic == "Unassigned":
+        continuity_providers = patients_df["panel_provider"].dropna().unique()
+        continuity_providers = np.append(continuity_providers, peds_providers)
+    elif provider == "All Providers":
+        continuity_providers = paneled_patients_df["panel_provider"].dropna().unique()
+        continuity_providers = np.append(continuity_providers, peds_providers)
+    else:
+        continuity_providers = [provider]
+
+    rows = []
+    for continuity_provider in sorted(continuity_providers):
+        # Remove unknown providers
+        if continuity_provider == "" or continuity_provider.startswith("*"):
+            continue
+
+        # Numerator is all of this provider's encounters with patients paneled to the provider,
+        # or for pediatrics, paneled to the clinic
+        provider_encounters_with_panel = encounters_with_paneled_provider[
+            encounters_with_paneled_provider["service_provider"] == continuity_provider
+        ]
+        num_paneled_encounters = provider_encounters_with_panel.shape[0]
+
+        # Denominator is all encounters for this provider
+        all_provider_encounters = encounters_with_patient_info[
+            encounters_with_patient_info["service_provider"] == continuity_provider
+        ]
+        ttl_encounters_12_months = all_provider_encounters.shape[0]
+
+        if ttl_encounters_12_months > 0:
+            rows.append(
+                {
+                    "provider": continuity_provider,
+                    "pct_paneled_encounters_last_12_months": round(
+                        num_paneled_encounters / ttl_encounters_12_months * 100, 1
+                    ),
+                    "paneled_encounters_last_12_months": num_paneled_encounters,
+                    "encounters_last_12_months": ttl_encounters_12_months,
+                }
+            )
+    provider_continuity_df = pd.DataFrame(rows)
+
     # Calculate stats
     n_total_selected_patients = patients_df.shape[0]
     n_paneled_patients = paneled_patients_df.shape[0]
@@ -154,8 +241,10 @@ def process(settings: settings.Settings, src: source_data.SourceData) -> AppData
         paneled_patients_df=paneled_patients_df,
         unpaneled_patients_df=unpaneled_patients_df,
         encounters_df=src.encounters_df,
+        provider_continuity_df=provider_continuity_df,
         new_visits_by_month=src.new_visits_by_month,
         n_total_selected_patients=n_total_selected_patients,
         n_paneled_patients=n_paneled_patients,
         n_encounters_last_12_months=n_encounters_last_12_months,
+        n_paneled_encounters_last_12_months=n_paneled_encounters_last_12_months,
     )

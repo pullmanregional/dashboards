@@ -35,6 +35,13 @@ def show(src_data: source_data.SourceData):
     st.subheader("New Patients")
     ui.st_new_patients(data)
 
+    st.subheader("Provider Continuity (Last 12 Months)")
+    ui.st_provider_continuity_stats(data)
+    with st_util.st_card_container(
+        "provider_continuity_container", padding_css="10px 16px"
+    ):
+        ui.st_provider_continuity_table(data)
+
     st.subheader("Patients")
     with st_util.st_card_container("patient_list_container", padding_css="10px 16px"):
         # Add select box to choose patients paneled vs unpaneled by seen in clinic
