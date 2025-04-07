@@ -275,8 +275,8 @@ def st_provider_continuity_stats(data: app_data.AppData):
     with col_1:
         st_util.st_card(
             "Visits with Paneled Provider",
-            f"{(data.n_paneled_encounters_last_12_months / data.n_encounters_last_12_months * 100):.1f}%",
-            f"{data.n_paneled_encounters_last_12_months} / {data.n_encounters_last_12_months} visits",
+            f"{(data.n_paneled_encounters_last_24_months / data.n_encounters_last_24_months * 100):.1f}%",
+            f"{data.n_paneled_encounters_last_24_months} / {data.n_encounters_last_24_months} visits",
         )
     with col_2:
         title = f"Total Visits"
@@ -287,8 +287,8 @@ def st_provider_continuity_stats(data: app_data.AppData):
 
         st_util.st_card(
             title,
-            f"{data.n_encounters_last_12_months}",
-            "Last 12 Months",
+            f"{data.n_encounters_last_24_months}",
+            "Last 2 Years",
         )
 
 
@@ -297,20 +297,20 @@ def st_provider_continuity_table(data: app_data.AppData):
         data.provider_continuity_df,
         column_order=[
             "provider",
-            "pct_paneled_encounters_last_12_months",
-            "paneled_encounters_last_12_months",
-            "encounters_last_12_months",
+            "pct_paneled_encounters_last_24_months",
+            "paneled_encounters_last_24_months",
+            "encounters_last_24_months",
         ],
         column_config={
             "provider": st.column_config.TextColumn("Provider"),
-            "pct_paneled_encounters_last_12_months": st.column_config.NumberColumn(
+            "pct_paneled_encounters_last_24_months": st.column_config.NumberColumn(
                 "Percent of Visits with Panel", format="%.1f%%"
             ),
-            "paneled_encounters_last_12_months": st.column_config.NumberColumn(
+            "paneled_encounters_last_24_months": st.column_config.NumberColumn(
                 "Visits with Panel"
             ),
-            "encounters_last_12_months": st.column_config.NumberColumn(
-                "Total Visits (12 Months)"
+            "encounters_last_24_months": st.column_config.NumberColumn(
+                "Total Visits (2 years)"
             ),
         },
         hide_index=True,
