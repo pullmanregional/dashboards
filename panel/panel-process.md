@@ -4,9 +4,9 @@ Paneling involves assigning patients to specific primary care providers to ensur
 
 #### 4-Cut Method
 
-The systematic **4-Cut Method** is used for  Palouse Medical, Pullman Family Medicine, and Residency clinics based on their visit history:
+The systematic **4-Cut Method** is used for  Palouse Medical, Pullman Family Medicine, and Residency clinics based on their visit history over the last 2 years:
 
-1. **1st Cut**: Patients who have seen only one provider in the past year are assigned to that provider.
+1. **1st Cut**: Patients who have seen only one provider are assigned to that provider.
 2. **2nd Cut**: Patients who have seen multiple providers but one provider the majority of the time are assigned to the majority provider.
 3. **3rd Cut**: Patients who have seen two or more providers equally are assigned to the provider who performed the last physical exam.
 4. **4th Cut**: Remaining patients are assigned to the last provider seen.
