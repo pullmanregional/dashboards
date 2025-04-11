@@ -54,19 +54,6 @@
       "justMyCode": true
     },
     {
-      "name": "Streamlit: explore",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "streamlit",
-      "cwd": "${workspaceFolder}/explore",
-      "args": [
-        "run",
-        "app.py"
-      ],
-      "console": "integratedTerminal",
-      "justMyCode": false
-    },
-    {
       "name": "Streamlit: finance",
       "type": "debugpy",
       "request": "launch",

@@ -77,18 +77,16 @@ def read_source_tables(prw_engine) -> SrcData:
             text("encounter_type"),
             text("appt_status"),
         )
-        .select_from(text("prw_encounters"))
+        .select_from(text("prw_encounters_outpt"))
         .where(text("appt_status = 'Completed' or appt_status = 'No Show'")),
         prw_engine,
     )
 
     # Set datetime column types
     mychart_df["mychart_activation_date"] = pd.to_datetime(
-        mychart_df["mychart_activation_date"], format="%Y%m%d"
+        mychart_df["mychart_activation_date"]
     )
-    encounters_df["encounter_date"] = pd.to_datetime(
-        encounters_df["encounter_date"], format="%Y%m%d"
-    )
+    encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"])
 
     return SrcData(
         patients_df=patients_df,
