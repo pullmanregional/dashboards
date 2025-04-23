@@ -54,6 +54,23 @@
       "justMyCode": true
     },
     {
+      "name": "Ingest: residency",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/residency/prefect/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/residency/prefect",
+      "args": [
+        "--prw",
+        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "--out",
+        "prh-residency.sqlite3",
+        "--kv",
+        "prh-residency.json"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "Streamlit: finance",
       "type": "debugpy",
       "request": "launch",
@@ -85,6 +102,19 @@
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/marketing",
+      "args": [
+        "run",
+        "app.py"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Streamlit: residency",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "cwd": "${workspaceFolder}/residency",
       "args": [
         "run",
         "app.py"
