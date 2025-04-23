@@ -27,7 +27,8 @@ DATA_KEY = st.secrets.get("DATA_KEY")
 class SourceData:
     """In-memory copy of DB tables"""
 
-    df: pd.DataFrame = None
+    encounters_df: pd.DataFrame = None
+    notes_df: pd.DataFrame = None
     kvdata: dict = None
 
     modified: datetime = None
@@ -41,10 +42,12 @@ def read() -> SourceData:
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def from_file(file: str) -> SourceData:
-    engine = source_data_util.sqlite_engine_from_file(file)
+def from_file(db_file: str, json_file: str) -> SourceData:
+    engine = source_data_util.sqlite_engine_from_file(db_file)
     source_data = from_db(engine)
     engine.dispose()
+
+    source_data.kvdata = source_data_util.json_from_file(json_file)
     return source_data
 
 
@@ -76,5 +79,10 @@ def from_db(db_engine) -> SourceData:
     result = pd.read_sql_query("SELECT MAX(modified) FROM meta", db_engine)
     modified = result.iloc[0, 0] if result.size > 0 else None
 
-    df = pd.read_sql_table("table_name", db_engine)
-    return SourceData(modified=modified, df=df)
+    encounters_df = pd.read_sql_table("encounters", db_engine)
+    notes_df = pd.read_sql_table("notes", db_engine)
+    return SourceData(
+        modified=modified,
+        encounters_df=encounters_df,
+        notes_df=notes_df,
+    )

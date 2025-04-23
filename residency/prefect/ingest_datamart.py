@@ -91,9 +91,26 @@ def transform(src: SrcData) -> OutData:
     encounters = src.encounters[src.encounters["service_provider"].isin(ALL_RESIDENTS)]
     encounters = encounters[encounters["appt_status"] == "Completed"]
 
+    # Rename columns to match datamart table names
+    notes_columns = {
+        "author_name": "signing_author",
+        "first_author_name": "initial_author",
+        "cosign_author_name": "cosign_author",
+    }
+    notes_inpt = src.notes_inpt.rename(columns=notes_columns)
+    notes_ed = src.notes_ed.rename(columns=notes_columns)
+
     # Filter notes to just residents
-    notes_inpt = filter_resident_notes(src.notes_inpt, ALL_RESIDENTS)
-    notes_ed = filter_resident_notes(src.notes_ed, ALL_RESIDENTS)
+    notes_inpt = filter_resident_notes(notes_inpt, ALL_RESIDENTS)
+    notes_ed = filter_resident_notes(notes_ed, ALL_RESIDENTS)
+
+    # Assign a resident to each note
+    for resident in ALL_RESIDENTS:
+        notes_inpt.loc[
+            is_residents_note(notes_inpt, resident),
+            "resident",
+        ] = resident
+        notes_ed.loc[is_residents_note(notes_ed, resident), "resident"] = resident
 
     # Set "academic_year" column to the year between July <year> to July <year+1>.
     # For example, both 7/1/2024 and 6/30/2025 should be "2024"
@@ -126,15 +143,6 @@ def transform(src: SrcData) -> OutData:
     notes_ed["ed"] = True
     notes_inpt["ed"] = False
 
-    # Combine inpatient and ED notes. Rename columns to match datamart table names
-    notes_columns = {
-        "author_name": "signing_author",
-        "first_author_name": "initial_author",
-        "cosign_author_name": "cosign_author",
-    }
-    notes_inpt.rename(columns=notes_columns, inplace=True)
-    notes_ed.rename(columns=notes_columns, inplace=True)
-
     return OutData(
         encounters=encounters,
         notes_inpt=notes_inpt,
@@ -146,10 +154,7 @@ def filter_resident_notes(notes, residents):
     """
     Find all relevant provider notes where the resident is the author or initial author
     """
-    ret = notes[
-        (notes["author_name"].isin(residents))
-        | (notes["first_author_name"].isin(residents))
-    ]
+    ret = notes[is_residents_note(notes, residents)]
 
     # Limit to: ED, H&P, progress notes, discharge summaries, consults, procedure notes, delivery, SNF, Significant Event
     ret = ret[
@@ -177,6 +182,14 @@ def filter_resident_notes(notes, residents):
     return ret
 
 
+def is_residents_note(note, residents):
+    if not isinstance(residents, list):
+        residents = [residents]
+    return (note["signing_author"].isin(residents)) | (
+        note["initial_author"].isin(residents)
+    )
+
+
 def calc_acgme_stats(out: OutData, residents: list[str]):
     """
     Calculate ACGME stats for each resident
@@ -186,6 +199,9 @@ def calc_acgme_stats(out: OutData, residents: list[str]):
         stats[resident] = calc_acgme_for_resident(
             resident, out.encounters, out.notes_inpt, out.notes_ed
         )
+    stats["Overall"] = calc_acgme_for_resident(
+        "", out.encounters, out.notes_inpt, out.notes_ed
+    )
     return stats
 
 
@@ -202,14 +218,8 @@ def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
         resident_notes_ed = notes_ed
     else:
         resident_encounters = encounters[encounters["service_provider"] == resident]
-        resident_notes_inpt = notes_inpt[
-            (notes_inpt["signing_author"] == resident)
-            | (notes_inpt["initial_author"] == resident)
-        ]
-        resident_notes_ed = notes_ed[
-            (notes_ed["signing_author"] == resident)
-            | (notes_ed["initial_author"] == resident)
-        ]
+        resident_notes_inpt = notes_inpt[is_residents_note(notes_inpt, resident)]
+        resident_notes_ed = notes_ed[is_residents_note(notes_ed, resident)]
 
     # Iterate over each academic years
     years = sorted(resident_encounters["academic_year"].unique(), reverse=True)
@@ -257,25 +267,25 @@ def calc_acgme_for_resident_year(
         resident_encounters_in_year_df[resident_encounters_in_year_df["with_pcp"]]
     )
     prov_continuity_percent = f"{prov_continuity_visits / total_visits:.0%}"
-    prov_continuity_comment = f"({prov_continuity_visits}/{total_visits} visits)"
+    prov_continuity_comment = f"{prov_continuity_visits}/{total_visits} visits"
 
     peds_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["peds"]]
     )
     peds_percent = f"{peds_visits / total_visits:.0%}"
-    peds_comment = f"({peds_visits}/{total_visits} visits)"
+    peds_comment = f"{peds_visits}/{total_visits} visits"
 
     geriatrics_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["geriatrics"]]
     )
     geriatrics_percent = f"{geriatrics_visits / total_visits:.0%}"
-    geriatrics_comment = f"({geriatrics_visits}/{total_visits} visits)"
+    geriatrics_comment = f"{geriatrics_visits}/{total_visits} visits"
 
     ob_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["ob"]]
     )
     ob_percent = f"{ob_visits / total_visits:.0%}"
-    ob_comment = f"({ob_visits}/{total_visits} visits)"
+    ob_comment = f"{ob_visits}/{total_visits} visits"
 
     # For patient sided continuity, we'll look at all the visits that the provider where With PCP is set.
     # Then take all the unique MRNs for those visits, and find all the visits for those MRNs in the same year.
@@ -288,13 +298,13 @@ def calc_acgme_for_resident_year(
         encounters_in_year_df[encounters_in_year_df["prw_id"].isin(with_pcp_mrns)]
     )
     pt_continuity_percent = f"{len(with_pcp_visits) / pt_continuity_visits:.0%}"
-    pt_continuity_comment = f"({len(with_pcp_visits)}/{pt_continuity_visits} visits)"
+    pt_continuity_comment = f"{len(with_pcp_visits)}/{pt_continuity_visits} visits"
 
     # Calculate column containing mrn - date of service so we can calculate number of unique patient-days
-    num_ed_patient_days = len(resident_notes_ed_year_df)
-    ed_patient_days_comment = "encounters"
-    num_inpt_patient_days = len(resident_notes_inpt_year_df)
-    inpt_patient_days_comment = "encounters"
+    num_ed_encounters = len(resident_notes_ed_year_df)
+    ed_encounters_comment = "encounters"
+    num_inpt_encounters = len(resident_notes_inpt_year_df)
+    inpt_encounters_comment = "encounters"
 
     stats = {
         "total_visits": total_visits,
@@ -313,10 +323,10 @@ def calc_acgme_for_resident_year(
         "ob_visits": ob_visits,
         "ob_percent": ob_percent,
         "ob_comment": ob_comment,
-        "ed_patient_days": num_ed_patient_days,
-        "ed_patient_days_comment": ed_patient_days_comment,
-        "inpt_patient_days": num_inpt_patient_days,
-        "inpt_patient_days_comment": inpt_patient_days_comment,
+        "ed_encounters": num_ed_encounters,
+        "ed_encounters_comment": ed_encounters_comment,
+        "inpt_encounters": num_inpt_encounters,
+        "inpt_encounters_comment": inpt_encounters_comment,
     }
     return stats
 

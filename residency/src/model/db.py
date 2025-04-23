@@ -42,3 +42,4 @@ class Notes(DatamartModel, table=True):
     initial_author: str | None = None
     signing_author: str | None = None
     cosign_author: str | None = None
+    resident: str | None = None

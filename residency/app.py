@@ -47,4 +47,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
     menu_items=None,
 )
+hide_streamlit_style = """
+            <style>
+                /* Hide the Streamlit header and menu, see https://discuss.streamlit.io/t/hiding-the-header-in-1-31-1/63398/2 */
+                header {visibility: hidden;}
+                .stMainBlockContainer {padding-top: 2rem;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 run()
