@@ -14,6 +14,31 @@ class Meta(DatamartModel, table=True):
     modified: datetime
 
 
-class DataTable(DatamartModel, table=True):
-    __tablename__ = "data"
+class Encounters(DatamartModel, table=True):
+    __tablename__ = "encounters"
     id: int | None = Field(default=None, primary_key=True)
+    prw_id: str | None = None
+    dept: str | None = None
+    academic_year: int | None = None
+    encounter_date: datetime | None = None
+    encounter_age: int | None = None
+    encounter_type: str | None = None
+    service_provider: str | None = None
+    with_pcp: bool | None = None
+    diagnoses: str | None = None
+    level_of_service: str | None = None
+
+
+class Notes(DatamartModel, table=True):
+    __tablename__ = "notes"
+    id: int | None = Field(default=None, primary_key=True)
+    prw_id: str | None = None
+    academic_year: int | None = None
+    service_date: datetime | None = None
+    dept: str | None = None
+    service: str | None = None
+    ed: bool = False
+    note_type: str | None = None
+    initial_author: str | None = None
+    signing_author: str | None = None
+    cosign_author: str | None = None

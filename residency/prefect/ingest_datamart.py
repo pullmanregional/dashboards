@@ -4,6 +4,7 @@ import shutil
 import json
 import logging
 import pandas as pd
+import numpy as np
 from dataclasses import dataclass
 from sqlmodel import Session, select, text, create_engine
 
@@ -21,12 +22,37 @@ from prw_common.encrypt import encrypt_file
 # -------------------------------------------------------
 @dataclass
 class SrcData:
-    data_df: pd.DataFrame
+    encounters: pd.DataFrame
+    notes_inpt: pd.DataFrame
+    notes_ed: pd.DataFrame
 
 
 @dataclass
 class OutData:
-    data_df: pd.DataFrame
+    encounters: pd.DataFrame
+    notes_inpt: pd.DataFrame
+    notes_ed: pd.DataFrame
+
+
+# Residents by year
+RESIDENTS_BY_YEAR = {
+    "R3": [],
+    "R2": [
+        "OLAWUYI, DAMOLA BOLUTIFE",
+        "WARD, JEFFREY LOREN",
+        "YOUNES, MOHAMMED",
+    ],
+    "R1": [
+        "MADER, KELSEY",
+        "PERIN, KARLY",
+        "SHAKIR, TUARUM N",
+    ],
+}
+ALL_RESIDENTS = (
+    sorted(RESIDENTS_BY_YEAR["R3"])
+    + sorted(RESIDENTS_BY_YEAR["R2"])
+    + sorted(RESIDENTS_BY_YEAR["R1"])
+)
 
 
 # -------------------------------------------------------
@@ -38,11 +64,20 @@ def read_source_tables(prw_engine) -> SrcData:
     """
     logging.info("Reading source tables")
 
-    data_df = pd.read_sql_query(
-        select(text("id")).select_from(text("table")),
-        prw_engine,
+    encounters = pd.read_sql_table("prw_encounters_outpt", prw_engine)
+    notes_inpt = pd.read_sql_table("prw_notes_inpt", prw_engine)
+    notes_ed = pd.read_sql_table("prw_notes_ed", prw_engine)
+
+    # Convert columns to datetime
+    encounters["encounter_date"] = pd.to_datetime(encounters["encounter_date"])
+    notes_inpt["service_date"] = pd.to_datetime(notes_inpt["service_date"])
+    notes_ed["service_date"] = pd.to_datetime(notes_ed["service_date"])
+
+    return SrcData(
+        encounters=encounters,
+        notes_inpt=notes_inpt,
+        notes_ed=notes_ed,
     )
-    return SrcData(data_df=data_df)
 
 
 # -------------------------------------------------------
@@ -52,9 +87,238 @@ def transform(src: SrcData) -> OutData:
     """
     Transform source data into datamart tables
     """
-    return OutData(
-        data_df=src.data_df,
+    # Filter to only include completed encounters and relevant notes for residents
+    encounters = src.encounters[src.encounters["service_provider"].isin(ALL_RESIDENTS)]
+    encounters = encounters[encounters["appt_status"] == "Completed"]
+
+    # Filter notes to just residents
+    notes_inpt = filter_resident_notes(src.notes_inpt, ALL_RESIDENTS)
+    notes_ed = filter_resident_notes(src.notes_ed, ALL_RESIDENTS)
+
+    # Set "academic_year" column to the year between July <year> to July <year+1>.
+    # For example, both 7/1/2024 and 6/30/2025 should be "2024"
+    academic_year = lambda date: np.where(
+        date.dt.month >= 7,
+        date.dt.year,
+        (date.dt.year - 1),
     )
+    encounters["academic_year"] = academic_year(encounters["encounter_date"])
+    notes_inpt["academic_year"] = academic_year(notes_inpt["service_date"])
+    notes_ed["academic_year"] = academic_year(notes_ed["service_date"])
+
+    # If the encounter diagnosis or LOS codes contain one of the ob codes, mark the Ob column
+    ob_codes = ["Z34", "Z3A", "O09"]
+    ob_los = ["0500F", "0501F", "0502F", "0503F"]
+    encounters["ob"] = encounters["diagnoses_icd"].str.contains("|".join(ob_codes)) | (
+        encounters["level_of_service"].isin(ob_los)
+    )
+
+    # Mark peds and geriatrics encounters
+    encounters["peds"] = encounters["encounter_age"] < 18
+    encounters["geriatrics"] = encounters["encounter_age"] > 65
+
+    # Sort by encounter date
+    encounters = encounters.sort_values(by="encounter_date")
+    notes_inpt = notes_inpt.sort_values(by="service_date")
+    notes_ed = notes_ed.sort_values(by="service_date")
+
+    # Mark ED notes
+    notes_ed["ed"] = True
+    notes_inpt["ed"] = False
+
+    # Combine inpatient and ED notes. Rename columns to match datamart table names
+    notes_columns = {
+        "author_name": "signing_author",
+        "first_author_name": "initial_author",
+        "cosign_author_name": "cosign_author",
+    }
+    notes_inpt.rename(columns=notes_columns, inplace=True)
+    notes_ed.rename(columns=notes_columns, inplace=True)
+
+    return OutData(
+        encounters=encounters,
+        notes_inpt=notes_inpt,
+        notes_ed=notes_ed,
+    )
+
+
+def filter_resident_notes(notes, residents):
+    """
+    Find all relevant provider notes where the resident is the author or initial author
+    """
+    ret = notes[
+        (notes["author_name"].isin(residents))
+        | (notes["first_author_name"].isin(residents))
+    ]
+
+    # Limit to: ED, H&P, progress notes, discharge summaries, consults, procedure notes, delivery, SNF, Significant Event
+    ret = ret[
+        ret["note_type"].isin(
+            [
+                "ED Provider Notes",
+                "ED Notes",
+                "ED Observation Notes",
+                "H&P",
+                "Interval H&P Note",
+                "Progress Notes",
+                "Assessment & Plan Note",
+                "Hospital Course",
+                "Interim Summary - Physician",
+                "Discharge Summary",
+                "Consults",
+                "Procedures",
+                "L&D Delivery Note",
+                "SNF Transfer",
+                "Significant Event",
+            ]
+        )
+    ]
+
+    return ret
+
+
+def calc_acgme_stats(out: OutData, residents: list[str]):
+    """
+    Calculate ACGME stats for each resident
+    """
+    stats = {}
+    for resident in residents:
+        stats[resident] = calc_acgme_for_resident(
+            resident, out.encounters, out.notes_inpt, out.notes_ed
+        )
+    return stats
+
+
+def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
+    """
+    Calculate ACGME stats for a single resident
+    """
+    stats = {}
+
+    # Filter to resident specified
+    if resident == "":
+        resident_encounters = encounters
+        resident_notes_inpt = notes_inpt
+        resident_notes_ed = notes_ed
+    else:
+        resident_encounters = encounters[encounters["service_provider"] == resident]
+        resident_notes_inpt = notes_inpt[
+            (notes_inpt["signing_author"] == resident)
+            | (notes_inpt["initial_author"] == resident)
+        ]
+        resident_notes_ed = notes_ed[
+            (notes_ed["signing_author"] == resident)
+            | (notes_ed["initial_author"] == resident)
+        ]
+
+    # Iterate over each academic years
+    years = sorted(resident_encounters["academic_year"].unique(), reverse=True)
+    for year in years:
+        year = int(year)
+        year_encounters = encounters[encounters["academic_year"] == year]
+        resident_year_encounters = resident_encounters[
+            resident_encounters["academic_year"] == year
+        ]
+        resident_year_notes_inpt = resident_notes_inpt[
+            resident_notes_inpt["academic_year"] == year
+        ]
+        resident_year_notes_ed = resident_notes_ed[
+            resident_notes_ed["academic_year"] == year
+        ]
+        stats[year] = calc_acgme_for_resident_year(
+            year_encounters,
+            resident_year_encounters,
+            resident_year_notes_inpt,
+            resident_year_notes_ed,
+        )
+        stats[year]["year"] = year
+
+    # Add a total row
+    stats["Total"] = calc_acgme_for_resident_year(
+        encounters, resident_encounters, resident_notes_inpt, resident_notes_ed
+    )
+    stats["Total"]["year"] = "Total"
+
+    return stats
+
+
+def calc_acgme_for_resident_year(
+    encounters_in_year_df,
+    resident_encounters_in_year_df,
+    resident_notes_inpt_year_df,
+    resident_notes_ed_year_df,
+):
+    """
+    Calculate ACGME stats for a single resident in a single year
+    """
+    total_visits = len(resident_encounters_in_year_df)
+
+    prov_continuity_visits = len(
+        resident_encounters_in_year_df[resident_encounters_in_year_df["with_pcp"]]
+    )
+    prov_continuity_percent = f"{prov_continuity_visits / total_visits:.0%}"
+    prov_continuity_comment = f"({prov_continuity_visits}/{total_visits} visits)"
+
+    peds_visits = len(
+        resident_encounters_in_year_df[resident_encounters_in_year_df["peds"]]
+    )
+    peds_percent = f"{peds_visits / total_visits:.0%}"
+    peds_comment = f"({peds_visits}/{total_visits} visits)"
+
+    geriatrics_visits = len(
+        resident_encounters_in_year_df[resident_encounters_in_year_df["geriatrics"]]
+    )
+    geriatrics_percent = f"{geriatrics_visits / total_visits:.0%}"
+    geriatrics_comment = f"({geriatrics_visits}/{total_visits} visits)"
+
+    ob_visits = len(
+        resident_encounters_in_year_df[resident_encounters_in_year_df["ob"]]
+    )
+    ob_percent = f"{ob_visits / total_visits:.0%}"
+    ob_comment = f"({ob_visits}/{total_visits} visits)"
+
+    # For patient sided continuity, we'll look at all the visits that the provider where With PCP is set.
+    # Then take all the unique MRNs for those visits, and find all the visits for those MRNs in the same year.
+    # Finally, calculate the number of visits with the provider and With PCP set divided by total visits calculated.
+    with_pcp_visits = resident_encounters_in_year_df[
+        resident_encounters_in_year_df["with_pcp"]
+    ]
+    with_pcp_mrns = with_pcp_visits["prw_id"].unique()
+    pt_continuity_visits = len(
+        encounters_in_year_df[encounters_in_year_df["prw_id"].isin(with_pcp_mrns)]
+    )
+    pt_continuity_percent = f"{len(with_pcp_visits) / pt_continuity_visits:.0%}"
+    pt_continuity_comment = f"({len(with_pcp_visits)}/{pt_continuity_visits} visits)"
+
+    # Calculate column containing mrn - date of service so we can calculate number of unique patient-days
+    num_ed_patient_days = len(resident_notes_ed_year_df)
+    ed_patient_days_comment = "encounters"
+    num_inpt_patient_days = len(resident_notes_inpt_year_df)
+    inpt_patient_days_comment = "encounters"
+
+    stats = {
+        "total_visits": total_visits,
+        "pt_continuity_visits": pt_continuity_visits,
+        "pt_continuity_percent": pt_continuity_percent,
+        "pt_continuity_comment": pt_continuity_comment,
+        "prov_continuity_visits": prov_continuity_visits,
+        "prov_continuity_percent": prov_continuity_percent,
+        "prov_continuity_comment": prov_continuity_comment,
+        "peds_visits": peds_visits,
+        "peds_percent": peds_percent,
+        "peds_comment": peds_comment,
+        "geriatrics_visits": geriatrics_visits,
+        "geriatrics_percent": geriatrics_percent,
+        "geriatrics_comment": geriatrics_comment,
+        "ob_visits": ob_visits,
+        "ob_percent": ob_percent,
+        "ob_comment": ob_comment,
+        "ed_patient_days": num_ed_patient_days,
+        "ed_patient_days_comment": ed_patient_days_comment,
+        "inpt_patient_days": num_inpt_patient_days,
+        "inpt_patient_days_comment": inpt_patient_days_comment,
+    }
+    return stats
 
 
 # -------------------------------------------------------
@@ -104,17 +368,26 @@ def main():
     # Write tables to datamart
     session = Session(out_engine)
     db_utils.clear_tables_and_insert_data(
-        session, [db_utils.TableData(table=db.DataTable, df=out.data_df)]
+        session,
+        [
+            db_utils.TableData(table=db.Encounters, df=out.encounters),
+            db_utils.TableData(
+                table=db.Notes, df=pd.concat([out.notes_inpt, out.notes_ed])
+            ),
+        ],
     )
 
     # Update last ingest time and modified times for source data files
     db_utils.write_meta(session, db.Meta)
     session.commit()
 
-    # Write to the output key/value file as JSON
-    kv_data = {}
+    # Calculate and dump output key/value file as JSON
+    kv_data = {
+        "residents": RESIDENTS_BY_YEAR,
+        "stats": calc_acgme_stats(out, ALL_RESIDENTS),
+    }
     with open(tmp_kv_file, "w") as f:
-        json.dump(kv_data, f)
+        json.dump(kv_data, f, indent=2)
 
     # Finally encrypt output files, or just copy if no encryption key is provided
     if encrypt_key and encrypt_key.lower() != "none":
