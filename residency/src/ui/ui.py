@@ -18,17 +18,18 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
     # Program overall stats
     st.header("Program Totals", divider="blue")
     st_res_stats(stats["Overall"])
+    st.write("#####")
 
     # Make a header for R1 through R3 if there are any residents in that year
     # Display sections for each residency year if there are residents
     for r_year in ["R3", "R2", "R1"]:
         if r_year in data.residents_by_year and len(data.residents_by_year[r_year]) > 0:
-            st.write("#####")
             st.header(f"{r_year} Residents", divider="blue")
             residents = data.residents_by_year[r_year]
             for resident in residents:
                 st.write(f"##### {resident}")
                 st_res_stats(stats[resident])
+                st.write("#####")
 
 
 def st_res_stats(stats):
