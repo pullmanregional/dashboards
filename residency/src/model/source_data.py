@@ -81,6 +81,11 @@ def from_db(db_engine) -> SourceData:
 
     encounters_df = pd.read_sql_table("encounters", db_engine)
     notes_df = pd.read_sql_table("notes", db_engine)
+
+    # Drop "id" columns
+    encounters_df = encounters_df.drop(columns=["id"])
+    notes_df = notes_df.drop(columns=["id"])
+
     return SourceData(
         modified=modified,
         encounters_df=encounters_df,
