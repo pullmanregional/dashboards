@@ -156,6 +156,9 @@ def filter_resident_notes(notes, residents):
     """
     ret = notes[is_residents_note(notes, residents)]
 
+    # Remove birthplace notes, which don't count towards Inpatient
+    ret = ret[~ret["dept"].isin(["CC WPL NURSERY", "CC WPL LABOR AND DELIVERY"])]
+
     # Limit to: ED, H&P, progress notes, discharge summaries, consults, procedure notes, delivery, SNF, Significant Event
     ret = ret[
         ret["note_type"].isin(
