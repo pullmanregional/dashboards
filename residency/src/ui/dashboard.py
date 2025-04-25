@@ -13,5 +13,8 @@ def show(src_data: source_data.SourceData):
     data = app_data.process(src_data)
 
     # Show main content
-    st.title("Residency Dashboard")
+    st.markdown(
+        "<h1 style='color:#207346;'>Pullman Family Medicine Residency Dashboard</h1>",
+        unsafe_allow_html=True,
+    )
     ui.show_content(settings, data)
