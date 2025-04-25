@@ -221,8 +221,17 @@ def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
         resident_notes_inpt = notes_inpt[is_residents_note(notes_inpt, resident)]
         resident_notes_ed = notes_ed[is_residents_note(notes_ed, resident)]
 
-    # Iterate over each academic years
+    # Filter notes to academic years where this resident saw patients in clinic to exclude med student notes
     years = sorted(resident_encounters["academic_year"].unique(), reverse=True)
+    all_encounters = encounters[encounters["academic_year"].isin(years)]
+    resident_notes_inpt = resident_notes_inpt[
+        resident_notes_inpt["academic_year"].isin(years)
+    ]
+    resident_notes_ed = resident_notes_ed[
+        resident_notes_ed["academic_year"].isin(years)
+    ]
+
+    # Iterate over each academic year
     for year in years:
         year = int(year)
         year_encounters = encounters[encounters["academic_year"] == year]
@@ -245,7 +254,7 @@ def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
 
     # Add a total row
     stats["Total"] = calc_acgme_for_resident_year(
-        encounters, resident_encounters, resident_notes_inpt, resident_notes_ed
+        all_encounters, resident_encounters, resident_notes_inpt, resident_notes_ed
     )
     stats["Total"]["year"] = "Total"
 
