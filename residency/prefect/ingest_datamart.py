@@ -133,6 +133,8 @@ def transform(src: SrcData) -> OutData:
     # Mark peds and geriatrics encounters
     encounters["peds"] = encounters["encounter_age"] < 18
     encounters["geriatrics"] = encounters["encounter_age"] > 65
+    notes_inpt["peds"] = notes_inpt["encounter_age"] < 18
+    notes_ed["peds"] = notes_ed["encounter_age"] < 18
 
     # Sort by encounter date
     encounters = encounters.sort_values(by="encounter_date")
@@ -312,11 +314,21 @@ def calc_acgme_for_resident_year(
     pt_continuity_percent = f"{len(with_pcp_visits) / pt_continuity_visits:.0%}"
     pt_continuity_comment = f"{len(with_pcp_visits)}/{pt_continuity_visits} visits"
 
-    # Calculate column containing mrn - date of service so we can calculate number of unique patient-days
-    num_ed_encounters = len(resident_notes_ed_year_df)
-    ed_encounters_comment = "encounters"
-    num_inpt_encounters = len(resident_notes_inpt_year_df)
-    inpt_encounters_comment = "encounters"
+    # Calculate number of adult/peds ED and inpatient encounters. An encounter is defined as any
+    # interaction where a note was left, even if multiple notes were left for the same patient on the same day,
+    # e.g. a lac repair note + ED note would be 2 encounters.
+    num_ed_adult_encounters = len(
+        resident_notes_ed_year_df[~resident_notes_ed_year_df["peds"]]
+    )
+    num_ed_peds_encounters = len(
+        resident_notes_ed_year_df[resident_notes_ed_year_df["peds"]]
+    )
+    num_inpt_adult_encounters = len(
+        resident_notes_inpt_year_df[~resident_notes_inpt_year_df["peds"]]
+    )
+    num_inpt_peds_encounters = len(
+        resident_notes_inpt_year_df[resident_notes_inpt_year_df["peds"]]
+    )
 
     stats = {
         "total_visits": total_visits,
@@ -335,10 +347,10 @@ def calc_acgme_for_resident_year(
         "ob_visits": ob_visits,
         "ob_percent": ob_percent,
         "ob_comment": ob_comment,
-        "ed_encounters": num_ed_encounters,
-        "ed_encounters_comment": ed_encounters_comment,
-        "inpt_encounters": num_inpt_encounters,
-        "inpt_encounters_comment": inpt_encounters_comment,
+        "ed_adult_encounters": num_ed_adult_encounters,
+        "ed_peds_encounters": num_ed_peds_encounters,
+        "inpt_adult_encounters": num_inpt_adult_encounters,
+        "inpt_peds_encounters": num_inpt_peds_encounters,
     }
     return stats
 
