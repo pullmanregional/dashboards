@@ -124,7 +124,7 @@ def transform(src: SrcData) -> OutData:
     notes_ed["academic_year"] = academic_year(notes_ed["service_date"])
 
     # If the encounter diagnosis or LOS codes contain one of the ob codes, mark the Ob column
-    ob_codes = ["Z33", "Z34", "Z3A", "O09"]
+    ob_codes = ["Z32.01", "Z33", "Z34", "Z3A", "O09"]
     ob_los = ["0500F", "0501F", "0502F", "0503F", "09888"]
     encounters["ob"] = encounters["diagnoses_icd"].str.contains("|".join(ob_codes)) | (
         encounters["level_of_service"].isin(ob_los)
