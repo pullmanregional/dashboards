@@ -4,7 +4,7 @@ Methods to show build streamlit UI
 
 import streamlit as st
 import plotly.express as px
-from common.st_util import st_card_container
+from common.st_util import st_card
 from ..model import source_data, app_data, settings
 import pandas as pd
 
@@ -32,6 +32,7 @@ def show_content(settings: settings.Settings, data: app_data.AppData):
             residents = data.residents_by_year[r_year]
             for resident in residents:
                 st.write(f"##### {resident}")
+                st_resident_stats(stats[resident])
                 st_volume_graph(data, resident)
 
                 st.write(f"**ACGME Metrics ({resident})**")
@@ -48,6 +49,18 @@ def st_section_header(text):
         f"<h2 style='color:#207346; border-bottom: 2px solid #207346; margin-bottom: 1.5rem;'>{text}</h2>",
         unsafe_allow_html=True,
     )
+
+
+def st_resident_stats(stats):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st_card(
+            title="Panel Size",
+            content=f"{stats['Total']['num_paneled_patients']}",
+            description="Patients with this assigned PCP in Epic",
+        )
+    with col2:
+        pass
 
 
 def st_volume_graph(data: app_data.AppData, resident: str):
