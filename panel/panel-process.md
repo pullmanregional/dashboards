@@ -4,7 +4,7 @@ Paneling involves assigning patients to specific primary care providers to ensur
 
 #### 4-Cut Method
 
-The systematic **4-Cut Method** is used for  Palouse Medical, Pullman Family Medicine, and Residency clinics based on their visit history over the last 2 years:
+The systematic **4-Cut Method** is used for Palouse Medical (excluding urgent care), Pullman Family Medicine, and Residency clinics based on their visit history over the last 2 years:
 
 1. **1st Cut**: Patients who have seen only one provider are assigned to that provider.
 2. **2nd Cut**: Patients who have seen multiple providers but one provider the majority of the time are assigned to the majority provider.
@@ -23,3 +23,7 @@ Clinics can aso use other criteria to determine their panels. Palouse Pediatrics
 4. **Exclude patients under 3 years old with no Pediatrics visits for 15 months**.
 
 Currently, Palouse Pediatrics does not empanel patients to a specific provider.
+
+#### Unassigned Patients
+
+If a patient has been seen in a primary care clinic in the last three years, they are considered a patient of the hospital. Those that do not meet the any of the criteria above they will be placed into the Unassigned list. For example, an adult patient who has not had an appointment in the last 2 years or only urgent care appointments will be not be paneled to a provider or practice.
