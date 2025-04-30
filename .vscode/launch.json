@@ -63,9 +63,7 @@
         "--prw",
         "sqlite:///../../../prh-warehouse/prw.sqlite3",
         "--out",
-        "prh-residency.sqlite3",
-        "--kv",
-        "prh-residency.json"
+        "prh-residency.sqlite3"
       ],
       "console": "integratedTerminal",
       "justMyCode": true

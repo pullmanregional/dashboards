@@ -22,6 +22,7 @@ from prw_common.encrypt import encrypt_file
 # -------------------------------------------------------
 @dataclass
 class SrcData:
+    patients: pd.DataFrame
     encounters: pd.DataFrame
     notes_inpt: pd.DataFrame
     notes_ed: pd.DataFrame
@@ -29,6 +30,7 @@ class SrcData:
 
 @dataclass
 class OutData:
+    patients: pd.DataFrame
     encounters: pd.DataFrame
     notes_inpt: pd.DataFrame
     notes_ed: pd.DataFrame
@@ -64,6 +66,7 @@ def read_source_tables(prw_engine) -> SrcData:
     """
     logging.info("Reading source tables")
 
+    patients = pd.read_sql_table("prw_patients", prw_engine)
     encounters = pd.read_sql_table("prw_encounters_outpt", prw_engine)
     notes_inpt = pd.read_sql_table("prw_notes_inpt", prw_engine)
     notes_ed = pd.read_sql_table("prw_notes_ed", prw_engine)
@@ -74,6 +77,7 @@ def read_source_tables(prw_engine) -> SrcData:
     notes_ed["service_date"] = pd.to_datetime(notes_ed["service_date"])
 
     return SrcData(
+        patients=patients,
         encounters=encounters,
         notes_inpt=notes_inpt,
         notes_ed=notes_ed,
@@ -146,6 +150,7 @@ def transform(src: SrcData) -> OutData:
     notes_inpt["ed"] = False
 
     return OutData(
+        patients=src.patients,
         encounters=encounters,
         notes_inpt=notes_inpt,
         notes_ed=notes_ed,
@@ -195,19 +200,29 @@ def is_residents_note(note, residents):
     )
 
 
-def calc_acgme_stats(out: OutData, residents: list[str]):
+def calc_stats(out: OutData, residents: list[str]):
     """
-    Calculate ACGME stats for each resident
+    Calculate stats, including ACGME stats, for each resident
     """
     stats = {}
     for resident in residents:
         stats[resident] = calc_acgme_for_resident(
             resident, out.encounters, out.notes_inpt, out.notes_ed
         )
+        stats[resident]["Total"]["num_paneled_patients"] = resident_panel_size(
+            resident, out.patients
+        )
     stats["Overall"] = calc_acgme_for_resident(
         "", out.encounters, out.notes_inpt, out.notes_ed
     )
     return stats
+
+
+def resident_panel_size(resident, patients):
+    """
+    Get the number of patients who are paneled for a given resident
+    """
+    return len(patients[patients["pcp"] == resident])
 
 
 def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
@@ -364,7 +379,6 @@ def parse_arguments():
         require_prw=True,
         require_out=True,
     )
-    parser.add_argument("--kv", help="Output key/value data file path", required=True)
     parser.add_argument(
         "--key",
         help="Encrypt with given key. Defaults to no encryption if not specified.",
@@ -381,10 +395,8 @@ def main():
     args = parse_arguments()
     prw_db_url = args.prw
     output_db_file = args.out
-    output_kv_file = args.kv
     encrypt_key = args.key
     tmp_db_file = "datamart.sqlite3"
-    tmp_kv_file = "datamart.json"
 
     # Create the sqlite output database and create the tables as defined in ../src/model/db.py
     out_engine = db_utils.get_db_connection(f"sqlite:///{tmp_db_file}")
@@ -399,6 +411,12 @@ def main():
     # Transform data
     out = transform(src)
 
+    # Calculate key/value data
+    kv_data = {
+        "residents": RESIDENTS_BY_YEAR,
+        "stats": calc_stats(out, ALL_RESIDENTS),
+    }
+
     # Write tables to datamart
     session = Session(out_engine)
     db_utils.clear_tables_and_insert_data(
@@ -410,30 +428,20 @@ def main():
             ),
         ],
     )
+    db_utils.write_kv_table(kv_data, session, db.KvTable)
 
     # Update last ingest time and modified times for source data files
     db_utils.write_meta(session, db.Meta)
     session.commit()
 
-    # Calculate and dump output key/value file as JSON
-    kv_data = {
-        "residents": RESIDENTS_BY_YEAR,
-        "stats": calc_acgme_stats(out, ALL_RESIDENTS),
-    }
-    with open(tmp_kv_file, "w") as f:
-        json.dump(kv_data, f, indent=2)
-
     # Finally encrypt output files, or just copy if no encryption key is provided
     if encrypt_key and encrypt_key.lower() != "none":
         encrypt_file(tmp_db_file, output_db_file, encrypt_key)
-        encrypt_file(tmp_kv_file, output_kv_file, encrypt_key)
     else:
         shutil.copy(tmp_db_file, output_db_file)
-        shutil.copy(tmp_kv_file, output_kv_file)
 
     # Cleanup
     os.remove(tmp_db_file)
-    os.remove(tmp_kv_file)
     prw_engine.dispose()
     out_engine.dispose()
     print("Done")

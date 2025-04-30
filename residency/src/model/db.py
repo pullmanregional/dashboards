@@ -46,3 +46,13 @@ class Notes(DatamartModel, table=True):
     resident: str | None = None
     diagnosis: str | None = None
     peds: bool = False
+
+
+class KvTable(DatamartModel, table=True):
+    """
+    Stores key/value data. This table will contains a single row with a JSON blob
+    """
+
+    __tablename__ = "_kv"
+    id: int | None = Field(default=None, primary_key=True)
+    data: str
