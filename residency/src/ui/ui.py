@@ -57,7 +57,7 @@ def st_resident_stats(stats):
         st_card(
             title="Panel Size",
             content=f"{stats['Total']['num_paneled_patients']}",
-            description="Patients with this assigned PCP in Epic",
+            description="Patients with assigned PCP in Epic",
         )
     with col2:
         pass
