@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
-streamlit-shadcn-ui = "*"
 plotly = "*"
 cryptography = "*"
 boto3 = "*"
