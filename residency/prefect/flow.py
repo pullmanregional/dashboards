@@ -71,7 +71,7 @@ def prw_datamart_residency():
     if PRH_RESIDENCY_CLOUDFLARE_R2_BUCKET:
         upload_files(
             PRH_RESIDENCY_CLOUDFLARE_R2_BUCKET,
-            [PRH_RESIDENCY_ENCRYPTED_DB_FILE, PRH_RESIDENCY_ENCRYPTED_JSON_FILE],
+            [PRH_RESIDENCY_ENCRYPTED_DB_FILE],
         )
 
 
