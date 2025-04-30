@@ -30,7 +30,6 @@ PRH_RESIDENCY_DATA_KEY = (
     or Secret.load("prh-residency-data-key").get()
 )
 PRH_RESIDENCY_ENCRYPTED_DB_FILE = os.environ.get("PRH_RESIDENCY_ENCRYPTED_DB_FILE")
-PRH_RESIDENCY_ENCRYPTED_JSON_FILE = os.environ.get("PRH_RESIDENCY_ENCRYPTED_JSON_FILE")
 
 
 @task
@@ -55,7 +54,7 @@ def prw_datamart_residency():
     with ShellOperation(
         commands=[
             "pipenv install",
-            f'pipenv run python ingest_datamart.py --prw "{PRW_CONN}" --out "{PRH_RESIDENCY_ENCRYPTED_DB_FILE}" --kv "{PRH_RESIDENCY_ENCRYPTED_JSON_FILE}" --key "{PRH_RESIDENCY_DATA_KEY}"',
+            f'pipenv run python ingest_datamart.py --prw "{PRW_CONN}" --out "{PRH_RESIDENCY_ENCRYPTED_DB_FILE}" --key "{PRH_RESIDENCY_DATA_KEY}"',
         ],
         env={
             "PIPENV_IGNORE_VIRTUALENVS": "1",
