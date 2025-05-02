@@ -130,6 +130,15 @@ def st_acgme_stats(stats):
     # Add row for each year / total
     for year in years:
         year_stats = stats[year]
+
+        # Peds / Geriatrics are different for total vs year rows
+        if year == "Total":
+            peds = f"{year_stats.get('num_paneled_peds_percent', 'N/A')} - :small[*{year_stats.get('num_paneled_peds_comment', '')}*]"
+            geri = f"{year_stats.get('num_paneled_geri_percent', 'N/A')} - :small[*{year_stats.get('num_paneled_geri_comment', '')}*]"
+        else:
+            peds = "N/A"
+            geri = "N/A"
+
         row = [
             "Total" if year == "Total" else str(year),
             str(year_stats.get("total_visits", "N/A")),
@@ -137,8 +146,8 @@ def st_acgme_stats(stats):
             str(year_stats.get("ed_peds_encounters", "N/A")),
             str(year_stats.get("inpt_adult_encounters", "N/A")),
             str(year_stats.get("inpt_peds_encounters", "N/A")),
-            f"{year_stats.get('peds_percent', 'N/A')} - :small[*{year_stats.get('peds_comment', '')}*]",
-            f"{year_stats.get('geriatrics_percent', 'N/A')} - :small[*{year_stats.get('geriatrics_comment', '')}*]",
+            peds,
+            geri,
             f"{year_stats.get('ob_percent', 'N/A')} - :small[*{year_stats.get('ob_comment', '')}*]",
             f"{year_stats.get('prov_continuity_percent', 'N/A')} - :small[*{year_stats.get('prov_continuity_comment', '')}*]",
             f"{year_stats.get('pt_continuity_percent', 'N/A')} - :small[*{year_stats.get('pt_continuity_comment', '')}*]",

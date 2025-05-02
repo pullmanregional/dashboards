@@ -207,25 +207,15 @@ def calc_stats(out: OutData, residents: list[str]):
     stats = {}
     for resident in residents:
         stats[resident] = calc_acgme_for_resident(
-            resident, out.encounters, out.notes_inpt, out.notes_ed
-        )
-        stats[resident]["Total"]["num_paneled_patients"] = resident_panel_size(
-            resident, out.patients
+            resident, out.encounters, out.notes_inpt, out.notes_ed, out.patients
         )
     stats["Overall"] = calc_acgme_for_resident(
-        "", out.encounters, out.notes_inpt, out.notes_ed
+        "", out.encounters, out.notes_inpt, out.notes_ed, out.patients
     )
     return stats
 
 
-def resident_panel_size(resident, patients):
-    """
-    Get the number of patients who are paneled for a given resident
-    """
-    return len(patients[patients["pcp"] == resident])
-
-
-def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
+def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed, patients):
     """
     Calculate ACGME stats for a single resident
     """
@@ -277,6 +267,23 @@ def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed):
         all_encounters, resident_encounters, resident_notes_inpt, resident_notes_ed
     )
     stats["Total"]["year"] = "Total"
+
+    # Calculate stats that are only in totals, not per year
+    if resident == "":
+        panel_df = patients[patients["pcp"].isin(ALL_RESIDENTS)]
+    else:
+        panel_df = patients[patients["pcp"] == resident]
+
+    panel_peds = panel_df[panel_df["age"] < 18]
+    panel_geri = panel_df[panel_df["age"] > 65]
+    totals = stats["Total"]
+    totals["num_paneled_patients"] = len(panel_df)
+    totals["num_paneled_peds"] = len(panel_peds)
+    totals["num_paneled_peds_percent"] = f"{len(panel_peds) / len(panel_df):.0%}"
+    totals["num_paneled_peds_comment"] = f"{len(panel_peds)}/{len(panel_df)} pts"
+    totals["num_paneled_geri"] = len(panel_geri)
+    totals["num_paneled_geri_percent"] = f"{len(panel_geri) / len(panel_df):.0%}"
+    totals["num_paneled_geri_comment"] = f"{len(panel_geri)}/{len(panel_df)} pts"
 
     return stats
 
