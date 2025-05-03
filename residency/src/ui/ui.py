@@ -136,8 +136,8 @@ def st_acgme_stats(stats):
             peds = f"{year_stats.get('num_paneled_peds_percent', 'N/A')} - :small[*{year_stats.get('num_paneled_peds_comment', '')}*]"
             geri = f"{year_stats.get('num_paneled_geri_percent', 'N/A')} - :small[*{year_stats.get('num_paneled_geri_comment', '')}*]"
         else:
-            peds = "N/A"
-            geri = "N/A"
+            peds = "--"
+            geri = "--"
 
         row = [
             "Total" if year == "Total" else str(year),
