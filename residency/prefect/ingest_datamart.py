@@ -323,6 +323,15 @@ def calc_acgme_for_resident_year(
     ob_percent = f"{ob_visits / total_visits:.0%}"
     ob_comment = f"{ob_visits}/{total_visits} visits"
 
+    # Filter telehealth visits
+    th_visits = len(
+        resident_encounters_in_year_df[
+            resident_encounters_in_year_df["encounter_type"] == "CVV VIRTUAL VISIT"
+        ]
+    )
+    th_percent = f"{th_visits / total_visits:.0%}"
+    th_comment = f"{th_visits}/{total_visits} visits"
+
     # For patient sided continuity, we'll look at all the visits that the provider where With PCP is set.
     # Then take all the unique MRNs for those visits, and find all the visits for those MRNs in the same year.
     # Finally, calculate the number of visits with the provider and With PCP set divided by total visits calculated.
@@ -369,6 +378,9 @@ def calc_acgme_for_resident_year(
         "ob_visits": ob_visits,
         "ob_percent": ob_percent,
         "ob_comment": ob_comment,
+        "th_visits": th_visits,
+        "th_percent": th_percent,
+        "th_comment": th_comment,
         "ed_adult_encounters": num_ed_adult_encounters,
         "ed_peds_encounters": num_ed_peds_encounters,
         "inpt_adult_encounters": num_inpt_adult_encounters,

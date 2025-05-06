@@ -119,6 +119,7 @@ def st_acgme_stats(stats):
         "Clinic Peds",
         "Clinic Geriatrics",
         "Clinic OB",
+        "Telehealth",
         "Provider Continuity",
         "Patient Continuity",
     ]
@@ -149,6 +150,7 @@ def st_acgme_stats(stats):
             peds,
             geri,
             f"{year_stats.get('ob_percent', 'N/A')} - :small[*{year_stats.get('ob_comment', '')}*]",
+            f"{year_stats.get('th_percent', 'N/A')} - :small[*{year_stats.get('th_comment', '')}*]",
             f"{year_stats.get('prov_continuity_percent', 'N/A')} - :small[*{year_stats.get('prov_continuity_comment', '')}*]",
             f"{year_stats.get('pt_continuity_percent', 'N/A')} - :small[*{year_stats.get('pt_continuity_comment', '')}*]",
         ]
