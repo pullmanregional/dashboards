@@ -66,7 +66,6 @@ def parse_arguments():
         require_prw=True,
         require_out=True,
     )
-    parser.add_argument("--kv", help="Output key/value data file path", required=True)
     parser.add_argument(
         "--key",
         help="Encrypt with given key. Defaults to no encryption if not specified.",
@@ -83,10 +82,8 @@ def main():
     args = parse_arguments()
     prw_db_url = args.prw
     output_db_file = args.out
-    output_kv_file = args.kv
     encrypt_key = args.key
     tmp_db_file = "datamart.sqlite3"
-    tmp_kv_file = "datamart.json"
 
     # Create the sqlite output database and create the tables as defined in ../src/model/db.py
     out_engine = db_utils.get_db_connection(f"sqlite:///{tmp_db_file}")
@@ -101,32 +98,28 @@ def main():
     # Transform data
     out = transform(src)
 
+    # Calculate key/value data
+    kv_data = {}
+
     # Write tables to datamart
     session = Session(out_engine)
     db_utils.clear_tables_and_insert_data(
         session, [db_utils.TableData(table=db.DataTable, df=out.data_df)]
     )
+    db_utils.write_kv_table(kv_data, session, db.KvTable)
 
     # Update last ingest time and modified times for source data files
     db_utils.write_meta(session, db.Meta)
     session.commit()
 
-    # Write to the output key/value file as JSON
-    kv_data = {}
-    with open(tmp_kv_file, "w") as f:
-        json.dump(kv_data, f)
-
     # Finally encrypt output files, or just copy if no encryption key is provided
     if encrypt_key and encrypt_key.lower() != "none":
         encrypt_file(tmp_db_file, output_db_file, encrypt_key)
-        encrypt_file(tmp_kv_file, output_kv_file, encrypt_key)
     else:
         shutil.copy(tmp_db_file, output_db_file)
-        shutil.copy(tmp_kv_file, output_kv_file)
 
     # Cleanup
     os.remove(tmp_db_file)
-    os.remove(tmp_kv_file)
     prw_engine.dispose()
     out_engine.dispose()
     print("Done")

@@ -2,7 +2,7 @@
 Source data as in-memory copy of all DB tables as dataframes
 """
 
-import logging
+import logging, json
 import pandas as pd
 import streamlit as st
 from dataclasses import dataclass
@@ -17,7 +17,6 @@ R2_BUCKET = st.secrets.get("PRH_SAMPLE_R2_BUCKET")
 
 # Local data file
 DATA_FILE = st.secrets.get("DATA_FILE")
-DATA_JSON = st.secrets.get("DATA_JSON")
 
 # Encryption keys for datasets
 DATA_KEY = st.secrets.get("DATA_KEY")
@@ -35,18 +34,16 @@ class SourceData:
 
 def read() -> SourceData:
     if DATA_FILE:
-        return from_file(DATA_FILE, DATA_JSON)
+        return from_file(DATA_FILE)
     else:
         return from_s3()
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def from_file(db_file: str, json_file: str) -> SourceData:
+def from_file(db_file: str) -> SourceData:
     engine = source_data_util.sqlite_engine_from_file(db_file)
     source_data = from_db(engine)
     engine.dispose()
-
-    source_data.kvdata = source_data_util.json_from_file(json_file)
     return source_data
 
 
@@ -59,10 +56,6 @@ def from_s3() -> SourceData:
     )
     source_data = from_db(engine)
     engine.dispose()
-
-    source_data.kvdata = source_data_util.json_from_s3(
-        r2_config, R2_BUCKET, "prh-sample.json.enc", DATA_KEY
-    )
 
     source_data_util.cleanup()
     return source_data
@@ -79,4 +72,9 @@ def from_db(db_engine) -> SourceData:
     modified = result.iloc[0, 0] if result.size > 0 else None
 
     df = pd.read_sql_table("table_name", db_engine)
-    return SourceData(modified=modified, df=df)
+
+    # Get key/value data from the first row
+    kv_data_df = pd.read_sql_query("SELECT data FROM _kv LIMIT 1", db_engine)
+    kv_data = json.loads(kv_data_df.iloc[0]["data"])
+
+    return SourceData(modified=modified, df=df, kvdata=kv_data)
