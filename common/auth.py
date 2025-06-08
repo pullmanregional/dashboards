@@ -54,7 +54,7 @@ def simple_auth():
 
 def oidc_auth(auto_redirect=False):
     """OpenID Connect (OIDC) authentication using streamlit's built-in OIDC implementation"""
-    if not st.experimental_user.is_logged_in:
+    if not st.user.is_logged_in:
         if auto_redirect:
             st.login()
         else:
@@ -75,7 +75,7 @@ def oidc_auth(auto_redirect=False):
                 unsafe_allow_html=True,
             )
             st.button("Pullman Regional Hospital", key="sign-in", on_click=st.login)
-    
+
         return False
     else:
         return st.experimental_user
