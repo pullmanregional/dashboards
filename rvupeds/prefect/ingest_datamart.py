@@ -75,12 +75,11 @@ def read_source_tables(prw_engine) -> SrcData:
             billing_provider as provider,
             procedure_code as cpt,
             modifiers,
-            quantity,
             procedure_desc as desc,
+            quantity,
             wrvu,
             reversal_reason,
             primary_payor_class as insurance_class,
-            dept,
             location
         FROM prw_charges 
         WHERE 
@@ -108,7 +107,7 @@ def transform(src: SrcData) -> OutData:
     """
     # Convert provider name to single word alias
     df = src.data_df
-    df["provider_alias"] = df.provider.map(PROVIDER_TO_ALIAS)
+    df["provider"] = df.provider.map(PROVIDER_TO_ALIAS)
 
     # Month (eg. 2022-01) and quarter (eg. 2020-Q01)
     df["month"] = df.date.dt.to_period("M").dt.strftime("%Y-%m")
