@@ -69,24 +69,26 @@
       "justMyCode": true
     },
     {
+      "name": "Ingest: rvupeds",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/rvupeds/prefect/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/rvupeds/prefect",
+      "args": [
+        "--prw",
+        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "--out",
+        "prh-rvupeds.sqlite3"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "Streamlit: finance",
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/finance",
-      "args": [
-        "run",
-        "app.py"
-      ],
-      "console": "integratedTerminal",
-      "justMyCode": false
-    },
-    {
-      "name": "Streamlit: panel",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "streamlit",
-      "cwd": "${workspaceFolder}/panel",
       "args": [
         "run",
         "app.py"
@@ -108,11 +110,37 @@
       "justMyCode": false
     },
     {
+      "name": "Streamlit: panel",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "cwd": "${workspaceFolder}/panel",
+      "args": [
+        "run",
+        "app.py"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
       "name": "Streamlit: residency",
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
       "cwd": "${workspaceFolder}/residency",
+      "args": [
+        "run",
+        "app.py"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Streamlit: rvupeds",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "cwd": "${workspaceFolder}/rvupeds",
       "args": [
         "run",
         "app.py"
