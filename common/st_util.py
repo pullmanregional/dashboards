@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_extras.stylable_container import stylable_container
 
 
 def st_clear_cache_page():
@@ -82,6 +81,7 @@ def st_card(title: str, content: str, description: str = ""):
 
 
 def st_card_container(key: str, padding_css: str = "0px 16px"):
+    from streamlit_extras.stylable_container import stylable_container
     with stylable_container(
         key=key,
         css_styles=f"""
