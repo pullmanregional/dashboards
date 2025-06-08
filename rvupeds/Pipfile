@@ -11,6 +11,9 @@ boto3 = "*"
 sqlmodel = "*"
 authlib = "*"
 pandas = "*"
+arrow = "*"
 
 [requires]
 python_version = "3"
+
+[dev-packages]

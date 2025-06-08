@@ -10,7 +10,7 @@ def show(src_data: source_data.SourceData):
     # Get sidebar user settings. Settings embedded in the content handled by ui module.
     settings = ui.show_settings(src_data)
 
-    data = app_data.process(src_data)
+    data = app_data.process(src_data, settings)
 
     # Show main content
     ui.show_content(settings, data)

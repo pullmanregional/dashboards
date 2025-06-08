@@ -26,8 +26,11 @@ DATA_KEY = st.secrets.get("DATA_KEY")
 class SourceData:
     """In-memory copy of DB tables"""
 
-    charges_df: pd.DataFrame = None
-    kvdata: dict = None
+    charges_df: pd.DataFrame
+    providers: list[str]
+    start_date: datetime
+    end_date: datetime
+
     modified: datetime = None
 
 
@@ -104,5 +107,14 @@ def from_db(db_engine) -> SourceData:
     # Get key/value data from the first row
     kv_data_df = pd.read_sql_query("SELECT data FROM _kv LIMIT 1", db_engine)
     kv_data = json.loads(kv_data_df.iloc[0]["data"])
+    providers = kv_data["providers"]
+    start_date = datetime.strptime(kv_data["start_date"], "%Y-%m-%d")
+    end_date = datetime.strptime(kv_data["end_date"], "%Y-%m-%d")
 
-    return SourceData(modified=modified, charges_df=charges_df, kvdata=kv_data)
+    return SourceData(
+        modified=modified,
+        charges_df=charges_df,
+        providers=providers,
+        start_date=start_date,
+        end_date=end_date,
+    )

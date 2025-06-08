@@ -43,6 +43,7 @@ PROVIDER_TO_ALIAS = {
     "SHIELDS, MARICARMEN": "Shields",
 }
 PROVIDERS = list(PROVIDER_TO_ALIAS.keys())
+PROVIDER_ALIASES = list(PROVIDER_TO_ALIAS.values())
 # Specific location strings that indicate an inpatient charge
 INPT_LOCATIONS = [
     "CC WPL PULLMAN REGIONAL HOSPITAL",
@@ -126,6 +127,19 @@ def transform(src: SrcData) -> OutData:
     return OutData(data_df=df)
 
 
+def calc_kv_data(out: OutData) -> dict:
+    """
+    Calculate key/value data.
+    """
+    return {
+        "providers": PROVIDER_ALIASES,
+        # Earliest and latest dates: post date will be before service date, and
+        # service date will not be after post date.
+        "start_date": out.data_df.date.min().strftime("%Y-%m-%d"),
+        "end_date": out.data_df.posted_date.max().strftime("%Y-%m-%d"),
+    }
+
+
 # -------------------------------------------------------
 # Main entry point
 # -------------------------------------------------------
@@ -168,7 +182,7 @@ def main():
     out = transform(src)
 
     # Calculate key/value data
-    kv_data = {}
+    kv_data = calc_kv_data(out)
 
     # Write tables to datamart
     session = Session(out_engine)

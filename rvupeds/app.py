@@ -18,11 +18,6 @@ def run():
     if not user:
         return st.stop()
 
-    # Add a logout link with an icon
-    if st.sidebar.button("Log out", icon=":material/logout:", use_container_width=True):
-        st.logout()
-        st.rerun()
-
     # Read, parse, and cache (via @st.cache_data) source data
     src_data = source_data.read()
 
@@ -44,7 +39,6 @@ st.set_page_config(
     page_title="RVU Dashboard - Pediatrics",
     page_icon=":material/leaderboard:",
     layout="wide",
-    initial_sidebar_state="collapsed",
     menu_items=None,
 )
 run()
