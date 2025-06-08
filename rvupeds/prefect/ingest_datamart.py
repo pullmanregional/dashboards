@@ -48,8 +48,6 @@ PROVIDER_ALIASES = list(PROVIDER_TO_ALIAS.values())
 INPT_LOCATIONS = [
     "CC WPL PULLMAN REGIONAL HOSPITAL",
 ]
-# Regex matching outpatient procedure CPT codes
-RE_PROCEDURE_CODES = "54150|41010|120[01][1-8]"
 
 
 # -------------------------------------------------------
@@ -76,7 +74,7 @@ def read_source_tables(prw_engine) -> SrcData:
             billing_provider as provider,
             procedure_code as cpt,
             modifiers,
-            procedure_desc as desc,
+            procedure_desc as cpt_desc,
             quantity,
             wrvu,
             reversal_reason,

@@ -3,11 +3,13 @@ Class to hold app specific user settings
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+import datetime as dt
 
 
 @dataclass(eq=True, frozen=True)
 class Settings:
     provider: str
-    start_date: datetime
-    end_date: datetime
+    start_date: dt.date
+    end_date: dt.date
+    compare_start_date: dt.date
+    compare_end_date: dt.date

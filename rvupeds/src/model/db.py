@@ -24,7 +24,7 @@ class Charges(DatamartModel, table=True):
     provider: str = Field(index=True)
     cpt: str = Field(index=True)
     modifiers: str | None = None
-    desc: str
+    cpt_desc: str
     quantity: int
     wrvu: float
     reversal_reason: str | None = None

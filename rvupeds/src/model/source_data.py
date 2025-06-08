@@ -5,8 +5,8 @@ Source data as in-memory copy of all DB tables as dataframes
 import logging, json
 import pandas as pd
 import streamlit as st
+import datetime as dt
 from dataclasses import dataclass
-from datetime import timedelta, datetime
 from common import source_data_util
 
 # Cloudflare R2 connection
@@ -28,10 +28,10 @@ class SourceData:
 
     charges_df: pd.DataFrame
     providers: list[str]
-    start_date: datetime
-    end_date: datetime
+    start_date: dt.date
+    end_date: dt.date
 
-    modified: datetime = None
+    modified: dt.datetime = None
 
 
 def read() -> SourceData:
@@ -41,7 +41,7 @@ def read() -> SourceData:
         return from_s3()
 
 
-@st.cache_data(ttl=timedelta(minutes=2))
+@st.cache_data(ttl=dt.timedelta(minutes=2))
 def from_file(db_file: str) -> SourceData:
     engine = source_data_util.sqlite_engine_from_file(db_file)
     source_data = from_db(engine)
@@ -49,7 +49,7 @@ def from_file(db_file: str) -> SourceData:
     return source_data
 
 
-@st.cache_data(ttl=timedelta(hours=6), show_spinner="Loading...")
+@st.cache_data(ttl=dt.timedelta(hours=6), show_spinner="Loading...")
 def from_s3() -> SourceData:
     logging.info("Fetching source data")
     r2_config = source_data_util.S3Config(R2_ACCT_ID, R2_ACCT_KEY, R2_URL)
@@ -83,7 +83,7 @@ def from_db(db_engine) -> SourceData:
             provider,
             cpt,
             modifiers,
-            desc,
+            cpt_desc,
             quantity,
             wrvu,
             reversal_reason,
@@ -98,18 +98,16 @@ def from_db(db_engine) -> SourceData:
         FROM charges 
     """,
         db_engine,
+        parse_dates=["date", "posted_date"],
+        dtype={"medicaid": bool, "inpatient": bool},
     )
-
-    # Convert date columns
-    charges_df["date"] = pd.to_datetime(charges_df["date"])
-    charges_df["posted_date"] = pd.to_datetime(charges_df["posted_date"])
 
     # Get key/value data from the first row
     kv_data_df = pd.read_sql_query("SELECT data FROM _kv LIMIT 1", db_engine)
     kv_data = json.loads(kv_data_df.iloc[0]["data"])
     providers = kv_data["providers"]
-    start_date = datetime.strptime(kv_data["start_date"], "%Y-%m-%d")
-    end_date = datetime.strptime(kv_data["end_date"], "%Y-%m-%d")
+    start_date = dt.datetime.strptime(kv_data["start_date"], "%Y-%m-%d").date()
+    end_date = dt.datetime.strptime(kv_data["end_date"], "%Y-%m-%d").date()
 
     return SourceData(
         modified=modified,

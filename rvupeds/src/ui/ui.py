@@ -6,7 +6,7 @@ from datetime import date
 import streamlit as st
 import arrow
 from ..model import source_data, app_data, settings
-from . import dates
+from . import dates, fig
 
 
 def show_settings(src_data: source_data.SourceData) -> settings.Settings:
@@ -31,8 +31,6 @@ def show_settings(src_data: source_data.SourceData) -> settings.Settings:
             "Last 12 months",
             "This year",
             "Last year",
-            "This quarter",
-            "Last quarter",
             "This month",
             "Last month",
             "Last 4 completed quarters",
@@ -66,8 +64,6 @@ def show_settings(src_data: source_data.SourceData) -> settings.Settings:
                 "Last 12 months",
                 "This year",
                 "Last year",
-                "This quarter",
-                "Last quarter",
                 "This month",
                 "Last month",
                 "Last 4 completed quarters",
@@ -113,10 +109,160 @@ def show_settings(src_data: source_data.SourceData) -> settings.Settings:
         st.rerun()
 
     return settings.Settings(
-        provider=provider, start_date=start_date, end_date=end_date
+        provider=provider,
+        start_date=start_date,
+        end_date=end_date,
+        compare_start_date=compare_start_date,
+        compare_end_date=compare_end_date,
     )
 
 
-def show_content(settings: settings.Settings, data: app_data.AppData):
-    st.subheader("Section")
-    st.write(data.data)
+def show_content(
+    settings: settings.Settings,
+    data: app_data.AppData | None,
+    compare: app_data.AppData | None,
+):
+    """Builds the main content"""
+    if data is None:
+        st.markdown(
+            "<h5 style='color:#6e6e6e; padding-top:65px;'>Select a provider and date range</h5>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    df, partitions, stats = data.df, data.partitions, data.stats
+    cmp_df, cmp_partitions, cmp_stats = (
+        (compare.df, compare.partitions, compare.stats)
+        if compare is not None
+        else (None, None, None)
+    )
+
+    # If no data is available, show message and stop
+    if len(df.index) == 0:
+        st.write("No data for selected time period.")
+        return
+
+    # Summary stats including overall # patients and wRVUs
+    st.header("Summary")
+    if compare is None:
+        fig.st_summary(stats, data.start_date, data.end_date, st, columns=True)
+    else:
+        # Write metrics in side-by-side vertical columns
+        colL, colR = st.columns(2)
+        fig.st_summary(stats, data.start_date, data.end_date, colL, columns=False)
+        fig.st_summary(
+            cmp_stats, compare.start_date, compare.end_date, colR, columns=False
+        )
+
+    # Summary graphs
+    st.markdown(
+        '<p style="margin-top:0px; margin-bottom:-15px; text-align:center; color:#A9A9A9">RVU graphs do not include charges posted outside of dates, so totals may not match number above.</p>',
+        unsafe_allow_html=True,
+    )
+    if compare is None:
+        enc_ct, rvu_ct = st.columns(2)
+        daily_ct = st.expander("By Day")
+        daily_enc_ct, daily_rvu_ct = daily_ct.columns(2)
+        fig.st_enc_by_month_fig(partitions, data.start_date, data.end_date, enc_ct)
+        fig.st_rvu_by_month_fig(df, data.end_date, rvu_ct)
+        fig.st_enc_by_day_fig(partitions, data.start_date, data.end_date, daily_enc_ct)
+        fig.st_rvu_by_day_fig(df, data.start_date, data.end_date, daily_rvu_ct)
+        daily_ct.markdown(
+            '<p style="margin-top:-15px; margin-bottom:10px; text-align:center; color:#A9A9A9">To zoom in, click on a graph and drag horizontally</p>',
+            unsafe_allow_html=True,
+        )
+    else:
+        main_ct = st.container()
+        main_colL, main_colR = main_ct.columns(2)
+        daily_ct = st.expander("By Day")
+        daily_colL, daily_colR = daily_ct.columns(2)
+        fig.st_enc_by_month_fig(partitions, data.start_date, data.end_date, main_colL)
+        fig.st_rvu_by_month_fig(df, data.end_date, main_colL)
+        fig.st_enc_by_day_fig(partitions, data.start_date, data.end_date, daily_colL)
+        fig.st_rvu_by_day_fig(df, data.start_date, data.end_date, daily_colL)
+
+        fig.st_enc_by_month_fig(
+            cmp_partitions, compare.start_date, compare.end_date, main_colR
+        )
+        fig.st_rvu_by_month_fig(cmp_df, compare.end_date, main_colR)
+        fig.st_enc_by_day_fig(
+            cmp_partitions, compare.start_date, compare.end_date, daily_colR
+        )
+        fig.st_rvu_by_day_fig(cmp_df, compare.start_date, compare.end_date, daily_colR)
+
+        daily_ct.markdown(
+            '<p style="margin-top:-15px; margin-bottom:10px; text-align:center; color:#A9A9A9">To zoom in, click on a graph and drag horizontally</p>',
+            unsafe_allow_html=True,
+        )
+
+    # Outpatient Summary
+    st.header("Outpatient")
+    if compare is None:
+        colL, colR = st.columns(2)
+        fig.st_sick_visits_fig(stats, colL)
+        fig.st_wcc_visits_fig(stats, colR)
+        fig.st_sick_vs_well_fig(stats, colL)
+        fig.st_non_encs_fig(partitions, colR)
+    else:
+        colL, colR = st.columns(2)
+        fig.st_sick_visits_fig(stats, colL)
+        fig.st_wcc_visits_fig(stats, colL)
+        fig.st_sick_vs_well_fig(stats, colL)
+        fig.st_non_encs_fig(partitions, colL)
+        fig.st_sick_visits_fig(cmp_stats, colR)
+        fig.st_wcc_visits_fig(cmp_stats, colR)
+        fig.st_sick_vs_well_fig(cmp_stats, colR)
+        fig.st_non_encs_fig(cmp_partitions, colR)
+
+    # Inpatient Summary
+    st.header("Inpatient")
+    if compare is None:
+        inpt_enc_ct = st.empty()
+        colL, colR = st.columns(2)
+        fig.st_inpt_encs_fig(partitions, inpt_enc_ct)
+        fig.st_inpt_vs_outpt_encs_fig(stats, colL)
+        fig.st_inpt_vs_outpt_rvu_fig(stats, colR)
+    else:
+        colL, colR = st.columns(2)
+        fig.st_inpt_vs_outpt_encs_fig(stats, colL)
+        fig.st_inpt_vs_outpt_rvu_fig(stats, colL)
+        fig.st_inpt_vs_outpt_encs_fig(cmp_stats, colR)
+        fig.st_inpt_vs_outpt_rvu_fig(cmp_stats, colR)
+
+    # Source data
+    st.header("Source Data")
+    dataset_ct = st.empty()
+    render_dataset(data, dataset_ct)
+
+
+def render_dataset(data: app_data.AppData, dataset_ct):
+    """Show the named source dataset in the provided container"""
+    if data is None:
+        return
+
+    df, partitions = data.df, data.partitions
+    display_dfs = {
+        "None": None,
+        "All Data (including shots, etc)": df,
+        "All Visits (Inpatient + Outpatient)": partitions["all_encs"],
+        "Inpatient - All": partitions["inpt_all"],
+        "Outpatient - All": partitions["outpt_all"],
+        "Outpatient - Visits": partitions["outpt_encs"],
+        "Outpatient - Well Only": partitions["wcc_encs"],
+        "Outpatient - Sick Only": partitions["sick_encs"],
+        "Outpatient - Other Charges": partitions["outpt_not_encs"],
+    }
+    dataset_name = st.selectbox("Show Data Set:", display_dfs.keys())
+    display_df = display_dfs.get(dataset_name)
+
+    # Filters for other partitions not used elsewhere
+    if dataset_name == "Clinic - 99211 and 99212":
+        display_df = df[df.cpt.str.match("992[01][12]")]
+    elif dataset_name == "Clinic - 99213":
+        display_df = df[df.cpt.str.match("992[01]3")]
+    elif dataset_name == "Clinic - 99214 and above":
+        display_df = df[df.cpt.str.match("992[01][45]|9949[56]")]
+
+    if display_df is not None:
+        st.dataframe(display_df)
+        st.write(f"{len(display_df)} rows")
