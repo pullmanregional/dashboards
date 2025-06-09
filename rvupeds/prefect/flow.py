@@ -14,7 +14,7 @@ from prefect.blocks.system import Secret
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 from prw_common.env_utils import load_prw_env
 
-PREFECT_FLOW_NAME = "prw-rvupeds"
+PREFECT_FLOW_NAME = "prw-datamart-rvupeds"
 
 # Load env vars from the .env file corresponding to PRW_ENV (dev/prod)
 PRW_ENV = load_prw_env(__file__)
@@ -43,7 +43,7 @@ def upload_files(bucket_name, files):
     retries=0,
     name=PREFECT_FLOW_NAME + (f".{PRW_ENV}" if PRW_ENV != "prod" else ""),
 )
-def prw_datamart_sample():
+def prw_datamart_rvupeds():
     # Set working dir to path of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     print("Running from:", os.getcwd())
@@ -73,4 +73,4 @@ def prw_datamart_sample():
 
 
 if __name__ == "__main__":
-    prw_datamart_sample()
+    prw_datamart_rvupeds()
