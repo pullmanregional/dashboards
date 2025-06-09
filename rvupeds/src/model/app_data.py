@@ -39,19 +39,19 @@ def process(
         df = df[df["provider"] == provider]
 
     # Filter data by given start and end dates for either including transactions with visit date or posting date in range
-    dt = df["date"].dt.date
+    service_dt = df["date"].dt.date
     post_dt = df["posted_date"].dt.date
     if start_date and end_date:
-        next_day = end_date + pd.Timedelta(days=1)
+        day_after_end_date = end_date + pd.Timedelta(days=1)
         df = df[
-            ((dt >= start_date) & (dt < next_day))
-            | ((post_dt >= start_date) & (post_dt < next_day))
+            ((service_dt >= start_date) & (service_dt < day_after_end_date))
+            | ((post_dt >= start_date) & (post_dt < day_after_end_date))
         ]
     elif start_date:
-        df = df[(dt >= start_date) | (post_dt >= start_date)]
+        df = df[(service_dt >= start_date) | (post_dt >= start_date)]
     elif end_date:
-        next_day = end_date + pd.Timedelta(days=1)
-        df = df[(dt < next_day) | (post_dt < next_day)]
+        day_after_end_date = end_date + pd.Timedelta(days=1)
+        df = df[(service_dt < day_after_end_date) | (post_dt < day_after_end_date)]
 
     # Parition data for viewing and calculate stats
     partitions = _calc_partitions(df)
