@@ -13,9 +13,13 @@ from common import auth, st_util
 
 def run():
     """Main streamlit app entry point"""
-    # Authenticate user
-    user = auth.oidc_auth()
-    if not user:
+    # # Authenticate user with single sign-on
+    # user = auth.oidc_auth()
+    # if not user:
+    #     return st.stop()
+
+    # 2nd layer password auth
+    if not auth.simple_auth():
         return st.stop()
 
     # Read, parse, and cache (via @st.cache_data) source data
