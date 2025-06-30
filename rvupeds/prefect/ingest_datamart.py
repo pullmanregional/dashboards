@@ -39,7 +39,7 @@ PROVIDER_TO_ALIAS = {
     "FROSTAD, MICHAEL": "Mike",
     "GORDON, METHUEL": "Gordon",
     "HRYNIEWICZ, KATHRYN": "Katie",
-    "RINALDI, MACKENZIE": "Kenzie",
+    "RINALDI, MACKENZIE CLAIRE": "Kenzie",
     "SHIELDS, MARICARMEN": "Shields",
 }
 PROVIDERS = list(PROVIDER_TO_ALIAS.keys())
