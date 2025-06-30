@@ -54,7 +54,7 @@ def from_s3() -> SourceData:
     logging.info("Fetching source data")
     r2_config = source_data_util.S3Config(R2_ACCT_ID, R2_ACCT_KEY, R2_URL)
     engine = source_data_util.sqlite_engine_from_s3(
-        r2_config, R2_BUCKET, "rvupeds.sqlite3.enc", DATA_KEY
+        r2_config, R2_BUCKET, "prh-rvupeds.sqlite3.enc", DATA_KEY
     )
     source_data = from_db(engine)
     engine.dispose()
