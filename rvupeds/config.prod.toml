@@ -3,7 +3,7 @@
 
 [server]
 port = 8507
-baseUrlPath = "/rvupeds"
+baseUrlPath = "/pedsrvu"
 
 # Don't launch browser on startup
 headless = true
