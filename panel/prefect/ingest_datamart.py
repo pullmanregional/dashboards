@@ -123,8 +123,9 @@ def transform(src: SrcData) -> OutData:
 
     # Force date columns to be date only, no time
     encounters_df["encounter_date"] = pd.to_datetime(encounters_df["encounter_date"])
-    # Map encounter location to clinic IDs
+    # Map encounter location to clinic IDs, dropping encounters at non-PCP offices
     encounters_df["location"] = encounters_df["dept"].map(CLINIC_IDS)
+    encounters_df = encounters_df[encounters_df["location"].notnull()]
 
     # Delete unused columns: dept, encounter_time, billing_provider, appt_status
     encounters_df.drop(
