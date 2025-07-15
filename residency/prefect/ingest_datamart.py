@@ -38,16 +38,20 @@ class OutData:
 
 # Residents by year
 RESIDENTS_BY_YEAR = {
-    "R3": [],
-    "R2": [
+    "R3": [
         "OLAWUYI, DAMOLA BOLUTIFE",
         "WARD, JEFFREY LOREN",
         "YOUNES, MOHAMMED",
     ],
-    "R1": [
+    "R2": [
         "MADER, KELSEY",
         "PERIN, KARLY",
         "SHAKIR, TUARUM N",
+    ],
+    "R1": [
+        "KIRUI, RISPER",
+        "PENDERGRAFT, COREY MARK",
+        "SWALLOW, NATHAN",
     ],
 }
 ALL_RESIDENTS = (
@@ -279,11 +283,19 @@ def calc_acgme_for_resident(resident, encounters, notes_inpt, notes_ed, patients
     totals = stats["Total"]
     totals["num_paneled_patients"] = len(panel_df)
     totals["num_paneled_peds"] = len(panel_peds)
-    totals["num_paneled_peds_percent"] = f"{len(panel_peds) / len(panel_df):.0%}"
-    totals["num_paneled_peds_comment"] = f"{len(panel_peds)}/{len(panel_df)} pts"
+    totals["num_paneled_peds_percent"] = (
+        f"{len(panel_peds) / len(panel_df) if len(panel_df) > 0 else 0:.0%}"
+    )
+    totals["num_paneled_peds_comment"] = (
+        f"{len(panel_peds)}/{len(panel_df) if len(panel_df) > 0 else 0} pts"
+    )
     totals["num_paneled_geri"] = len(panel_geri)
-    totals["num_paneled_geri_percent"] = f"{len(panel_geri) / len(panel_df):.0%}"
-    totals["num_paneled_geri_comment"] = f"{len(panel_geri)}/{len(panel_df)} pts"
+    totals["num_paneled_geri_percent"] = (
+        f"{len(panel_geri) / len(panel_df) if len(panel_df) > 0 else 0:.0%}"
+    )
+    totals["num_paneled_geri_comment"] = (
+        f"{len(panel_geri)}/{len(panel_df) if len(panel_df) > 0 else 0} pts"
+    )
 
     return stats
 
@@ -302,25 +314,29 @@ def calc_acgme_for_resident_year(
     prov_continuity_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["with_pcp"]]
     )
-    prov_continuity_percent = f"{prov_continuity_visits / total_visits:.0%}"
+    prov_continuity_percent = (
+        f"{prov_continuity_visits / total_visits if total_visits > 0 else 0:.0%}"
+    )
     prov_continuity_comment = f"{prov_continuity_visits}/{total_visits} visits"
 
     peds_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["peds"]]
     )
-    peds_percent = f"{peds_visits / total_visits:.0%}"
+    peds_percent = f"{peds_visits / total_visits if total_visits > 0 else 0:.0%}"
     peds_comment = f"{peds_visits}/{total_visits} visits"
 
     geriatrics_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["geriatrics"]]
     )
-    geriatrics_percent = f"{geriatrics_visits / total_visits:.0%}"
+    geriatrics_percent = (
+        f"{geriatrics_visits / total_visits if total_visits > 0 else 0:.0%}"
+    )
     geriatrics_comment = f"{geriatrics_visits}/{total_visits} visits"
 
     ob_visits = len(
         resident_encounters_in_year_df[resident_encounters_in_year_df["ob"]]
     )
-    ob_percent = f"{ob_visits / total_visits:.0%}"
+    ob_percent = f"{ob_visits / total_visits if total_visits > 0 else 0:.0%}"
     ob_comment = f"{ob_visits}/{total_visits} visits"
 
     # Filter telehealth visits
@@ -329,7 +345,7 @@ def calc_acgme_for_resident_year(
             resident_encounters_in_year_df["encounter_type"] == "CVV VIRTUAL VISIT"
         ]
     )
-    th_percent = f"{th_visits / total_visits:.0%}"
+    th_percent = f"{th_visits / total_visits if total_visits > 0 else 0:.0%}"
     th_comment = f"{th_visits}/{total_visits} visits"
 
     # For patient sided continuity, we'll look at all the visits that the provider where With PCP is set.
@@ -342,7 +358,7 @@ def calc_acgme_for_resident_year(
     pt_continuity_visits = len(
         encounters_in_year_df[encounters_in_year_df["prw_id"].isin(with_pcp_mrns)]
     )
-    pt_continuity_percent = f"{len(with_pcp_visits) / pt_continuity_visits:.0%}"
+    pt_continuity_percent = f"{len(with_pcp_visits) / pt_continuity_visits if pt_continuity_visits > 0 else 0:.0%}"
     pt_continuity_comment = f"{len(with_pcp_visits)}/{pt_continuity_visits} visits"
 
     # Calculate number of adult/peds ED and inpatient encounters. An encounter is defined as any
