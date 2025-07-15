@@ -99,7 +99,7 @@ def st_volume_graph(data: app_data.AppData, resident: str):
     # Simple hover showing just the count
     fig.update_traces(hovertemplate="%{y}")
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, key=f"volume_graph_{resident}", use_container_width=True)
 
 
 def st_acgme_stats(stats):

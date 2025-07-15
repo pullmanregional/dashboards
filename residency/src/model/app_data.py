@@ -85,18 +85,21 @@ def process(src_data: source_data.SourceData) -> AppData:
         ed_counts = ed_dates.value_counts().reset_index()
         ed_counts.columns = ["Date", "ED"]
 
-        # Give a 0 count for empty dataframes
-        if clinic_counts.empty:
-            clinic_counts = pd.DataFrame({"Date": [pd.Timestamp.now()], "Clinic": [0]})
-        if inpt_counts.empty:
-            inpt_counts = pd.DataFrame({"Date": [pd.Timestamp.now()], "Inpatient": [0]})
-        if ed_counts.empty:
-            ed_counts = pd.DataFrame({"Date": [pd.Timestamp.now()], "ED": [0]})
-
         # Combine the counts into a single dataframe, merging by date
         counts = pd.merge(clinic_counts, inpt_counts, on="Date", how="outer")
         counts = pd.merge(counts, ed_counts, on="Date", how="outer")
         counts = counts.fillna(0)
+
+        # If no data exists, create a single row with zeros
+        if counts.empty:
+            counts = pd.DataFrame(
+                {
+                    "Date": [pd.Timestamp.now().date()],
+                    "Clinic": [0],
+                    "Inpatient": [0],
+                    "ED": [0],
+                }
+            )
 
         # Sort by date
         counts["Date"] = pd.to_datetime(counts["Date"])
