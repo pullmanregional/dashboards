@@ -12,6 +12,7 @@ sqlmodel = "*"
 authlib = "*"
 pandas = "*"
 arrow = "*"
+pyodbc = "*"
 
 [requires]
 python_version = "3"
