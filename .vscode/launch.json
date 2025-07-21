@@ -72,13 +72,13 @@
       "name": "Ingest: rvupeds",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/rvupeds/prefect/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/rvupeds/prefect",
+      "program": "${workspaceFolder}/rvupeds/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/rvupeds/ingest",
       "args": [
         "--prw",
-        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
         "--out",
-        "prh-rvupeds.sqlite3"
+        "${workspaceFolder}/../prh-warehouse/prh-rvupeds.sqlite3",
       ],
       "console": "integratedTerminal",
       "justMyCode": true
