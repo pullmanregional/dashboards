@@ -8,15 +8,15 @@
       "name": "Ingest: finance",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/finance/prefect/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/finance/prefect",
+      "program": "${workspaceFolder}/finance/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/finance/ingest",
       "args": [
         "--prw",
-        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
         "--out",
-        "prh-finance.sqlite3",
+        "${workspaceFolder}/../prh-warehouse/prh-finance.sqlite3",
         "--kv",
-        "prh-finance.json"
+        "${workspaceFolder}/../prh-warehouse/prh-finance.json"
       ],
       "console": "integratedTerminal",
       "justMyCode": true
@@ -25,13 +25,13 @@
       "name": "Ingest: marketing",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/marketing/prefect/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/marketing/prefect",
+      "program": "${workspaceFolder}/marketing/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/marketing/ingest",
       "args": [
         "--prw",
-        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
         "--out",
-        "prh-marketing.sqlite3"
+        "${workspaceFolder}/../prh-warehouse/prh-marketing.sqlite3"
       ],
       "console": "integratedTerminal",
       "justMyCode": true
@@ -40,15 +40,15 @@
       "name": "Ingest: panel",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/panel/prefect/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/panel/prefect",
+      "program": "${workspaceFolder}/panel/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/panel/ingest",
       "args": [
         "--prw",
-        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
         "--out",
-        "prh-panel.sqlite3",
+        "${workspaceFolder}/../prh-warehouse/prh-panel.sqlite3",
         "--kv",
-        "prh-panel.json"
+        "${workspaceFolder}/../prh-warehouse/prh-panel.json"
       ],
       "console": "integratedTerminal",
       "justMyCode": true
@@ -57,13 +57,13 @@
       "name": "Ingest: residency",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/residency/prefect/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/residency/prefect",
+      "program": "${workspaceFolder}/residency/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/residency/ingest",
       "args": [
         "--prw",
-        "sqlite:///../../../prh-warehouse/prw.sqlite3",
+        "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
         "--out",
-        "prh-residency.sqlite3"
+        "${workspaceFolder}/../prh-warehouse/prh-residency.sqlite3"
       ],
       "console": "integratedTerminal",
       "justMyCode": true

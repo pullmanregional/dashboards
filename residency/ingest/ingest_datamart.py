@@ -436,6 +436,11 @@ def main():
     s3_auth = args.s3auth
     tmp_db_file = "datamart.sqlite3"
 
+    logging.info(
+        f"Input: {db_utils.mask_conn_pw(prw_db_url)}, output: {output_db_file}, encrypt: {encrypt_key is not None}, upload: {s3_url}",
+        flush=True,
+    )
+
     # Create the sqlite output database and create the tables as defined in ../src/model/db.py
     out_engine = db_utils.get_db_connection(f"sqlite:///{tmp_db_file}")
     db.DatamartModel.metadata.create_all(out_engine)
@@ -487,7 +492,7 @@ def main():
     if encrypt_key and s3_url and s3_auth:
         upload_file_to_s3(s3_url, s3_auth, output_db_file)
 
-    print("Done")
+    logging.info("Done")
 
 
 if __name__ == "__main__":
