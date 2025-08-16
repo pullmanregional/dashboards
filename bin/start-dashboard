@@ -29,9 +29,9 @@ cd "$DASHBOARD_NAME" || { echo "Dashboard directory not found: $DASHBOARD_NAME";
 
 if [ "$INTERACTIVE" = true ]; then
     # Interactive mode
-    pipenv run streamlit run app.py
+    uv run streamlit run app.py
 else
     # Background mode
-    nohup pipenv run streamlit run app.py &> nohup.out & echo $! > streamlit.pid
+    nohup uv run streamlit run app.py &> nohup.out & echo $! > streamlit.pid
     echo "Dashboard started in background. PID saved to streamlit.pid"
 fi

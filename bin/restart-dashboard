@@ -16,5 +16,5 @@ OLD_PID=$(cat streamlit.pid 2>/dev/null)
 kill $OLD_PID || { echo "Existing process $OLD_PID could not be terminated"; exit 1; }
 
 # Restart
-nohup pipenv run streamlit run app.py &> nohup.out & echo $! > streamlit.pid
+nohup uv run streamlit run app.py &> nohup.out & echo $! > streamlit.pid
 echo "Dashboard $DASHBOARD_NAME restarted. PID saved to streamlit.pid"
