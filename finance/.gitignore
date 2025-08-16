@@ -1,6 +1,4 @@
 data/
-prefect/*.json
-prefect/*.enc
 .streamlit/secrets.toml
 **/node_modules
 *.rdp
