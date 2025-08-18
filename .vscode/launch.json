@@ -8,8 +8,8 @@
       "name": "Ingest: finance",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/finance/ingest/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/finance/ingest",
+      "program": "${workspaceFolder}/streamlit/finance/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/streamlit/finance/ingest",
       "args": [
         "--prw",
         "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
@@ -25,8 +25,8 @@
       "name": "Ingest: marketing",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/marketing/ingest/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/marketing/ingest",
+      "program": "${workspaceFolder}/streamlit/marketing/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/streamlit/marketing/ingest",
       "args": [
         "--prw",
         "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
@@ -40,8 +40,8 @@
       "name": "Ingest: panel",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/panel/ingest/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/panel/ingest",
+      "program": "${workspaceFolder}/streamlit/panel/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/streamlit/panel/ingest",
       "args": [
         "--prw",
         "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
@@ -57,8 +57,8 @@
       "name": "Ingest: residency",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/residency/ingest/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/residency/ingest",
+      "program": "${workspaceFolder}/streamlit/residency/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/streamlit/residency/ingest",
       "args": [
         "--prw",
         "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
@@ -72,8 +72,8 @@
       "name": "Ingest: rvupeds",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/rvupeds/ingest/ingest_datamart.py",
-      "cwd": "${workspaceFolder}/rvupeds/ingest",
+      "program": "${workspaceFolder}/streamlit/rvupeds/ingest/ingest_datamart.py",
+      "cwd": "${workspaceFolder}/streamlit/rvupeds/ingest",
       "args": [
         "--prw",
         "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
@@ -88,7 +88,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "cwd": "${workspaceFolder}/finance",
+      "cwd": "${workspaceFolder}/streamlit/finance",
       "args": [
         "run",
         "app.py"
@@ -101,7 +101,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "cwd": "${workspaceFolder}/marketing",
+      "cwd": "${workspaceFolder}/streamlit/marketing",
       "args": [
         "run",
         "app.py"
@@ -114,7 +114,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "cwd": "${workspaceFolder}/panel",
+      "cwd": "${workspaceFolder}/streamlit/panel",
       "args": [
         "run",
         "app.py"
@@ -127,7 +127,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "cwd": "${workspaceFolder}/residency",
+      "cwd": "${workspaceFolder}/streamlit/residency",
       "args": [
         "run",
         "app.py"
@@ -140,7 +140,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "cwd": "${workspaceFolder}/rvupeds",
+      "cwd": "${workspaceFolder}/streamlit/rvupeds",
       "args": [
         "run",
         "app.py"
