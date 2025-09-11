@@ -1,0 +1,41 @@
+# HTTP redirect to HTTPS
+server {
+  listen 80;
+  server_name data.prh.app;
+
+  # Managed by certbot
+  location /.well-known/acme-challenge/ {
+      root /var/www/certbot;
+  }
+  location / {
+      return 301 https://$host$request_uri;
+  }
+}
+
+# HTTPS server with OAuth2-proxy protection
+server {
+  listen 443 ssl;
+  server_name data.prh.app;
+
+  # SSL configuration
+  ssl_certificate /etc/letsencrypt/live/data.prh.app/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/data.prh.app/privkey.pem;
+  include /etc/letsencrypt/options-ssl-nginx.conf;
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+  # OAuth2 Proxy endpoints: /oauth2/* and /oauth2callback
+  include /etc/nginx/oauth2-proxy-endpoints.conf;
+
+  # To route through oauth2-proxy, add this line inside the location block (this includes streamlit headers):
+  #   include /etc/nginx/oauth2-proxy-auth.conf;
+  #
+  # To use streamlit native oauth2, replace that line with streamlit headers only:
+  #   include /etc/nginx/streamlit-proxy-headers.conf;
+  #
+  # Only one of them is needed since oauth2-proxy-auth.conf is a superset of streamlit-proxy-headers.conf
+  #
+  location /<app> {
+    proxy_pass http://0.0.0.0:8505/<app>;
+    include /etc/nginx/oauth2-proxy-auth.conf;
+  }
+}
