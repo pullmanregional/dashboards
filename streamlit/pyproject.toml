@@ -12,5 +12,6 @@ dependencies = [
     "pyodbc>=5.2.0",
     "sqlmodel>=0.0.24",
     "streamlit>=1.47.0",
+    "streamlit-aggrid>=1.1.8.post1",
     "streamlit-extras>=0.7.6",
 ]
