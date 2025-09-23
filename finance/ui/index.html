@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRH Finance Dashboard - Department Selection</title>
+    <link rel="preload" as="image" href="./static/prh-logo.svg" />
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div class="department-selector">
+      <div class="container">
+        <div class="logo"><img src="./static/prh-logo.svg" alt="PRH Logo" /></div>
+        
+        <div class="form-section">
+          <div class="select-wrapper">
+            <select id="department-select">
+              <option value="">Choose a department...</option>
+            </select>
+          </div>
+          
+          <button id="go-button" class="go-button" disabled>
+            Go to Dashboard
+          </button>
+        </div>
+        
+        <div id="link-info" class="link-info">
+          <p>Direct link to dashboard:</p>
+          <a id="link-url" class="link-url">
+            --
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

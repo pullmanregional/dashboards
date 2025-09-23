@@ -147,6 +147,20 @@
       ],
       "console": "integratedTerminal",
       "justMyCode": false
+    },
+    {
+      "name": "Finance dashboard: express server + vite",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/finance",
+    },
+    {
+      "name": "Finance dashboard: Chrome-only",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173/finance",
+      "webRoot": "${workspaceFolder}/finance/ui"
     }
   ]
 }
