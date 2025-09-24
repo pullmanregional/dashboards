@@ -62,7 +62,7 @@ INCOME_STATEMENT_DEF = [
                     {
                         "name": "Service Revenue",
                         "items": [
-                            {"account": "40020:Service Revenue", "negative": True},
+                            {"account": "40030:Service Revenue", "negative": True},
                             {
                                 "account": "40031:EPIC Miscellaneous Revenue",
                                 "negative": True,
