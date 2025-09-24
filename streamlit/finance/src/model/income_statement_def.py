@@ -1,6 +1,7 @@
 """
 Defines how to convert a table of raw revenue/expense items to a readable income statement
 """
+
 INCOME_STATEMENT_DEF = [
     {
         "name": "Operating Revenues",
@@ -15,7 +16,12 @@ INCOME_STATEMENT_DEF = [
                                 "account": "40000:Patient Revenues",
                                 "category": "Inpatient Revenue",
                                 "negative": True,
-                            }
+                            },
+                            {
+                                "account": "40000:Patient Revenues",
+                                "category": "Inpatient Revenue_40000",
+                                "negative": True,
+                            },
                         ],
                     },
                     {
@@ -28,7 +34,17 @@ INCOME_STATEMENT_DEF = [
                             },
                             {
                                 "account": "40000:Patient Revenues",
+                                "category": "Outpatient Revenue_40000",
+                                "negative": True,
+                            },
+                            {
+                                "account": "40000:Patient Revenues",
                                 "category": "Clinic Revenue",
+                                "negative": True,
+                            },
+                            {
+                                "account": "40000:Patient Revenues",
+                                "category": "Clinic Revenue_40000",
                                 "negative": True,
                             },
                         ],
@@ -44,13 +60,40 @@ INCOME_STATEMENT_DEF = [
                         "negative": True,
                     },
                     {
-                        "account": "40300:Other Operating Revenue",
-                        "category": "*",
-                        "negative": True,
+                        "name": "Service Revenue",
+                        "items": [
+                            {"account": "40020:Service Revenue", "negative": True},
+                            {
+                                "account": "40031:EPIC Miscellaneous Revenue",
+                                "negative": True,
+                            },
+                        ],
                     },
                     {
-                        "account": "40301:Gain/Loss on Sale",
-                        "negative": True,
+                        "name": "Grants Revenue",
+                        "items": [
+                            {"account": "40100:Grants Revenue", "negative": True}
+                        ],
+                    },
+                    {
+                        "name": "Donations",
+                        "items": [{"account": "40200:Donations", "negative": True}],
+                    },
+                    {
+                        "name": "Other Operating Revenue",
+                        "items": [
+                            {
+                                "account": "40300:Other Operating Revenue",
+                                "negative": True,
+                            },
+                            {"account": "40301:Gain/Loss on Sale", "negative": True},
+                        ],
+                    },
+                    {
+                        "name": "Interest Income",
+                        "items": [
+                            {"account": "47000:Interest Income", "negative": True}
+                        ],
                     },
                 ],
             },
