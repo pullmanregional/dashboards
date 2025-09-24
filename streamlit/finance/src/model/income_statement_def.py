@@ -99,6 +99,7 @@ INCOME_STATEMENT_DEF = [
             },
         ],
     },
+    {"name": "Total Operating Revenue", "total": ["Operating Revenues"]},
     {
         "name": "Deductions",
         "items": [
