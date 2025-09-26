@@ -197,7 +197,6 @@ export class TreeTable extends LitElement {
     const indentLevel = treeInfo.level;
 
     const rowClasses = [
-      isBold ? "font-bold" : "font-medium",
       isHighlight ? "tree-table-highlight" : "",
       !isHighlight && !this.hasDataValues(row) ? "!border-base-300" : "",
     ].filter(Boolean);
@@ -205,8 +204,8 @@ export class TreeTable extends LitElement {
     const cells = this.headers.map((header, headerIndex) => {
       const cellClasses = [
         header.align || "text-left",
-        isBold ? "font-bold" : "",
         header.classes || "",
+        isBold ? "font-bold" : "",
         this.compact ? "py-0 px-2" : "",
       ].filter(Boolean);
 

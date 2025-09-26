@@ -56,7 +56,7 @@ export const INCOME_STMT_DEF = [
       {
         name: "Service Revenue",
         items: [
-          { account: "40020:Service Revenue", negative: true },
+          { account: "40030:Service Revenue", negative: true },
           { account: "40031:EPIC Miscellaneous Revenue", negative: true },
         ],
       },
@@ -209,6 +209,7 @@ export const INCOME_STMT_DEF = [
       "-Salaries & Benefits/",
       "-Other Direct Expenses/",
     ],
+    bold: true,
     highlight: true,
   },
   {
@@ -262,6 +263,7 @@ export const INCOME_STMT_DEF = [
       "-Non-Operating Expenses/",
       "Investments (Non-Operating)/",
     ],
+    bold: true,
     highlight: true,
   },
 ];

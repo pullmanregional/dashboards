@@ -1,29 +1,60 @@
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
+// ------------------------------------------------------------
+// Formatting utilities
+// ------------------------------------------------------------
+const FORMATTERS = {
+  currency: new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(value || 0);
+  }),
+
+  number: (decimals = 0) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }),
+};
+
+function formatCurrency(value) {
+  return FORMATTERS.currency.format(value || 0);
 }
 
 function formatNumber(value, decimals = 0) {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value || 0);
+  return FORMATTERS.number(decimals).format(value || 0);
+}
+
+// ------------------------------------------------------------
+// Variance calculations
+// ------------------------------------------------------------
+function calculateVariance(actual, budget) {
+  return ((actual - budget) / budget) * 100;
+}
+
+function createMetricCard(title, value, budgetValue, variance, isExpense) {
+  const metricCard = document.createElement("metric-card");
+  metricCard.title = title;
+  metricCard.value = value;
+  metricCard.budgetValue = budgetValue;
+  metricCard.variance = variance;
+  metricCard.isExpense = isExpense;
+  return metricCard;
 }
 
 function populateFinancialMetrics(metricEl, data) {
   const stats = data.stats;
-  const revenueVariance =
-    ((stats.ytdRevenue - stats.ytdBudgetRevenue) / stats.ytdBudgetRevenue) *
-    100;
-  const expenseVariance =
-    ((stats.ytdExpense - stats.ytdBudgetExpense) / stats.ytdBudgetExpense) *
-    100;
-  const volumeVariance =
-    ((stats.ytmVolume - stats.ytmBudgetVolume) / stats.ytmBudgetVolume) * 100;
+  const revenueVariance = calculateVariance(
+    stats.ytdRevenue,
+    stats.ytdBudgetRevenue
+  );
+  const expenseVariance = calculateVariance(
+    stats.ytdExpense,
+    stats.ytdBudgetExpense
+  );
+  const volumeVariance = calculateVariance(
+    stats.ytmVolume,
+    stats.ytmBudgetVolume
+  );
 
   const metrics = [
     {
@@ -60,13 +91,15 @@ function populateFinancialMetrics(metricEl, data) {
 
   metricEl.innerHTML = "";
   metrics.forEach((metric) => {
-    const metricCard = document.createElement("metric-card");
-    metricCard.title = metric.title;
-    metricCard.value = metric.value;
-    metricCard.budgetValue = metric.budgetValue;
-    metricCard.variance = metric.variance;
-    metricCard.isExpense = metric.isExpense;
-    metricEl.appendChild(metricCard);
+    metricEl.appendChild(
+      createMetricCard(
+        metric.title,
+        metric.value,
+        metric.budgetValue,
+        metric.variance,
+        metric.isExpense
+      )
+    );
   });
 }
 

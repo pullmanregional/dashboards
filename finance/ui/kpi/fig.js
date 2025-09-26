@@ -1,23 +1,23 @@
-function populateVolumeChart(chartEl, data) {
-  const { volumes = [], budget = [] } = data;
-  const months = volumes.slice(-12).map((v) => v.month);
-  const actualVolumes = volumes.slice(-12).map((v) => v.volume || 0);
+// ------------------------------------------------------------
+// Chart configuration constants
+// ------------------------------------------------------------
+const CHART_CONFIG = {
+  colors: {
+    primary: "#059669",
+    secondary: "#6b7280",
+    revenue: "#059669",
+    expense: "#dc2626",
+    productive: "#059669",
+    nonproductive: "#dc2626",
+    fte: "#3b82f6",
+  },
 
-  const annualBudgetVolume = budget.reduce(
-    (sum, b) => sum + (b.budget_volume || 0),
-    0
-  );
-  const monthlyBudgetVolume = annualBudgetVolume / 12;
-  const budgetLine = new Array(months.length).fill(monthlyBudgetVolume);
-
-  const options = {
+  commonOptions: {
     title: {
-      text: "Volume vs Budget",
       left: "center",
       textStyle: { fontSize: 16, fontWeight: "bold", color: "#1f2937" },
     },
     tooltip: { trigger: "axis" },
-    legend: { data: ["Actual Volume", "Budget"], bottom: 0 },
     grid: {
       left: "3%",
       right: "4%",
@@ -25,6 +25,29 @@ function populateVolumeChart(chartEl, data) {
       top: "15%",
       containLabel: true,
     },
+  },
+};
+
+// ------------------------------------------------------------
+// Volume chart utilities
+// ------------------------------------------------------------
+function calculateBudgetLine(budget, monthsLength) {
+  const annualBudgetVolume = budget.reduce(
+    (sum, b) => sum + (b.budget_volume || 0),
+    0
+  );
+  const monthlyBudgetVolume = annualBudgetVolume / 12;
+  return new Array(monthsLength).fill(monthlyBudgetVolume);
+}
+
+function createVolumeChartOptions(months, actualVolumes, budgetLine) {
+  return {
+    ...CHART_CONFIG.commonOptions,
+    title: {
+      ...CHART_CONFIG.commonOptions.title,
+      text: "Volume vs Budget",
+    },
+    legend: { data: ["Actual Volume", "Budget"], bottom: 0 },
     xAxis: {
       type: "category",
       data: months,
@@ -37,26 +60,34 @@ function populateVolumeChart(chartEl, data) {
         type: "line",
         data: actualVolumes,
         smooth: true,
-        itemStyle: { color: "#059669" },
-        areaStyle: { opacity: 0.3, color: "#059669" },
+        itemStyle: { color: CHART_CONFIG.colors.primary },
+        areaStyle: { opacity: 0.3, color: CHART_CONFIG.colors.primary },
       },
       {
         name: "Budget",
         type: "line",
         data: budgetLine,
-        lineStyle: { type: "dashed", color: "#6b7280" },
-        itemStyle: { color: "#6b7280" },
+        lineStyle: { type: "dashed", color: CHART_CONFIG.colors.secondary },
+        itemStyle: { color: CHART_CONFIG.colors.secondary },
       },
     ],
   };
-
-  chartEl.options = options;
 }
 
-function populateRevenueChart(chartEl, data) {
-  const { stats = {} } = data;
+function populateVolumeChart(chartEl, data) {
+  const { volumes = [], budget = [] } = data;
+  const months = volumes.slice(-12).map((v) => v.month);
+  const actualVolumes = volumes.slice(-12).map((v) => v.volume || 0);
+  const budgetLine = calculateBudgetLine(budget, months.length);
 
-  const dataPoints = [
+  chartEl.options = createVolumeChartOptions(months, actualVolumes, budgetLine);
+}
+
+// ------------------------------------------------------------
+// Revenue chart utilities
+// ------------------------------------------------------------
+function createRevenueDataPoints(stats) {
+  return [
     {
       name: "Revenue",
       value: stats.ytdRevenue || 0,
@@ -68,29 +99,28 @@ function populateRevenueChart(chartEl, data) {
       budget: stats.ytdBudgetExpense || 0,
     },
   ];
+}
 
-  const options = {
+function createRevenueTooltipFormatter(dataPoints) {
+  return (params) => {
+    const item = dataPoints.find((d) => d.name === params.name);
+    return `${
+      params.name
+    }<br/>Actual: $${params.value.toLocaleString()}<br/>Budget: $${item.budget.toLocaleString()}`;
+  };
+}
+
+function createRevenueChartOptions(dataPoints) {
+  return {
+    ...CHART_CONFIG.commonOptions,
     title: {
+      ...CHART_CONFIG.commonOptions.title,
       text: "Revenue vs Expenses YTD",
-      left: "center",
-      textStyle: { fontSize: 16, fontWeight: "bold", color: "#1f2937" },
     },
     tooltip: {
-      formatter: (params) => {
-        const item = dataPoints.find((d) => d.name === params.name);
-        return `${
-          params.name
-        }<br/>Actual: $${params.value.toLocaleString()}<br/>Budget: $${item.budget.toLocaleString()}`;
-      },
+      formatter: createRevenueTooltipFormatter(dataPoints),
     },
     legend: { data: ["Actual", "Budget"], bottom: 0 },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "15%",
-      top: "15%",
-      containLabel: true,
-    },
     xAxis: { type: "category", data: dataPoints.map((d) => d.name) },
     yAxis: {
       type: "value",
@@ -102,46 +132,57 @@ function populateRevenueChart(chartEl, data) {
         type: "bar",
         data: dataPoints.map((d) => d.value),
         itemStyle: {
-          color: (params) => (params.dataIndex === 0 ? "#059669" : "#dc2626"),
+          color: (params) =>
+            params.dataIndex === 0
+              ? CHART_CONFIG.colors.revenue
+              : CHART_CONFIG.colors.expense,
         },
       },
       {
         name: "Budget",
         type: "bar",
         data: dataPoints.map((d) => d.budget),
-        itemStyle: { color: "#6b7280", opacity: 0.6 },
+        itemStyle: { color: CHART_CONFIG.colors.secondary, opacity: 0.6 },
       },
     ],
   };
-
-  chartEl.options = options;
 }
 
-function populateProductivityChart(chartEl, data) {
-  const { hours = [] } = data;
+function populateRevenueChart(chartEl, data) {
+  const { stats = {} } = data;
+  const dataPoints = createRevenueDataPoints(stats);
+  chartEl.options = createRevenueChartOptions(dataPoints);
+}
 
-  const months = hours.slice(-12).map((h) => h.month);
-  const prodHours = hours.slice(-12).map((h) => h.prod_hrs || 0);
-  const nonprodHours = hours.slice(-12).map((h) => h.nonprod_hrs || 0);
-  const fteValues = hours.slice(-12).map((h) => h.total_fte || 0);
+// ------------------------------------------------------------
+// Productivity chart utilities
+// ------------------------------------------------------------
+function extractProductivityData(hours) {
+  const recentHours = hours.slice(-12);
+  return {
+    months: recentHours.map((h) => h.month),
+    prodHours: recentHours.map((h) => h.prod_hrs || 0),
+    nonprodHours: recentHours.map((h) => h.nonprod_hrs || 0),
+    fteValues: recentHours.map((h) => h.total_fte || 0),
+  };
+}
 
-  const options = {
+function createProductivityChartOptions(
+  months,
+  prodHours,
+  nonprodHours,
+  fteValues
+) {
+  return {
+    ...CHART_CONFIG.commonOptions,
     title: {
+      ...CHART_CONFIG.commonOptions.title,
       text: "Productivity & FTE Trends",
-      left: "center",
-      textStyle: { fontSize: 16, fontWeight: "bold", color: "#1f2937" },
     },
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: {
       data: ["Productive Hours", "Non-Productive Hours", "Total FTE"],
       bottom: 0,
-    },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "15%",
-      top: "15%",
-      containLabel: true,
     },
     xAxis: {
       type: "category",
@@ -169,14 +210,14 @@ function populateProductivityChart(chartEl, data) {
         type: "bar",
         stack: "hours",
         data: prodHours,
-        itemStyle: { color: "#059669" },
+        itemStyle: { color: CHART_CONFIG.colors.productive },
       },
       {
         name: "Non-Productive Hours",
         type: "bar",
         stack: "hours",
         data: nonprodHours,
-        itemStyle: { color: "#dc2626" },
+        itemStyle: { color: CHART_CONFIG.colors.nonproductive },
       },
       {
         name: "Total FTE",
@@ -184,13 +225,23 @@ function populateProductivityChart(chartEl, data) {
         yAxisIndex: 1,
         data: fteValues,
         smooth: true,
-        itemStyle: { color: "#3b82f6" },
+        itemStyle: { color: CHART_CONFIG.colors.fte },
         lineStyle: { width: 3 },
       },
     ],
   };
+}
 
-  chartEl.options = options;
+function populateProductivityChart(chartEl, data) {
+  const { hours = [] } = data;
+  const { months, prodHours, nonprodHours, fteValues } =
+    extractProductivityData(hours);
+  chartEl.options = createProductivityChartOptions(
+    months,
+    prodHours,
+    nonprodHours,
+    fteValues
+  );
 }
 
 export { populateVolumeChart, populateRevenueChart, populateProductivityChart };

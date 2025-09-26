@@ -34,7 +34,7 @@ export class IncomeStmtTable extends LitElement {
       "YTD Actual": row["YTD Actual"],
       "YTD Budget": row["YTD Budget"],
       // Add financial-specific styling
-      bold: this.isBoldRow(row),
+      bold: row.bold,
       highlight: row.highlight,
     }));
   }
@@ -85,16 +85,6 @@ export class IncomeStmtTable extends LitElement {
     );
   }
 
-  // Financial-specific logic for determining highlighted rows
-  isHighlightRow(row) {
-    const name = row["Ledger Account"] || "";
-    return (
-      name.includes("Net Revenue") ||
-      name.includes("Operating Margin") ||
-      name.includes("Total Operating")
-    );
-  }
-
   // Check if a row has financial data values
   hasDataValues(row) {
     return row["Actual"] !== null && row["Actual"] !== undefined;
@@ -108,12 +98,16 @@ export class IncomeStmtTable extends LitElement {
         if (value === null || value === undefined || value === "") return "-";
         const num = parseFloat(value);
         if (isNaN(num)) return "-";
-        return new Intl.NumberFormat("en-US", {
+
+        // Format with parentheses for negative values
+        const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(num);
+        }).format(Math.abs(num));
+
+        return num < 0 ? `(${formatted})` : formatted;
       }
       // Default formatting for non-financial columns
       if (value === null || value === undefined || value === "") return "-";

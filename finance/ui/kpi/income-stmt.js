@@ -1,4 +1,5 @@
 import { INCOME_STMT_DEF } from "./income-stmt-def.js";
+import { DEPARTMENTS } from "../department-config.js";
 
 // Income Statement Population
 export function populateIncomeStatement(element, data) {
@@ -11,20 +12,23 @@ export function populateIncomeStatement(element, data) {
   element.data = hierarchicalData;
 }
 
+// ------------------------------------------------------------
+// Data transformation utilities
+// ------------------------------------------------------------
+function normalizeIncomeStatementData(rawData) {
+  return rawData.map((row) => ({
+    ...row,
+    category: row.spend_category || row.revenue_category || "",
+  }));
+}
+
 // Transform raw income statement data into hierarchical structure
 export function transformIncomeStatementData(rawData) {
   if (!rawData || rawData.length === 0) return [];
 
-  // Normalize data by combining spend_category and revenue_category into a single category field
-  const srcData = rawData.map((row) => ({
-    ...row,
-    category: row.spend_category || row.revenue_category || "",
-  }));
-
-  // Initialize the hierarchical income statement structure
+  const srcData = normalizeIncomeStatementData(rawData);
   const incomeStatement = [];
 
-  // Process each item in the income statement definition to build the hierarchy
   INCOME_STMT_DEF.forEach((item) => {
     applyStatementDefItem(item, srcData, incomeStatement, "");
   });
@@ -52,6 +56,7 @@ function applyStatementDefItem(
       Budget: null,
       "YTD Actual": null,
       "YTD Budget": null,
+      bold: statementDefItem.bold,
       highlight: statementDefItem.highlight,
     });
 
@@ -79,6 +84,7 @@ function applyStatementDefItem(
         Budget: null,
         "YTD Actual": null,
         "YTD Budget": null,
+        bold: statementDefItem.bold,
         highlight: statementDefItem.highlight,
       });
 
@@ -120,6 +126,47 @@ function applyStatementDefItem(
   }
 }
 
+// ------------------------------------------------------------
+// Account and category processing utilities
+// ------------------------------------------------------------
+function processAccountCategoryData(
+  account,
+  category,
+  negative,
+  srcData,
+  incomeStatement,
+  path
+) {
+  const curPath = buildHierarchicalPath(path, account, category);
+  const filteredRows = filterRowsByAccountAndCategory(
+    srcData,
+    account,
+    category
+  );
+  const accountText = getAccountDisplayText(account, category);
+  const multiplier = negative ? -1 : 1;
+
+  const rowsByUnit = groupRowsByUnit(filteredRows);
+  const needsUnitPrefixes = Object.keys(rowsByUnit).length > 1;
+
+  Object.keys(rowsByUnit).forEach((deptWdId) => {
+    const unitRows = rowsByUnit[deptWdId];
+    const unitName = needsUnitPrefixes ? getUnitNameFromWdId(deptWdId) : null;
+
+    const aggregatedRow = aggregateUnitRows(unitRows);
+    const displayText = formatDisplayText(
+      accountText,
+      unitName,
+      needsUnitPrefixes
+    );
+    const unitPath = buildUnitPath(curPath, unitName, needsUnitPrefixes);
+
+    incomeStatement.push(
+      createIncomeStatementRow(unitPath, displayText, aggregatedRow, multiplier)
+    );
+  });
+}
+
 // Add financial data rows for a specific account and category combination
 function addDataFromAccountAndCategory(
   account,
@@ -129,42 +176,125 @@ function addDataFromAccountAndCategory(
   incomeStatement,
   path
 ) {
-  // Build hierarchical path for this data row
-  const curPath =
-    category !== null && category !== undefined
-      ? path === ""
-        ? `${account}-${category}`
-        : `${path}|${account}-${category}`
-      : path === ""
-      ? account
-      : `${path}|${account}`;
+  processAccountCategoryData(
+    account,
+    category,
+    negative,
+    srcData,
+    incomeStatement,
+    path
+  );
+}
 
-  // Filter source data to matching account and category
+// Build hierarchical path for tree structure
+function buildHierarchicalPath(path, account, category) {
+  if (category !== null && category !== undefined) {
+    return path === ""
+      ? `${account}-${category}`
+      : `${path}|${account}-${category}`;
+  }
+  return path === "" ? account : `${path}|${account}`;
+}
+
+// Filter source data by account and category
+function filterRowsByAccountAndCategory(srcData, account, category) {
   let rows = srcData.filter((row) => row.ledger_acct === account);
   if (category !== null && category !== undefined) {
     rows = rows.filter((row) => row.category === category);
   }
+  return rows;
+}
 
-  // Apply sign multiplier for revenue items (which should be negative in accounting)
-  const multiplier = negative ? -1 : 1;
-
-  // Determine display text for the account row
-  let accountText = account;
+// Get display text for the account
+function getAccountDisplayText(account, category) {
   if (category !== null && category !== undefined) {
-    accountText = category === "" ? "(Blank)" : category;
+    return category === "" ? "(Blank)" : category;
+  }
+  return account;
+}
+
+// Group rows by department work ID
+function groupRowsByUnit(rows) {
+  const rowsByUnit = {};
+  rows.forEach((row) => {
+    const deptWdId = row.dept_wd_id;
+    if (!rowsByUnit[deptWdId]) {
+      rowsByUnit[deptWdId] = [];
+    }
+    rowsByUnit[deptWdId].push(row);
+  });
+  return rowsByUnit;
+}
+
+// Aggregate financial values for a unit
+function aggregateUnitRows(unitRows) {
+  return unitRows.reduce(
+    (sum, row) => ({
+      actual: (sum.actual || 0) + (row.actual || 0),
+      budget: (sum.budget || 0) + (row.budget || 0),
+      actual_ytd: (sum.actual_ytd || 0) + (row.actual_ytd || 0),
+      budget_ytd: (sum.budget_ytd || 0) + (row.budget_ytd || 0),
+    }),
+    {}
+  );
+}
+
+// Format display text with unit prefix if needed
+function formatDisplayText(accountText, unitName, needsUnitPrefixes) {
+  if (needsUnitPrefixes && unitName) {
+    return `${accountText} [${unitName}]`;
+  }
+  return accountText;
+}
+
+// Build unique path for each unit
+function buildUnitPath(curPath, unitName, needsUnitPrefixes) {
+  if (needsUnitPrefixes && unitName) {
+    return `${curPath}-${unitName}`;
+  }
+  return curPath;
+}
+
+// Create income statement row object
+function createIncomeStatementRow(
+  tree,
+  ledgerAccount,
+  aggregatedRow,
+  multiplier
+) {
+  return {
+    tree,
+    "Ledger Account": ledgerAccount,
+    Actual: multiplier * aggregatedRow.actual,
+    Budget: multiplier * aggregatedRow.budget,
+    "YTD Actual": multiplier * aggregatedRow.actual_ytd,
+    "YTD Budget": multiplier * aggregatedRow.budget_ytd,
+  };
+}
+
+// Helper function to get unit name from dept_wd_id
+function getUnitNameFromWdId(deptWdId) {
+  // Search through all departments to find the unit with matching wd_id
+  for (const deptKey in DEPARTMENTS) {
+    const dept = DEPARTMENTS[deptKey];
+
+    // Check if this department has sub_depts
+    if (dept.sub_depts) {
+      for (const subDept of dept.sub_depts) {
+        if (subDept.wd_ids && subDept.wd_ids.includes(deptWdId)) {
+          return subDept.name;
+        }
+      }
+    }
+
+    // Check if this department's main wd_ids include the target
+    if (dept.wd_ids && dept.wd_ids.includes(deptWdId)) {
+      return dept.name;
+    }
   }
 
-  // Create income statement rows for each matching data record
-  rows.forEach((row) => {
-    incomeStatement.push({
-      tree: curPath,
-      "Ledger Account": accountText,
-      Actual: multiplier * (row.actual || 0),
-      Budget: multiplier * (row.budget || 0),
-      "YTD Actual": multiplier * (row.actual_ytd || 0),
-      "YTD Budget": multiplier * (row.budget_ytd || 0),
-    });
-  });
+  // Return the wd_id itself as fallback
+  return deptWdId;
 }
 
 // Calculate and add total rows by summing values from specified hierarchical paths
@@ -221,6 +351,7 @@ function addTotalRow(statementDefItem, incomeStatement, path) {
     Budget: budget,
     "YTD Actual": actualYtd,
     "YTD Budget": budgetYtd,
+    bold: statementDefItem.bold,
     highlight: statementDefItem.highlight,
   });
 }
