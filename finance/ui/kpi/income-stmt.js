@@ -1,116 +1,94 @@
 import { INCOME_STMT_DEF } from "./income-stmt-def.js";
 import { DEPARTMENTS } from "../department-config.js";
 
-// Income Statement Population
+// Populates a tree table element with hierarchical income statement data
 export function populateIncomeStatement(element, data) {
   if (!element || !data) return;
-
-  // Transform the raw income statement data into hierarchical structure
-  const hierarchicalData = transformIncomeStatementData(data.incomeStmt || []);
-  element.data = hierarchicalData;
+  element.data = transformIncomeStatementData(data.incomeStmt || []);
 }
 
-// ------------------------------------------------------------
-// Data transformation utilities
-// ------------------------------------------------------------
-function normalizeIncomeStatementData(rawData) {
-  return rawData.map((row) => ({
+// Transforms raw financial data into hierarchical income statement structure
+// rawData: Array of financial records with ledger_acct, spend_category/revenue_category, actual, budget, etc.
+export function transformIncomeStatementData(rawData) {
+  if (!rawData?.length) return [];
+
+  // Normalize category field from either spend_category or revenue_category
+  const srcData = rawData.map((row) => ({
     ...row,
     category: row.spend_category || row.revenue_category || "",
   }));
-}
 
-// Transform raw income statement data into hierarchical structure
-export function transformIncomeStatementData(rawData) {
-  if (!rawData || rawData.length === 0) return [];
-
-  const srcData = normalizeIncomeStatementData(rawData);
+  // Build hierarchical structure following INCOME_STMT_DEF template
   const incomeStatement = [];
-
-  INCOME_STMT_DEF.forEach((item) => {
-    applyStatementDefItem(item, srcData, incomeStatement, "");
-  });
-
+  INCOME_STMT_DEF.forEach((item) =>
+    applyStatementDefItem(item, srcData, incomeStatement, "")
+  );
   return incomeStatement;
 }
 
-// Recursively process income statement definition items to build hierarchical structure
-function applyStatementDefItem(
-  statementDefItem,
-  srcData,
-  incomeStatement,
-  path
-) {
-  // Handle section headers that contain sub-items (like "Operating Revenues", "Expenses")
-  if (statementDefItem.name && statementDefItem.items) {
-    const curPath =
-      path === "" ? statementDefItem.name : `${path}|${statementDefItem.name}`;
-
-    // Add header row for this section
+// Recursively processes income statement definition items to build hierarchical structure
+// item: Definition object with name/items (section), account/category (data), or total (calculated)
+// path: Hierarchical path using '|' delimiter for tree structure
+function applyStatementDefItem(item, srcData, incomeStatement, path) {
+  if (item.name && item.items) {
+    // Section header with sub-items (e.g., "Operating Revenues", "Expenses")
+    const curPath = path ? `${path}|${item.name}` : item.name;
     incomeStatement.push({
       tree: curPath,
-      "Ledger Account": statementDefItem.name,
+      "Ledger Account": item.name,
       Actual: null,
       Budget: null,
       "YTD Actual": null,
       "YTD Budget": null,
-      bold: statementDefItem.bold,
-      highlight: statementDefItem.highlight,
+      bold: item.bold,
+      highlight: item.highlight,
     });
-
-    // Recursively process all sub-items under this section
-    statementDefItem.items.forEach((subItem) => {
-      applyStatementDefItem(subItem, srcData, incomeStatement, curPath);
-    });
+    item.items.forEach((subItem) =>
+      applyStatementDefItem(subItem, srcData, incomeStatement, curPath)
+    );
   }
 
-  // Handle account-level items that reference specific ledger accounts
-  if (statementDefItem.account) {
-    const account = statementDefItem.account;
-    const category = statementDefItem.category;
-    const negative = statementDefItem.negative;
-
-    if (category === "*") {
-      // Wildcard category: process all categories found for this account
-      const curPath = path === "" ? account : `${path}|${account}`;
-
-      // Add account header row
+  if (item.account) {
+    // Account-level item that references specific ledger accounts
+    if (item.category === "*") {
+      // Wildcard category: dynamically process all categories found for this account
+      const curPath = path ? `${path}|${item.account}` : item.account;
       incomeStatement.push({
         tree: curPath,
-        "Ledger Account": account,
+        "Ledger Account": item.account,
         Actual: null,
         Budget: null,
         "YTD Actual": null,
         "YTD Budget": null,
-        bold: statementDefItem.bold,
-        highlight: statementDefItem.highlight,
+        bold: item.bold,
+        highlight: item.highlight,
       });
 
       // Find all unique categories for this account in the source data
-      const uniqueCategories = [
+      const categories = [
         ...new Set(
           srcData
-            .filter((row) => row.ledger_acct === account)
+            .filter((row) => row.ledger_acct === item.account)
             .map((row) => row.category)
-            .filter((cat) => cat !== null && cat !== undefined)
+            .filter((cat) => cat != null)
         ),
       ].sort();
 
       // Process each category found for this account
-      uniqueCategories.forEach((cat) => {
+      categories.forEach((cat) =>
         applyStatementDefItem(
-          { account, category: cat, negative },
+          { account: item.account, category: cat, negative: item.negative },
           srcData,
           incomeStatement,
           curPath
-        );
-      });
+        )
+      );
     } else {
-      // Specific category: add data for this account and category combination
-      addDataFromAccountAndCategory(
-        account,
-        category,
-        negative,
+      // Specific category or no category: add data for this account and category combination
+      addAccountData(
+        item.account,
+        item.category,
+        item.negative,
         srcData,
         incomeStatement,
         path
@@ -118,16 +96,15 @@ function applyStatementDefItem(
     }
   }
 
-  // Handle calculated totals (like "Net Revenue", "Operating Margin")
-  if (statementDefItem.total) {
-    addTotalRow(statementDefItem, incomeStatement, path);
+  if (item.total) {
+    // Calculated totals (e.g., "Net Revenue", "Operating Margin")
+    addTotalRow(item, incomeStatement, path);
   }
 }
 
-// ------------------------------------------------------------
-// Account and category processing utilities
-// ------------------------------------------------------------
-function processAccountCategoryData(
+// Adds financial data rows for a specific account and category combination
+// Handles multiple departments by grouping data and adding unit prefixes when needed
+function addAccountData(
   account,
   category,
   negative,
@@ -135,84 +112,17 @@ function processAccountCategoryData(
   incomeStatement,
   path
 ) {
-  const curPath = buildHierarchicalPath(path, account, category);
-  const filteredRows = filterRowsByAccountAndCategory(
-    srcData,
-    account,
-    category
+  const curPath = buildPath(path, account, category);
+  const rows = srcData.filter(
+    (row) =>
+      row.ledger_acct === account &&
+      (category == null || row.category === category)
   );
-  const accountText = getAccountDisplayText(account, category);
+
+  const displayText = category != null ? category || "(Blank)" : account;
   const multiplier = negative ? -1 : 1;
 
-  const rowsByUnit = groupRowsByUnit(filteredRows);
-  const needsUnitPrefixes = Object.keys(rowsByUnit).length > 1;
-
-  Object.keys(rowsByUnit).forEach((deptWdId) => {
-    const unitRows = rowsByUnit[deptWdId];
-    const unitName = needsUnitPrefixes ? getUnitNameFromWdId(deptWdId) : null;
-
-    const aggregatedRow = aggregateUnitRows(unitRows);
-    const displayText = formatDisplayText(
-      accountText,
-      unitName,
-      needsUnitPrefixes
-    );
-    const unitPath = buildUnitPath(curPath, unitName, needsUnitPrefixes);
-
-    incomeStatement.push(
-      createIncomeStatementRow(unitPath, displayText, aggregatedRow, multiplier)
-    );
-  });
-}
-
-// Add financial data rows for a specific account and category combination
-function addDataFromAccountAndCategory(
-  account,
-  category,
-  negative,
-  srcData,
-  incomeStatement,
-  path
-) {
-  processAccountCategoryData(
-    account,
-    category,
-    negative,
-    srcData,
-    incomeStatement,
-    path
-  );
-}
-
-// Build hierarchical path for tree structure
-function buildHierarchicalPath(path, account, category) {
-  if (category !== null && category !== undefined) {
-    return path === ""
-      ? `${account}-${category}`
-      : `${path}|${account}-${category}`;
-  }
-  return path === "" ? account : `${path}|${account}`;
-}
-
-// Filter source data by account and category
-function filterRowsByAccountAndCategory(srcData, account, category) {
-  let rows = srcData.filter((row) => row.ledger_acct === account);
-  if (category !== null && category !== undefined) {
-    rows = rows.filter((row) => row.category === category);
-  }
-  return rows;
-}
-
-// Get display text for the account
-function getAccountDisplayText(account, category) {
-  if (category !== null && category !== undefined) {
-    return category === "" ? "(Blank)" : category;
-  }
-  return account;
-}
-
-// Group rows by department work ID
-function groupRowsByUnit(rows) {
+  // Group rows by department to handle multi-unit scenarios
   const rowsByUnit = {};
   rows.forEach((row) => {
     const deptWdId = row.dept_wd_id;
@@ -221,103 +131,82 @@ function groupRowsByUnit(rows) {
     }
     rowsByUnit[deptWdId].push(row);
   });
-  return rowsByUnit;
+
+  // Add unit prefixes only when data spans multiple departments
+  const needsUnitPrefixes = Object.keys(rowsByUnit).length > 1;
+
+  Object.entries(rowsByUnit).forEach(([deptWdId, unitRows]) => {
+    const unitName = needsUnitPrefixes ? getUnitName(deptWdId) : null;
+
+    // Aggregate financial values across all rows for this unit
+    const aggregated = unitRows.reduce(
+      (sum, row) => ({
+        actual: (sum.actual || 0) + (row.actual || 0),
+        budget: (sum.budget || 0) + (row.budget || 0),
+        actual_ytd: (sum.actual_ytd || 0) + (row.actual_ytd || 0),
+        budget_ytd: (sum.budget_ytd || 0) + (row.budget_ytd || 0),
+      }),
+      {}
+    );
+
+    const finalDisplayText =
+      needsUnitPrefixes && unitName
+        ? `${displayText} [${unitName}]`
+        : displayText;
+    const unitPath =
+      needsUnitPrefixes && unitName ? `${curPath}-${unitName}` : curPath;
+
+    incomeStatement.push({
+      tree: unitPath,
+      "Ledger Account": finalDisplayText,
+      Actual: multiplier * aggregated.actual,
+      Budget: multiplier * aggregated.budget,
+      "YTD Actual": multiplier * aggregated.actual_ytd,
+      "YTD Budget": multiplier * aggregated.budget_ytd,
+    });
+  });
 }
 
-// Aggregate financial values for a unit
-function aggregateUnitRows(unitRows) {
-  return unitRows.reduce(
-    (sum, row) => ({
-      actual: (sum.actual || 0) + (row.actual || 0),
-      budget: (sum.budget || 0) + (row.budget || 0),
-      actual_ytd: (sum.actual_ytd || 0) + (row.actual_ytd || 0),
-      budget_ytd: (sum.budget_ytd || 0) + (row.budget_ytd || 0),
-    }),
-    {}
-  );
+// Builds hierarchical path for tree structure using '|' delimiter
+// Combines account and category into path segments
+function buildPath(path, account, category) {
+  const accountPath = category != null ? `${account}-${category}` : account;
+  return path ? `${path}|${accountPath}` : accountPath;
 }
 
-// Format display text with unit prefix if needed
-function formatDisplayText(accountText, unitName, needsUnitPrefixes) {
-  if (needsUnitPrefixes && unitName) {
-    return `${accountText} [${unitName}]`;
-  }
-  return accountText;
-}
-
-// Build unique path for each unit
-function buildUnitPath(curPath, unitName, needsUnitPrefixes) {
-  if (needsUnitPrefixes && unitName) {
-    return `${curPath}-${unitName}`;
-  }
-  return curPath;
-}
-
-// Create income statement row object
-function createIncomeStatementRow(
-  tree,
-  ledgerAccount,
-  aggregatedRow,
-  multiplier
-) {
-  return {
-    tree,
-    "Ledger Account": ledgerAccount,
-    Actual: multiplier * aggregatedRow.actual,
-    Budget: multiplier * aggregatedRow.budget,
-    "YTD Actual": multiplier * aggregatedRow.actual_ytd,
-    "YTD Budget": multiplier * aggregatedRow.budget_ytd,
-  };
-}
-
-// Helper function to get unit name from dept_wd_id
-function getUnitNameFromWdId(deptWdId) {
-  // Search through all departments to find the unit with matching wd_id
-  for (const deptKey in DEPARTMENTS) {
-    const dept = DEPARTMENTS[deptKey];
-
-    // Check if this department has sub_depts
+// Maps department work ID to human-readable unit name
+// Searches through DEPARTMENTS config to find matching wd_id
+function getUnitName(deptWdId) {
+  for (const dept of Object.values(DEPARTMENTS)) {
     if (dept.sub_depts) {
       for (const subDept of dept.sub_depts) {
-        if (subDept.wd_ids && subDept.wd_ids.includes(deptWdId)) {
-          return subDept.name;
-        }
+        if (subDept.wd_ids?.includes(deptWdId)) return subDept.name;
       }
     }
-
-    // Check if this department's main wd_ids include the target
-    if (dept.wd_ids && dept.wd_ids.includes(deptWdId)) {
-      return dept.name;
-    }
+    if (dept.wd_ids?.includes(deptWdId)) return dept.name;
   }
-
-  // Return the wd_id itself as fallback
-  return deptWdId;
+  return deptWdId; // Fallback to ID if no match found
 }
 
-// Calculate and add total rows by summing values from specified hierarchical paths
-function addTotalRow(statementDefItem, incomeStatement, path) {
-  const pathsToSum = statementDefItem.total;
+// Calculates and adds total rows by summing values from specified hierarchical paths
+// item.total: Array of path specifications (e.g., "Operating Revenues", "-Deductions")
+// Supports negative prefixes to subtract values (e.g., "-Deductions" subtracts deduction totals)
+function addTotalRow(item, incomeStatement, path) {
   let actual = 0,
     budget = 0,
     actualYtd = 0,
     budgetYtd = 0;
 
-  // Process each path specification (e.g., "Operating Revenues", "-Deductions")
-  pathsToSum.forEach((prefix) => {
+  item.total.forEach((prefix) => {
     // Normalize path delimiter from '/' to '|' and handle negative signs
     let cleanPrefix = prefix.replace(/\//g, "|");
     const isNegative = cleanPrefix.startsWith("-");
     cleanPrefix = isNegative ? cleanPrefix.substring(1) : cleanPrefix;
 
-    // Find all rows that match this hierarchical path prefix
-    const matchingRows = incomeStatement.filter((row) => {
-      const rowTree = row.tree;
-      if (!rowTree) return false;
-
-      // Match rows that start with the prefix (includes all sub-items)
-      return rowTree.startsWith(cleanPrefix);
-    });
+    // Find all rows that match this hierarchical path prefix (includes all sub-items)
+    const matchingRows = incomeStatement.filter((row) =>
+      row.tree?.startsWith(cleanPrefix)
+    );
 
     // Sum all matching rows across all time periods
     const sums = matchingRows.reduce(
@@ -338,18 +227,15 @@ function addTotalRow(statementDefItem, incomeStatement, path) {
     budgetYtd += multiplier * sums.budgetYtd;
   });
 
-  // Create the calculated total row with proper hierarchical path
-  const curPath =
-    path === "" ? statementDefItem.name : `${path}|${statementDefItem.name}`;
-
+  const curPath = path ? `${path}|${item.name}` : item.name;
   incomeStatement.push({
     tree: curPath,
-    "Ledger Account": statementDefItem.name,
+    "Ledger Account": item.name,
     Actual: actual,
     Budget: budget,
     "YTD Actual": actualYtd,
     "YTD Budget": budgetYtd,
-    bold: statementDefItem.bold,
-    highlight: statementDefItem.highlight,
+    bold: item.bold,
+    highlight: item.highlight,
   });
 }
