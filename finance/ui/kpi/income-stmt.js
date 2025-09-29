@@ -1,15 +1,15 @@
 import { INCOME_STMT_DEF } from "./income-stmt-def.js";
 import { DEPARTMENTS } from "../department-config.js";
 
-// Populates a tree table element with hierarchical income statement data
-export function populateIncomeStatement(element, data) {
-  if (!element || !data) return;
-  element.data = transformIncomeStatementData(data.incomeStmt || []);
+// Populates a <income-stmt-table> element with hierarchical income statement data
+export function populateIncomeStmt(incomeStmtEl, data) {
+  if (!incomeStmtEl || !data) return;
+  incomeStmtEl.data = transformIncomeStmtData(data.incomeStmt || []);
 }
 
 // Transforms raw financial data into hierarchical income statement structure
 // rawData: Array of financial records with ledger_acct, spend_category/revenue_category, actual, budget, etc.
-export function transformIncomeStatementData(rawData) {
+export function transformIncomeStmtData(rawData) {
   if (!rawData?.length) return [];
 
   // Normalize category field from either spend_category or revenue_category

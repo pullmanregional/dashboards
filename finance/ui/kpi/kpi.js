@@ -274,7 +274,7 @@ function render() {
     fig.populateVolumeChart(volumeChartEl, STATE.data);
     fig.populateRevenueChart(revenueChartEl, STATE.data);
     fig.populateProductivityChart(productivityChartEl, STATE.data);
-    incomeStmt.populateIncomeStatement(incomeStmtEl, STATE.data);
+    incomeStmt.populateIncomeStmt(incomeStmtEl, STATE.data);
   }
 }
 
