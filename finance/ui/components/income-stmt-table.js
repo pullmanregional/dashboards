@@ -1,6 +1,39 @@
 import { LitElement, html } from "lit";
 import "./tree-table.js";
 
+// Income statement column headers
+const INCOME_STMT_HEADERS = [
+  { title: "Account/Category", key: "Ledger Account", align: "text-left" },
+  {
+    title: "Actual",
+    key: "Actual",
+    align: "text-right",
+    classes: "font-mono",
+    summable: true,
+  },
+  {
+    title: "Budget",
+    key: "Budget",
+    align: "text-right",
+    classes: "font-mono",
+    summable: true,
+  },
+  {
+    title: "YTD Actual",
+    key: "YTD Actual",
+    align: "text-right",
+    classes: "font-mono",
+    summable: true,
+  },
+  {
+    title: "YTD Budget",
+    key: "YTD Budget",
+    align: "text-right",
+    classes: "font-mono",
+    summable: true,
+  },
+];
+
 export class IncomeStmtTable extends LitElement {
   // Disable shadow DOM to use DaisyUI
   createRenderRoot() {
@@ -16,81 +49,10 @@ export class IncomeStmtTable extends LitElement {
   constructor() {
     super();
     this.data = [];
-    this.title = "Income Statement";
-    this.maxHeight = "max-h-96";
+    this.maxHeight = "";
   }
 
-  // Transform income statement data and add financial-specific properties
-  transformData() {
-    if (!this.data || this.data.length === 0) {
-      return [];
-    }
-
-    return this.data.map((row) => ({
-      tree: row.tree,
-      "Ledger Account": row["Ledger Account"],
-      Actual: row["Actual"],
-      Budget: row["Budget"],
-      "YTD Actual": row["YTD Actual"],
-      "YTD Budget": row["YTD Budget"],
-      // Add financial-specific styling
-      bold: row.bold,
-      highlight: row.highlight,
-    }));
-  }
-
-  // Define the headers for the income statement table
-  getHeaders() {
-    return [
-      { title: "Account/Category", key: "Ledger Account", align: "text-left" },
-      {
-        title: "Actual",
-        key: "Actual",
-        align: "text-right",
-        classes: "font-mono",
-        summable: true,
-      },
-      {
-        title: "Budget",
-        key: "Budget",
-        align: "text-right",
-        classes: "font-mono",
-        summable: true,
-      },
-      {
-        title: "YTD Actual",
-        key: "YTD Actual",
-        align: "text-right",
-        classes: "font-mono",
-        summable: true,
-      },
-      {
-        title: "YTD Budget",
-        key: "YTD Budget",
-        align: "text-right",
-        classes: "font-mono",
-        summable: true,
-      },
-    ];
-  }
-
-  // Financial-specific logic for determining bold rows
-  isBoldRow(row) {
-    const name = row["Ledger Account"] || "";
-    return (
-      !this.hasDataValues(row) || // Header rows
-      name.includes("Total") ||
-      name.includes("Margin") ||
-      name.includes("Net")
-    );
-  }
-
-  // Check if a row has financial data values
-  hasDataValues(row) {
-    return row["Actual"] !== null && row["Actual"] !== undefined;
-  }
-
-  // Financial-specific formatter
+  // Finance number formatter
   createFormatter() {
     return (value, header, row) => {
       if (header.summable) {
@@ -116,39 +78,22 @@ export class IncomeStmtTable extends LitElement {
   }
 
   render() {
-    const transformedData = this.transformData();
-    const headers = this.getHeaders();
-
-    if (transformedData.length === 0) {
+    if (!this.data?.length) {
       return html`
-        <div class="card bg-base-100 shadow-lg">
-          <div class="card-body p-4">
-            <h2 class="card-title text-lg border-b border-base-300 pb-2 mb-4">
-              ${this.title}
-            </h2>
-            <div class="text-center py-8 text-base-content/60">
-              <div class="text-lg mb-2">No income statement data available</div>
-              <div class="text-sm">
-                Select a time period to view financial data
-              </div>
-            </div>
-          </div>
+        <div class="text-center py-8 text-base-content/60">
+          <div class="text-lg mb-2">No income statement data available</div>
         </div>
       `;
     }
 
     return html`
       <tree-table
-        title="${this.title}"
-        .headers="${headers}"
-        .data="${transformedData}"
-        maxHeight=""
+        .headers="${INCOME_STMT_HEADERS}"
+        .data="${this.data}"
         treeColumn="tree"
-        ?calculateTotals="${true}"
-        ?collapsed="${true}"
-        ?compact="${true}"
-        fontSize="text-xs"
+        calculateTotals
         .formatter="${this.createFormatter()}"
+        maxHeight="${this.maxHeight}"
       >
       </tree-table>
     `;

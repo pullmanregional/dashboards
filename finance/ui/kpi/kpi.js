@@ -25,7 +25,7 @@ const revenueChartEl = document.getElementById("revenue-chart");
 const productivityChartEl = document.getElementById("productivity-chart");
 const timePeriodSelectEl = document.getElementById("time-period-select");
 const unitSelectEl = document.getElementById("unit-select");
-const incomeStatementEl = document.getElementById("income-statement");
+const incomeStmtEl = document.getElementById("income-stmt");
 
 // State
 let STATE = {
@@ -274,7 +274,7 @@ function render() {
     fig.populateVolumeChart(volumeChartEl, STATE.data);
     fig.populateRevenueChart(revenueChartEl, STATE.data);
     fig.populateProductivityChart(productivityChartEl, STATE.data);
-    incomeStmt.populateIncomeStatement(incomeStatementEl, STATE.data);
+    incomeStmt.populateIncomeStatement(incomeStmtEl, STATE.data);
   }
 }
 

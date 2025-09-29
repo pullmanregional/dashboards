@@ -164,10 +164,12 @@
                 aria-label="Income Statement"
               />
               <div role="tabpanel" class="tab-content p-1 pt-3">
-                <income-stmt-table
-                  id="income-statement"
-                  title="Income Statement"
-                ></income-stmt-table>
+                <div class="card bg-base-100 shadow-lg">
+                  <div class="card-body px-4 pt-3 pb-4">
+                    <h2 class="card-title">Income Statement</h2>
+                    <income-stmt-table id="income-stmt"></income-stmt-table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
