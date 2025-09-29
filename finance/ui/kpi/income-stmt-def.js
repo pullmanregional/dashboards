@@ -44,7 +44,6 @@ export const INCOME_STMT_DEF = [
         ],
       },
     ],
-    highlight: true,
   },
   {
     name: "Other Revenue",
