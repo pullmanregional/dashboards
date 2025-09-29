@@ -12,38 +12,44 @@
     <link rel="stylesheet" href="./kpi/kpi.css" />
     <script type="module" src="./kpi/kpi.js"></script>
   </head>
-  <body class="bg-base-200 min-h-screen">
+  <body
+    class="min-h-screen bg-gradient-to-br from-base-200 via-base-300 to-base-300"
+  >
     <div class="container mx-auto p-4 max-w-7xl">
       <!-- Header Section -->
       <div class="bg-base-100 rounded-lg shadow-lg mb-3 p-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:items-center">
-          <!-- Back Button -->
-          <div class="order-1 sm:order-1 justify-self-start">
-            <button id="back-button" class="btn btn-ghost btn-sm pl-2">
-              <i class="fas fa-chevron-left mr-1"></i>
-              Department list
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
+          <!-- Back Button. On mobile, center, otherwise left align. -->
+          <div class="justify-self-center sm:justify-self-start">
+            <button
+              id="back-button"
+              class="btn btn-ghost btn-sm"
+              onclick="history.back()"
+            >
+              <i class="fas fa-chevron-left"></i>
+              Back
             </button>
           </div>
 
-          <!-- Controls Section - Shows first on mobile, last on desktop -->
-          <div class="order-2 sm:order-3 justify-self-center sm:justify-self-end flex flex-wrap justify-center sm:justify-end gap-2">
-            <select id="unit-select" class="select select-bordered select-sm w-40 hidden">
+          <!-- Header title -->
+          <div class="order-2 text-center">
+            <h1 id="title" class="text-xl font-bold leading-tight pb-2">
+              Department Dashboard
+            </h1>
+            <h2 id="subtitle" class="text-sm leading-tight">-</h2>
+          </div>
+
+          <!-- Right side controls. Center on mobile, otherwise right align. -->
+          <div
+            class="order-3 flex flex-wrap justify-center sm:justify-end gap-2"
+          >
+            <select id="unit-select" class="select select-sm w-40 hidden">
               <!-- Options will be populated here when sub_depts are available -->
             </select>
-            <select id="time-period-select" class="select select-bordered select-sm w-32">
+            <select id="time-period-select" class="select select-sm w-32">
               <!-- Options will be populated here -->
               <option value="">Select month</option>
             </select>
-          </div>
-
-          <!-- Title Section - Always centered on desktop, middle on mobile -->
-          <div class="order-3 sm:order-2 col-span-1 sm:col-span-1 text-center">
-            <h1 id="title" class="text-xl sm:text-2xl font-bold text-base-content leading-tight">
-              Department Dashboard
-            </h1>
-            <h2 id="subtitle" class="text-sm sm:text-base text-base-content leading-tight">
-              -
-            </h2>
           </div>
         </div>
       </div>
@@ -56,19 +62,7 @@
 
       <!-- Error State -->
       <div id="error-state" class="alert alert-error hidden">
-        <svg
-          class="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          ></path>
-        </svg>
+        <i class="fas fa-exclamation-triangle w-6"></i>
         <div>
           <h3 class="font-bold">Error loading dashboard</h3>
           <div id="error-message">Failed to load data</div>
@@ -78,27 +72,23 @@
 
       <!-- Main Dashboard Content -->
       <div id="dashboard-content" class="hidden">
-        <div class="card bg-base-100 shadow-lg">
-          <div class="card-body !py-1">
+        <div class="card shadow-lg">
+          <div class="card-body bg-base-100 rounded-lg px-2 py-1">
             <div role="tablist" class="tabs tabs-border tabs-md">
               <!-- KPIs Tab -->
               <input
                 type="radio"
                 name="main_tabs"
                 role="tab"
-                class="tab font-semibold text-base-content"
+                class="tab font-semibold"
                 aria-label="KPIs"
                 checked
               />
-              <div role="tabpanel" class="tab-content bg-base-100 p-1 pt-3">
+              <div role="tabpanel" class="tab-content p-1 pt-3">
                 <!-- Financial Summary -->
-                <div class="card bg-base-100 shadow-lg mb-4">
-                  <div class="card-body !pt-2">
-                    <h2
-                      class="card-title text-lg border-b border-base-300 pb-2 mb-4"
-                    >
-                      Financial Summary
-                    </h2>
+                <div class="card shadow-lg mb-4">
+                  <div class="card-body px-4 pt-3 pb-4">
+                    <h2 class="card-title">Financial Summary</h2>
                     <div
                       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
                       id="financial-metrics"
@@ -110,34 +100,59 @@
 
                 <!-- KPI and Volume Tables -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                  <table-card
-                    id="kpi-table"
-                    title="Key Performance Indicators"
-                  ></table-card>
-                  <table-card
-                    id="volume-table"
-                    title="Volume History"
-                    maxHeight="max-h-80"
-                  ></table-card>
+                  <div class="card shadow-lg mb-4">
+                    <div class="card-body px-4 pt-3 pb-4">
+                      <h2 class="card-title">Key Performance Indicators</h2>
+                      <data-table id="kpi-table"></data-table>
+                    </div>
+                  </div>
+                  <div class="card shadow-lg mb-4">
+                    <div class="card-body px-4 pt-3 pb-4">
+                      <h2 class="card-title">Volumes</h2>
+                      <data-table
+                        id="volume-table"
+                        maxHeight="max-h-80"
+                      ></data-table>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Charts Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                  <chart-card
-                    id="volume-chart"
-                    title="Volume Trends"
-                  ></chart-card>
-                  <chart-card
-                    id="revenue-chart"
-                    title="Financial Performance"
-                  ></chart-card>
+                  <div class="card shadow-lg mb-4">
+                    <div class="card-body px-4 pt-3 pb-4">
+                      <h2 class="card-title">Volume Trends</h2>
+                      <data-chart
+                        id="volume-chart"
+                        title="Volume Trends"
+                        height="h-80"
+                      ></data-chart>
+                    </div>
+                  </div>
+
+                  <div class="card shadow-lg mb-4">
+                    <div class="card-body px-4 pt-3 pb-4">
+                      <h2 class="card-title">Financial Performance</h2>
+                      <data-chart
+                        id="revenue-chart"
+                        title="Financial Performance"
+                        height="h-80"
+                      ></data-chart>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Productivity Chart - Full Width -->
-                <chart-card
-                  id="productivity-chart"
-                  title="Productivity Trends"
-                ></chart-card>
+                <div class="card shadow-lg mb-4">
+                  <div class="card-body px-4 pt-3 pb-4">
+                    <h2 class="card-title">Productivity Trends</h2>
+                    <data-chart
+                      id="productivity-chart"
+                      title="Productivity Trends"
+                      height="h-80"
+                    ></data-chart>
+                  </div>
+                </div>
               </div>
 
               <!-- Income Statement Tab -->
@@ -145,10 +160,10 @@
                 type="radio"
                 name="main_tabs"
                 role="tab"
-                class="tab font-semibold text-base-content"
+                class="tab font-semibold"
                 aria-label="Income Statement"
               />
-              <div role="tabpanel" class="tab-content bg-base-100 p-1 pt-3">
+              <div role="tabpanel" class="tab-content p-1 pt-3">
                 <income-stmt-table
                   id="income-statement"
                   title="Income Statement"

@@ -1,7 +1,8 @@
+// Simple wrapper for ECharts
 import { LitElement, html, css } from "lit";
 import * as echarts from "echarts";
 
-export class ChartCard extends LitElement {
+export class DataChart extends LitElement {
   // Disable shadow DOM to work with DaisyUI
   createRenderRoot() {
     return this;
@@ -11,11 +12,13 @@ export class ChartCard extends LitElement {
     title: { type: String, default: "" },
     options: { type: Object, default: null },
     loading: { type: Boolean, default: false },
+    height: { type: String, default: "" },
   };
 
   constructor() {
     super();
     this.chart = null;
+    this.height = "";
   }
 
   firstUpdated() {
@@ -70,19 +73,13 @@ export class ChartCard extends LitElement {
   }
 
   render() {
+    const heightClass = this.height ? this.height : "";
     return html`
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body !pt-2">
-          <h2 class="card-title text-lg border-b border-base-300 pb-2 mb-4">
-            ${this.title}
-          </h2>
-          <div class="h-80">
-            <div class="chart-container w-full h-full"></div>
-          </div>
-        </div>
+      <div class="${heightClass}">
+        <div class="chart-container w-full h-full"></div>
       </div>
     `;
   }
 }
 
-window.customElements.define("chart-card", ChartCard);
+window.customElements.define("data-chart", DataChart);

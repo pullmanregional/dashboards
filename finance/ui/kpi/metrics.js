@@ -1,3 +1,5 @@
+import { MetricCard } from "../components/metric-card.js";
+
 // ------------------------------------------------------------
 // Formatting utilities
 // ------------------------------------------------------------
@@ -27,48 +29,29 @@ function formatNumber(value, decimals = 0) {
 // ------------------------------------------------------------
 // Variance calculations
 // ------------------------------------------------------------
-function calculateVariance(actual, budget) {
+function calcVariance(actual, budget) {
   return ((actual - budget) / budget) * 100;
-}
-
-function createMetricCard(title, value, budgetValue, variance, isExpense) {
-  const metricCard = document.createElement("metric-card");
-  metricCard.title = title;
-  metricCard.value = value;
-  metricCard.budgetValue = budgetValue;
-  metricCard.variance = variance;
-  metricCard.isExpense = isExpense;
-  return metricCard;
 }
 
 function populateFinancialMetrics(metricEl, data) {
   const stats = data.stats;
-  const revenueVariance = calculateVariance(
-    stats.ytdRevenue,
-    stats.ytdBudgetRevenue
-  );
-  const expenseVariance = calculateVariance(
-    stats.ytdExpense,
-    stats.ytdBudgetExpense
-  );
-  const volumeVariance = calculateVariance(
-    stats.ytmVolume,
-    stats.ytmBudgetVolume
-  );
+  const revVariance = calcVariance(stats.ytdRevenue, stats.ytdBudgetRevenue);
+  const expVariance = calcVariance(stats.ytdExpense, stats.ytdBudgetExpense);
+  const volumeVariance = calcVariance(stats.ytmVolume, stats.ytmBudgetVolume);
 
   const metrics = [
     {
       title: "YTD Revenue",
       value: formatCurrency(stats.ytdRevenue),
       budgetValue: formatCurrency(stats.ytdBudgetRevenue),
-      variance: revenueVariance,
+      variance: revVariance,
       isExpense: false,
     },
     {
       title: "YTD Expenses",
       value: formatCurrency(stats.ytdExpense),
       budgetValue: formatCurrency(stats.ytdBudgetExpense),
-      variance: expenseVariance,
+      variance: expVariance,
       isExpense: true,
     },
     {
@@ -77,7 +60,7 @@ function populateFinancialMetrics(metricEl, data) {
       budgetValue: formatCurrency(
         (stats.ytdBudgetRevenue || 0) - (stats.ytdBudgetExpense || 0)
       ),
-      variance: revenueVariance,
+      variance: revVariance,
       isExpense: false,
     },
     {
@@ -91,15 +74,13 @@ function populateFinancialMetrics(metricEl, data) {
 
   metricEl.innerHTML = "";
   metrics.forEach((metric) => {
-    metricEl.appendChild(
-      createMetricCard(
-        metric.title,
-        metric.value,
-        metric.budgetValue,
-        metric.variance,
-        metric.isExpense
-      )
-    );
+    const metricCard = new MetricCard();
+    metricCard.title = metric.title;
+    metricCard.value = metric.value;
+    metricCard.budgetValue = metric.budgetValue;
+    metricCard.variance = metric.variance;
+    metricCard.isExpense = metric.isExpense;
+    metricEl.appendChild(metricCard);
   });
 }
 

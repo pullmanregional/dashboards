@@ -12,37 +12,34 @@
     />
     <link rel="stylesheet" href="./index.css" />
   </head>
-  <body class="bg-gradient-to-br from-primary to-secondary min-h-screen">
+  <body class="min-h-screen">
     <div class="container mx-auto p-4 max-w-6xl">
-      <div
-        class="bg-base-100 rounded-3xl shadow-2xl backdrop-blur-lg bg-opacity-95 p-8"
-      >
+      <div class="rounded-3xl shadow-2xl backdrop-blur-lg bg-opacity-95 p-8">
         <!-- Header Section -->
-        <div class="text-center mb-8">
-          <div class="logo mx-auto mb-4">
+        <div class="text-center mb-10">
+          <div class="flex justify-center mx-auto mb-6">
             <img src="./static/prh-logo.svg" alt="PRH Logo" />
           </div>
-          <h1 class="text-4xl font-bold text-base-content mb-2">
+          <h1 class="text-4xl font-bold text-base-content">
             Financial Dashboards
           </h1>
         </div>
 
         <!-- Cards Container -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Administrative Overview Card -->
-          <div class="card bg-base-100 shadow-xl">
-            <div class="card-body flex flex-col h-full">
+          <!-- Administrative Overview Card. Click anywhere, not just button, to go to dashboard. -->
+          <div id="btn-view-admin" class="card shadow-xl">
+            <div class="card-body h-full">
               <div class="flex flex-col items-center text-center mb-4">
-                <h2 class="card-title text-lg mt-5 mb-2">
-                  Administrative Overview
-                </h2>
-                <p class="text-base-content/70 text-center text-sm">
-                  Income statements, balance sheet, and department summary.
+                <h2 class="card-title text-lg my-3">Administrative Overview</h2>
+                <p class="text-base-content/70 text-sm">
+                  Income statement, balance sheet, and summary of all
+                  departments.
                 </p>
               </div>
 
-              <div class="card-actions justify-end mt-auto">
-                <button id="admin-button" class="btn btn-primary btn-block">
+              <div class="card-actions mt-auto">
+                <button class="btn btn-primary btn-block">
                   View Administrative Dashboard
                 </button>
               </div>
@@ -50,62 +47,52 @@
           </div>
 
           <!-- Departmental Dashboard Card -->
-          <div class="card bg-base-100 shadow-xl">
-            <div class="card-body flex flex-col h-full">
+          <div class="card shadow-xl">
+            <div class="card-body h-full">
               <div class="flex flex-col items-center text-center mb-4">
-                <h2 class="card-title text-lg mt-5 mb-2">By Department</h2>
-                <p class="text-base-content/70 text-center text-sm">
+                <h2 class="card-title text-lg my-3">By Department</h2>
+                <p class="text-base-content/70 text-sm">
                   KPIs, volumes, and productivity data for each departments.
                 </p>
               </div>
 
-              <div class="flex-grow mt-1">
+              <!-- Dropdown and direct link -->
+              <div class="flex-grow">
                 <div class="dropdown w-full">
+                  <!-- Dropdown hint and chevron-->
                   <label
                     tabindex="0"
-                    id="department-select"
                     class="btn btn-outline w-full justify-between"
                   >
-                    <span id="department-text">Choose a department...</span>
-                    <svg
-                      class="w-4 h-4 ml-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                      ></path>
-                    </svg>
+                    <span id="dept-text">Choose a department...</span>
+                    <i class="fas fa-chevron-down"></i>
                   </label>
+                  <!-- Dropdown items -->
                   <ul
                     tabindex="0"
-                    class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-full max-h-48 overflow-y-auto"
+                    id="dept-menu"
+                    class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto"
                   >
                     <li><a data-value="">Choose a department...</a></li>
                   </ul>
                 </div>
 
-                <div id="link-info" class="text-center mt-4">
-                  <span id="link-info-text">&nbsp;</span>
+                <div class="text-center mt-4">
+                  <span id="dept-link-text">&nbsp;</span>
                   <a
-                    id="link-url"
+                    id="dept-link-url"
                     class="hidden link link-primary text-xs break-all font-mono"
-                    >--</a
-                  >
+                  ></a>
                 </div>
               </div>
 
-              <div class="card-actions justify-end mt-3">
+              <div class="card-actions mt-4">
                 <button
-                  id="go-button"
+                  id="btn-view-dept"
                   class="btn btn-primary btn-block"
                   disabled
                 >
-                  Go to Department Dashboard
+                  View Department Dashboard
                 </button>
               </div>
             </div>

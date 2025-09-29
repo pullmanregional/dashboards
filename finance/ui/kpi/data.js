@@ -4,6 +4,7 @@ class KPIData {
   constructor() {
     this.db = null;
     this.sqlite3 = null;
+    this.data = null;
     this.kvData = null;
     this.initialized = false;
   }
@@ -23,7 +24,7 @@ class KPIData {
       await this.loadData();
       this.initialized = true;
     } catch (error) {
-      console.error("Failed to initialize DataService:", error);
+      console.error("Failed to initialize data layer", error);
       throw error;
     }
   }
@@ -38,9 +39,8 @@ class KPIData {
       const dbArrayBuffer = await dbResponse.arrayBuffer();
       const dbUint8Array = new Uint8Array(dbArrayBuffer);
 
-      // Create database using the OpfsDb which handles binary data properly
       if (this.sqlite3.opfs) {
-        // Use OPFS (Origin Private File System) database
+        // Use OPFS (Origin Private File System) database when available
         this.db = new this.sqlite3.opfs.OpfsDb("/finance.db");
         await this.db.importDb(dbUint8Array);
       } else {
@@ -63,7 +63,7 @@ class KPIData {
         }
       }
 
-      console.log("Database loaded successfully");
+      console.log("Data loaded");
 
       // Fetch KV data
       const kvResponse = await fetch("/api/kvdata");
@@ -71,7 +71,7 @@ class KPIData {
         throw new Error(`Failed to fetch KV data: ${kvResponse.statusText}`);
       }
       this.kvData = await kvResponse.json();
-      console.log("KV data loaded successfully");
+      console.log("KV data loaded");
     } catch (error) {
       console.error("Failed to load data:", error);
       throw error;
@@ -99,19 +99,21 @@ class KPIData {
       throw new Error("Dashboard data not initialized");
     }
 
-    return {
-      lastUpdated: this.query("SELECT MAX(modified) as max_date FROM meta")[0]
-        ?.max_date,
-      volumes: this.query("SELECT * FROM volumes ORDER BY month DESC"),
-      uos: this.query("SELECT * FROM uos ORDER BY month DESC"),
-      budget: this.query("SELECT * FROM budget"),
-      hours: this.query("SELECT * FROM hours ORDER BY month DESC"),
-      contractedHours: this.query("SELECT * FROM contracted_hours"),
-      incomeStatement: this.query(
-        "SELECT * FROM income_stmt ORDER BY month DESC"
-      ),
-      contractedHoursUpdatedMonth: this.kvData?.contracted_hours_updated_month,
-    };
+    if (!this.data) {
+      this.data = {
+        lastUpdated: this.query("SELECT MAX(modified) as max_date FROM meta")[0]
+          ?.max_date,
+        volumes: this.query("SELECT * FROM volumes ORDER BY month DESC"),
+        uos: this.query("SELECT * FROM uos ORDER BY month DESC"),
+        budget: this.query("SELECT * FROM budget"),
+        hours: this.query("SELECT * FROM hours ORDER BY month DESC"),
+        contractedHours: this.query("SELECT * FROM contracted_hours"),
+        incomeStmt: this.query("SELECT * FROM income_stmt ORDER BY month DESC"),
+        contractedHoursUpdatedMonth:
+          this.kvData?.contracted_hours_updated_month,
+      };
+    }
+    return this.data;
   }
 
   getAvailableMonths() {
@@ -126,61 +128,56 @@ class KPIData {
       const last = this.query(
         `SELECT month FROM ${table} ORDER BY month DESC limit 1`
       );
-      if (first.length === 0 || last.length === 0) {
-        return { first_month, last_month };
+      if (
+        firstMonth == null ||
+        first?.[0].month.localeCompare(firstMonth) > 0
+      ) {
+        firstMonth = first[0]?.month;
       }
-      if (firstMonth == null || first[0].month.localeCompare(firstMonth) > 0) {
-        firstMonth = first[0].month;
-      }
-      if (lastMonth == null || last[0].month.localeCompare(lastMonth) < 0) {
-        lastMonth = last[0].month;
+      if (lastMonth == null || last?.[0].month.localeCompare(lastMonth) < 0) {
+        lastMonth = last[0]?.month;
       }
     }
     return { firstMonth, lastMonth };
   }
 
-  // Get department data filtered by department IDs and month
-  getDepartmentData(deptIds, selectedMonth) {
+  // Get department data filtered by department workday IDs and month
+  filterData(wdIds, month) {
     const sourceData = this.getSourceData();
 
-    // Filter data by department IDs
+    // Filter data by workday ID
     const volumes = sourceData.volumes.filter((row) =>
-      deptIds.includes(row.dept_wd_id)
+      wdIds.includes(row.dept_wd_id)
     );
-    const uos = sourceData.uos.filter((row) =>
-      deptIds.includes(row.dept_wd_id)
-    );
+    const uos = sourceData.uos.filter((row) => wdIds.includes(row.dept_wd_id));
     const hours = sourceData.hours.filter((row) =>
-      deptIds.includes(row.dept_wd_id)
+      wdIds.includes(row.dept_wd_id)
     );
     const budget = sourceData.budget.filter((row) =>
-      deptIds.includes(row.dept_wd_id)
+      wdIds.includes(row.dept_wd_id)
     );
-    const incomeStatement = sourceData.incomeStatement.filter((row) =>
-      deptIds.includes(row.dept_wd_id)
+    const incomeStmt = sourceData.incomeStmt.filter((row) =>
+      wdIds.includes(row.dept_wd_id)
     );
     const contractedHours = sourceData.contractedHours.filter((row) =>
-      deptIds.includes(row.dept_wd_id)
+      wdIds.includes(row.dept_wd_id)
     );
 
     return {
       volumes: this.calculateVolumesHistory(volumes),
       uos: this.calculateVolumesHistory(uos),
       hours: this.calculateHoursHistory(hours),
-      incomeStatement: this.calculateIncomeStatementForMonth(
-        incomeStatement,
-        selectedMonth
-      ),
-      hoursForMonth: this.calculateHoursForMonth(hours, selectedMonth),
-      hoursYTM: this.calculateHoursYTM(hours, selectedMonth),
+      incomeStmt: this.calcIncomeStmt(incomeStmt, month),
+      hoursForMonth: this.calculateHoursForMonth(hours, month),
+      hoursYTM: this.calculateHoursYTM(hours, month),
       budget: budget,
       contractedHours: contractedHours,
-      stats: this.calculateStats(deptIds, selectedMonth, {
+      stats: this.calculateStats(wdIds, month, {
         volumes,
         uos,
         hours,
         budget,
-        incomeStatement,
+        incomeStmt,
         contractedHours,
       }),
     };
@@ -275,8 +272,8 @@ class KPIData {
     return sum;
   }
 
-  // Calculate income statement for specific month - simplified version
-  calculateIncomeStatementForMonth(data, month) {
+  // Calculate income statement for specific month
+  calcIncomeStmt(data, month) {
     return data.filter((row) => row.month === month);
   }
 
@@ -337,7 +334,7 @@ class KPIData {
     stats.ytmBudgetVolume = budgetSum.budget_volume * (selMonthNum / 12);
 
     // Revenue and expense calculations from income statement
-    const incomeStmtData = data.incomeStatement.filter(
+    const incomeStmtData = data.incomeStmt.filter(
       (row) => row.month === selectedMonth
     );
 

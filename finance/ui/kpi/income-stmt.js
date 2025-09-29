@@ -6,9 +6,7 @@ export function populateIncomeStatement(element, data) {
   if (!element || !data) return;
 
   // Transform the raw income statement data into hierarchical structure
-  const hierarchicalData = transformIncomeStatementData(
-    data.incomeStatement || []
-  );
+  const hierarchicalData = transformIncomeStatementData(data.incomeStmt || []);
   element.data = hierarchicalData;
 }
 

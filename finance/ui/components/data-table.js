@@ -1,6 +1,6 @@
 import { LitElement, html, css } from "lit";
 
-export class TableCard extends LitElement {
+export class DataTable extends LitElement {
   // Disable shadow DOM to use DaisyUI
   createRenderRoot() {
     return this;
@@ -58,43 +58,35 @@ export class TableCard extends LitElement {
   }
 
   render() {
-    const containerClass = this.maxHeight
-      ? `overflow-x-auto ${this.maxHeight}`
-      : "overflow-x-auto";
+    const maxHeightClass = this.maxHeight ? this.maxHeight : "";
+    const containerClass = `overflow-x-auto ${maxHeightClass}`;
 
     return html`
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body !pt-2">
-          <h2 class="card-title text-lg border-b border-base-300 pb-2 mb-4">
-            ${this.title}
-          </h2>
-          <div class="${containerClass}">
-            <table class="table table-sm table-hover">
-              <thead class="sticky top-0 bg-base-200">
+      <div class="${containerClass}">
+        <table class="table table-sm table-hover">
+          <thead class="sticky top-0 bg-base-200 text-xs uppercase">
+            <tr>
+              ${this.headers.map(
+                (header) =>
+                  html`<th class="${header.align || "text-left"}">
+                    ${header.title}
+                  </th>`
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            ${this.rows.map(
+              (row) => html`
                 <tr>
-                  ${this.headers.map(
-                    (header) =>
-                      html`<th class="${header.align || "text-left"}">
-                        ${header.title}
-                      </th>`
-                  )}
+                  ${row.map((cell, index) => this.renderCell(cell, index))}
                 </tr>
-              </thead>
-              <tbody>
-                ${this.rows.map(
-                  (row) => html`
-                    <tr>
-                      ${row.map((cell, index) => this.renderCell(cell, index))}
-                    </tr>
-                  `
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              `
+            )}
+          </tbody>
+        </table>
       </div>
     `;
   }
 }
 
-window.customElements.define("table-card", TableCard);
+window.customElements.define("data-table", DataTable);

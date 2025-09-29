@@ -196,10 +196,9 @@ export class TreeTable extends LitElement {
     const isCollapsed = this.collapsedPaths.has(treePath);
     const indentLevel = treeInfo.level;
 
-    const rowClasses = [
-      isHighlight ? "tree-table-highlight" : "",
-      !isHighlight && !this.hasDataValues(row) ? "!border-base-300" : "",
-    ].filter(Boolean);
+    const rowClasses = isHighlight
+      ? "border-l-3 border-l-warning bg-warning/10"
+      : "hover:bg-base-200";
 
     const cells = this.headers.map((header, headerIndex) => {
       const cellClasses = [
@@ -242,7 +241,7 @@ export class TreeTable extends LitElement {
       return html`<td class="${cellClasses.join(" ")}">${cellContent}</td>`;
     });
 
-    return html`<tr class="${rowClasses.join(" ")}">
+    return html`<tr class="${rowClasses}">
       ${cells}
     </tr>`;
   }
@@ -264,7 +263,7 @@ export class TreeTable extends LitElement {
                 ? "table-xs"
                 : "table-sm"} table-hover ${this.fontSize}"
             >
-              <thead class="sticky top-0 bg-base-200">
+              <thead class="sticky top-0 bg-base-200 text-xs uppercase">
                 <tr>
                   ${this.headers.map(
                     (header, index) => html`

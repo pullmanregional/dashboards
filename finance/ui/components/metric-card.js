@@ -43,10 +43,12 @@ export class MetricCard extends LitElement {
 
   render() {
     return html`
-      <div class="stat bg-base-100 border border-base-300 rounded-lg">
-        <div class="stat-title text-xs">${this.title}</div>
-        <div class="stat-value text-lg font-mono">${this.value}</div>
-        <div class="stat-desc">Budget: ${this.budgetValue}</div>
+      <div class="stat border border-base-300 rounded-lg">
+        <div class="stat-title text-xs font-bold mb-2 uppercase">
+          ${this.title}
+        </div>
+        <div class="stat-value text-lg/[1.2] font-mono mb-1">${this.value}</div>
+        <div class="stat-desc text-0.6875rem">Budget: ${this.budgetValue}</div>
         <div class="stat-actions">
           <span class="${this.getStatusColor()} text-lg">●</span>
         </div>

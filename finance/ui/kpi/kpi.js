@@ -1,193 +1,202 @@
 import { getDepartmentConfig } from "../department-config.js";
 import { KPI_DATA } from "./data.js";
-import "../components/metric-card.js";
-import "../components/table-card.js";
-import "../components/chart-card.js";
+import "../components/data-table.js";
+import "../components/data-chart.js";
 import "../components/income-stmt-table.js";
 import * as fig from "./fig.js";
 import * as metrics from "./metrics.js";
-import { populateIncomeStatement } from "./income-stmt.js";
+import * as incomeStmt from "./income-stmt.js";
 import dayjs from "dayjs";
 
-// Constants
-const ELEMENT_IDS = {
-  title: "title",
-  subtitle: "subtitle",
-  loadingState: "loading-state",
-  errorState: "error-state",
-  errorMessage: "error-message",
-  dashboardContent: "dashboard-content",
-  financialMetrics: "financial-metrics",
-  kpiTable: "kpi-table",
-  volumeTable: "volume-table",
-  backButton: "back-button",
-  retryButton: "retry-button",
-  volumeChart: "volume-chart",
-  revenueChart: "revenue-chart",
-  productivityChart: "productivity-chart",
-  timePeriodSelect: "time-period-select",
-  unitSelect: "unit-select",
-  incomeStatement: "income-statement",
-};
+// DOM elements
+const titleEl = document.getElementById("title");
+const subtitleEl = document.getElementById("subtitle");
+const loadingStateEl = document.getElementById("loading-state");
+const errorStateEl = document.getElementById("error-state");
+const errorMessageEl = document.getElementById("error-message");
+const dashboardContentEl = document.getElementById("dashboard-content");
+const financialMetricsEl = document.getElementById("financial-metrics");
+const kpiTableEl = document.getElementById("kpi-table");
+const volumeTableEl = document.getElementById("volume-table");
+const backButtonEl = document.getElementById("back-button");
+const retryButtonEl = document.getElementById("retry-button");
+const volumeChartEl = document.getElementById("volume-chart");
+const revenueChartEl = document.getElementById("revenue-chart");
+const productivityChartEl = document.getElementById("productivity-chart");
+const timePeriodSelectEl = document.getElementById("time-period-select");
+const unitSelectEl = document.getElementById("unit-select");
+const incomeStatementEl = document.getElementById("income-statement");
 
-// Dashboard state
-let dashboardState = {
+// State
+let STATE = {
   loading: true,
   error: null,
   data: null,
-  departmentId: null,
-  departmentConfig: null,
+  deptId: null,
+  deptConfig: null,
   selectedMonth: null,
   selectedUnit: null,
 };
 
-// HTML elements cache
-const elements = {};
-
-// ------------------------------------------------------------
-// Utility functions
-// ------------------------------------------------------------
-function initializeElements() {
-  Object.entries(ELEMENT_IDS).forEach(([key, id]) => {
-    elements[key] = document.getElementById(id);
-  });
-}
-
-function parseUrlParameters() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return {
-    deptId: urlParams.get("dept"),
-    unitParam: urlParams.get("unit"),
-    monthParam: urlParams.get("month"),
-  };
-}
-
-function validateDepartment(deptId) {
-  const deptConfig = getDepartmentConfig(deptId);
-  if (!deptId || !deptConfig) {
-    window.location.href = "index.html";
-    return null;
-  }
-  return deptConfig;
-}
-
-function parseUnitParameter(deptConfig, unitParam) {
-  if (!deptConfig.sub_depts || unitParam === null) return null;
-
-  const unitIndex = parseInt(unitParam);
-  if (
-    !isNaN(unitIndex) &&
-    unitIndex >= 0 &&
-    unitIndex < deptConfig.sub_depts.length
-  ) {
-    return unitIndex;
-  }
-  return null;
-}
-
-function setupEventListeners() {
-  elements.backButton.addEventListener("click", () => {
-    window.location.href = "index.html";
-  });
-
-  elements.retryButton.addEventListener("click", loadData);
-  elements.timePeriodSelect.addEventListener("change", handleTimePeriodChange);
-  elements.unitSelect.addEventListener("change", handleUnitChange);
-}
-
 // ------------------------------------------------------------
 // UI initialization
 // ------------------------------------------------------------
-async function init() {
-  initializeElements();
-
-  const { deptId, unitParam, monthParam } = parseUrlParameters();
-
-  const deptConfig = validateDepartment(deptId);
-  if (!deptConfig) return;
-
-  dashboardState.departmentId = deptId;
-  dashboardState.departmentConfig = deptConfig;
-  dashboardState.selectedUnit = parseUnitParameter(deptConfig, unitParam);
-  dashboardState.selectedMonth = monthParam || null;
-
-  setupEventListeners();
-  populateUnitSelector();
-  await loadData();
-}
-
-async function loadData() {
-  try {
-    dashboardState.loading = true;
-    dashboardState.error = null;
-    updateUI();
-
-    await KPI_DATA.initialize();
-
-    populateTimePeriodSelector(KPI_DATA);
-
-    // Get wd_ids based on selected unit or full department
-    const wd_ids = getFilteredWdIds();
-    dashboardState.data = KPI_DATA.getDepartmentData(
-      wd_ids,
-      dashboardState.selectedMonth
-    );
-    dashboardState.loading = false;
-    updateUI();
-  } catch (error) {
-    console.error("Error loading dashboard:", error);
-    dashboardState.error = error.message;
-    dashboardState.loading = false;
-    updateUI();
+// Validate department and redirect to main page if invalid
+function validateDepartment(deptId) {
+  const config = getDepartmentConfig(deptId);
+  if (!deptId || !config) {
+    window.location.href = "index.html";
+    return null;
   }
+  return config;
 }
 
-function generateMonthOptions(firstMonth, lastMonth) {
-  const monthOptions = [];
-  let curDate = dayjs(lastMonth);
-  const startDate = dayjs(firstMonth);
-
-  do {
-    monthOptions.push(curDate.format("YYYY-MM"));
-    curDate = curDate.subtract(1, "month");
-  } while (curDate.isAfter(startDate));
-
-  return monthOptions;
+// Parse unit parameter
+function parseUnit(unitParam, subDepts) {
+  if (!subDepts || unitParam === null) return null;
+  const index = parseInt(unitParam);
+  return index >= 0 && index < subDepts.length ? index : null;
 }
 
-function createMonthOption(month) {
-  const option = document.createElement("option");
-  option.value = month;
-  option.textContent = dayjs(month).format("MMM YYYY");
-  return option;
-}
-
-function populateTimePeriodSelector(kpiData) {
-  const { firstMonth, lastMonth } = kpiData.getAvailableMonths();
-
-  if (!firstMonth || !lastMonth) {
-    elements.timePeriodSelect.innerHTML = "No data available";
+// Populate the Select unit dropdown with list of sub-departments
+function populateUnitSelector() {
+  // Hide unit dropdown if there are no sub-departments
+  const subDepts = STATE.deptConfig.sub_depts;
+  if (!subDepts || subDepts.length === 0) {
+    unitSelectEl.classList.add("hidden");
     return;
   }
 
-  const monthOptions = generateMonthOptions(firstMonth, lastMonth);
+  // Show Select unit dropdown
+  unitSelectEl.classList.remove("hidden");
+  unitSelectEl.innerHTML = "";
 
-  elements.timePeriodSelect.innerHTML = "";
-  monthOptions.forEach((month) => {
-    elements.timePeriodSelect.appendChild(createMonthOption(month));
+  // Populate with sub-departments
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All Units";
+  unitSelectEl.appendChild(allOption);
+
+  subDepts.forEach((subDept, index) => {
+    const option = document.createElement("option");
+    option.value = index.toString();
+    option.textContent = subDept.name;
+    unitSelectEl.appendChild(option);
   });
 
-  if (!dashboardState.selectedMonth && monthOptions.length > 0) {
-    dashboardState.selectedMonth = monthOptions[0];
-  }
-
-  elements.timePeriodSelect.value = dashboardState.selectedMonth;
+  // Initialize to selected unit
+  unitSelectEl.value =
+    STATE.selectedUnit !== null ? STATE.selectedUnit.toString() : "";
 }
 
-async function handleTimePeriodChange(event) {
+// Populate the time period dropdown with months between firstMonth and lastMonth, given
+// in the format YYYY-MM
+function populateTimePeriodSelector(firstMonth, lastMonth) {
+  if (!firstMonth || !lastMonth) {
+    timePeriodSelectEl.innerHTML = "No data available";
+    return;
+  }
+
+  const options = [];
+  let date = dayjs(lastMonth);
+  const startDate = dayjs(firstMonth);
+
+  // Option values are in the format 2025-01
+  while (date.isAfter(startDate) || date.isSame(startDate)) {
+    options.push(date.format("YYYY-MM"));
+    date = date.subtract(1, "month");
+  }
+
+  // Option labels in the dropdown are in the format "Jan 2025"
+  timePeriodSelectEl.innerHTML = "";
+  options.forEach((month) => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.textContent = dayjs(month).format("MMM YYYY");
+    timePeriodSelectEl.appendChild(option);
+  });
+
+  // Select the first month by default
+  if (!STATE.selectedMonth && options.length > 0) {
+    STATE.selectedMonth = options[0];
+  }
+  timePeriodSelectEl.value = STATE.selectedMonth;
+}
+
+// ------------------------------------------------------------
+// Data functions
+// ------------------------------------------------------------
+async function loadData() {
+  try {
+    showLoading();
+    await KPI_DATA.initialize();
+
+    // Update time period dropdown
+    const { firstMonth, lastMonth } = KPI_DATA.getAvailableMonths();
+    populateTimePeriodSelector(firstMonth, lastMonth);
+
+    const wdIds = getSelectedWorkdayIds();
+    const data = KPI_DATA.filterData(wdIds, STATE.selectedMonth);
+    showLoaded(data);
+  } catch (error) {
+    console.error("Error loading data:", error);
+    showError(error);
+  }
+}
+
+async function refreshData() {
+  try {
+    showLoading();
+    const wdIds = getSelectedWorkdayIds();
+    const data = KPI_DATA.filterData(wdIds, STATE.selectedMonth);
+    console.log(data);
+    showLoaded(data);
+  } catch (error) {
+    console.error("Error refreshing dashboard data:", error);
+    showError(error);
+  }
+}
+
+function getSelectedWorkdayIds() {
+  const config = STATE.deptConfig;
+
+  if (STATE.selectedUnit === null) {
+    // This department has no sub-departments, or All Units selected
+    if (config.sub_depts?.length > 0) {
+      return config.sub_depts.flatMap((subDept) => subDept.wd_ids);
+    }
+    return config.wd_ids;
+  }
+
+  const selectedSubDept = config.sub_depts?.[STATE.selectedUnit];
+  return selectedSubDept ? selectedSubDept.wd_ids : [];
+}
+
+// ------------------------------------------------------------
+// Event handlers
+// ------------------------------------------------------------
+function showLoading() {
+  STATE.loading = true;
+  STATE.error = null;
+  render();
+}
+
+function showLoaded(data) {
+  STATE.data = data;
+  STATE.loading = false;
+  render();
+}
+
+function showError(error) {
+  STATE.error = error.message;
+  STATE.loading = false;
+  render();
+}
+
+async function handleTimeChange(event) {
   const newMonth = event.target.value;
-  if (newMonth !== dashboardState.selectedMonth) {
-    dashboardState.selectedMonth = newMonth;
+  if (newMonth !== STATE.selectedMonth) {
+    STATE.selectedMonth = newMonth;
     updateURL();
     await refreshData();
   }
@@ -196,178 +205,108 @@ async function handleTimePeriodChange(event) {
 async function handleUnitChange(event) {
   const newUnit = event.target.value;
   const newUnitIndex = newUnit === "" ? null : parseInt(newUnit);
-  if (newUnitIndex !== dashboardState.selectedUnit) {
-    dashboardState.selectedUnit = newUnitIndex;
+  if (newUnitIndex !== STATE.selectedUnit) {
+    STATE.selectedUnit = newUnitIndex;
     updateURL();
     await refreshData();
   }
 }
 
-function createUnitOption(value, text) {
-  const option = document.createElement("option");
-  option.value = value;
-  option.textContent = text;
-  return option;
-}
-
-function populateUnitSelector() {
-  const deptConfig = dashboardState.departmentConfig;
-
-  if (!deptConfig.sub_depts || deptConfig.sub_depts.length === 0) {
-    elements.unitSelect.classList.add("hidden");
-    return;
-  }
-
-  elements.unitSelect.classList.remove("hidden");
-  elements.unitSelect.innerHTML = "";
-
-  elements.unitSelect.appendChild(createUnitOption("", "All Units"));
-
-  deptConfig.sub_depts.forEach((subDept, index) => {
-    elements.unitSelect.appendChild(
-      createUnitOption(index.toString(), subDept.name)
-    );
-  });
-
-  elements.unitSelect.value =
-    dashboardState.selectedUnit !== null
-      ? dashboardState.selectedUnit.toString()
-      : "";
-}
-
 function updateURL() {
-  const urlParams = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
 
-  // Update unit parameter
-  if (dashboardState.selectedUnit !== null) {
-    urlParams.set("unit", dashboardState.selectedUnit.toString());
+  if (STATE.selectedUnit !== null) {
+    params.set("unit", STATE.selectedUnit.toString());
   } else {
-    urlParams.delete("unit");
+    params.delete("unit");
   }
 
-  // Update month parameter
-  if (dashboardState.selectedMonth) {
-    urlParams.set("month", dashboardState.selectedMonth);
+  if (STATE.selectedMonth) {
+    params.set("month", STATE.selectedMonth);
   } else {
-    urlParams.delete("month");
+    params.delete("month");
   }
 
-  // Update the URL without refreshing the page
-  const newURL = `${window.location.pathname}?${urlParams.toString()}`;
+  const newURL = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, "", newURL);
 }
 
-function getFilteredWdIds() {
-  const deptConfig = dashboardState.departmentConfig;
+function updateNavbar() {
+  const deptName = STATE.deptConfig?.name || "Department";
+  titleEl.textContent = `PRH - ${deptName}`;
 
-  // If no specific unit selected (i.e., "All Units" selected)
-  if (dashboardState.selectedUnit === null) {
-    // If department has sub_depts, return all wd_ids from all sub_depts
-    if (deptConfig.sub_depts && deptConfig.sub_depts.length > 0) {
-      return deptConfig.sub_depts.flatMap((subDept) => subDept.wd_ids || []);
-    }
-    // Otherwise, return the main department wd_ids
-    return deptConfig.wd_ids || [];
-  }
-
-  // Return wd_ids for the selected sub-department
-  const selectedSubDept = deptConfig.sub_depts[dashboardState.selectedUnit];
-  return selectedSubDept ? selectedSubDept.wd_ids : [];
-}
-
-async function refreshData() {
-  try {
-    dashboardState.loading = true;
-    dashboardState.error = null;
-    updateUI();
-
-    // Get fresh data for the new month without reinitializing the database
-    const wd_ids = getFilteredWdIds();
-    dashboardState.data = KPI_DATA.getDepartmentData(
-      wd_ids,
-      dashboardState.selectedMonth
-    );
-    dashboardState.loading = false;
-    updateUI();
-  } catch (error) {
-    console.error("Error refreshing dashboard data:", error);
-    dashboardState.error = error.message;
-    dashboardState.loading = false;
-    updateUI();
-  }
-}
-
-function generateSubtitleText() {
-  const monthStr = dashboardState.selectedMonth
-    ? "Year to " + dayjs(dashboardState.selectedMonth).format("MMMM YYYY")
+  const monthStr = STATE.selectedMonth
+    ? "Year to " + dayjs(STATE.selectedMonth).format("MMMM YYYY")
     : "";
 
-  if (
-    dashboardState.selectedUnit !== null &&
-    dashboardState.departmentConfig?.sub_depts
-  ) {
-    const unitName =
-      dashboardState.departmentConfig.sub_depts[dashboardState.selectedUnit]
-        ?.name;
-    if (unitName && monthStr) {
-      return `${unitName} • ${monthStr}`;
-    } else if (unitName) {
-      return unitName;
+  let subtitle = monthStr;
+  if (STATE.selectedUnit !== null && STATE.deptConfig?.sub_depts) {
+    const unitName = STATE.deptConfig.sub_depts[STATE.selectedUnit]?.name;
+    if (unitName) {
+      subtitle = monthStr ? `${unitName} • ${monthStr}` : unitName;
     }
   }
-  return monthStr;
+
+  subtitleEl.textContent = subtitle;
 }
 
-function updateTitleAndSubtitle() {
-  const deptStr = dashboardState.departmentConfig?.name || "Department";
-  elements.title.textContent = `PRH - ${deptStr}`;
-  elements.subtitle.textContent = generateSubtitleText();
-}
+function render() {
+  updateNavbar();
 
-function showLoadingState() {
-  elements.loadingState.classList.remove("hidden");
-  elements.errorState.classList.add("hidden");
-  elements.dashboardContent.classList.add("hidden");
-}
-
-function showErrorState() {
-  elements.loadingState.classList.add("hidden");
-  elements.errorState.classList.remove("hidden");
-  elements.dashboardContent.classList.add("hidden");
-  elements.errorMessage.textContent = dashboardState.error;
-}
-
-function showDashboardContent() {
-  elements.loadingState.classList.add("hidden");
-  elements.errorState.classList.add("hidden");
-  elements.dashboardContent.classList.remove("hidden");
-
-  // Populate dashboard display
-  metrics.populateFinancialMetrics(
-    elements.financialMetrics,
-    dashboardState.data
-  );
-  metrics.populateKPITable(elements.kpiTable, dashboardState.data);
-  metrics.populateVolumeTable(elements.volumeTable, dashboardState.data);
-  fig.populateVolumeChart(elements.volumeChart, dashboardState.data);
-  fig.populateRevenueChart(elements.revenueChart, dashboardState.data);
-  fig.populateProductivityChart(
-    elements.productivityChart,
-    dashboardState.data
-  );
-  populateIncomeStatement(elements.incomeStatement, dashboardState.data);
-}
-
-function updateUI() {
-  updateTitleAndSubtitle();
-
-  if (dashboardState.loading) {
-    showLoadingState();
-  } else if (dashboardState.error) {
-    showErrorState();
+  if (STATE.loading) {
+    loadingStateEl.classList.remove("hidden");
+    errorStateEl.classList.add("hidden");
+    dashboardContentEl.classList.add("hidden");
+  } else if (STATE.error) {
+    loadingStateEl.classList.add("hidden");
+    errorStateEl.classList.remove("hidden");
+    dashboardContentEl.classList.add("hidden");
+    errorMessageEl.textContent = STATE.error;
   } else {
-    showDashboardContent();
+    loadingStateEl.classList.add("hidden");
+    errorStateEl.classList.add("hidden");
+    dashboardContentEl.classList.remove("hidden");
+
+    // Populate dashboard
+    metrics.populateFinancialMetrics(financialMetricsEl, STATE.data);
+    metrics.populateKPITable(kpiTableEl, STATE.data);
+    metrics.populateVolumeTable(volumeTableEl, STATE.data);
+    fig.populateVolumeChart(volumeChartEl, STATE.data);
+    fig.populateRevenueChart(revenueChartEl, STATE.data);
+    fig.populateProductivityChart(productivityChartEl, STATE.data);
+    incomeStmt.populateIncomeStatement(incomeStatementEl, STATE.data);
   }
+}
+
+// Main entry point - initialize UI
+async function init() {
+  // Display based on URL parameters
+  const params = new URLSearchParams(window.location.search);
+  const deptId = params.get("dept");
+  const unitParam = params.get("unit");
+  const monthParam = params.get("month");
+  const deptConfig = validateDepartment(deptId);
+  if (!deptConfig) return;
+
+  // Initialize state
+  STATE.deptId = deptId;
+  STATE.deptConfig = deptConfig;
+  STATE.selectedUnit = parseUnit(unitParam, deptConfig.sub_depts);
+  STATE.selectedMonth = monthParam || null;
+
+  // Event handlers
+  backButtonEl.addEventListener("click", () => {
+    window.location.href = "index.html";
+  });
+  retryButtonEl.addEventListener("click", loadData);
+  timePeriodSelectEl.addEventListener("change", handleTimeChange);
+  unitSelectEl.addEventListener("change", handleUnitChange);
+
+  // If this department has sub-departments, populate the "unit" dropdown
+  populateUnitSelector();
+
+  // Finally fetch and read from db
+  await loadData();
 }
 
 // Initialize when DOM is ready
