@@ -46,10 +46,24 @@
             <select id="unit-select" class="select select-sm w-40 hidden">
               <!-- Options will be populated here when sub_depts are available -->
             </select>
-            <select id="time-period-select" class="select select-sm w-32">
-              <!-- Options will be populated here -->
-              <option value="">Select month</option>
-            </select>
+            <div class="flex gap-1 items-center">
+              <button
+                id="prev-month-btn"
+                class="btn btn-ghost btn-sm btn-square"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <select id="time-period-select" class="select select-sm w-32">
+                <!-- Options will be populated here -->
+                <option value="">Select month</option>
+              </select>
+              <button
+                id="next-month-btn"
+                class="btn btn-ghost btn-sm btn-square"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>

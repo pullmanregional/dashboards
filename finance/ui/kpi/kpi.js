@@ -1,5 +1,5 @@
 import { getDepartmentConfig } from "../department-config.js";
-import { KPI_DATA } from "./data.js";
+import DATA from "./data.js";
 import "../components/data-table.js";
 import "../components/data-chart.js";
 import "../components/income-stmt-table.js";
@@ -24,6 +24,8 @@ const volumeChartEl = document.getElementById("volume-chart");
 const revenueChartEl = document.getElementById("revenue-chart");
 const productivityChartEl = document.getElementById("productivity-chart");
 const timePeriodSelectEl = document.getElementById("time-period-select");
+const prevMonthBtnEl = document.getElementById("prev-month-btn");
+const nextMonthBtnEl = document.getElementById("next-month-btn");
 const unitSelectEl = document.getElementById("unit-select");
 const incomeStmtEl = document.getElementById("income-stmt");
 
@@ -36,6 +38,7 @@ let STATE = {
   deptConfig: null,
   selectedMonth: null,
   selectedUnit: null,
+  availMonths: [],
 };
 
 // ------------------------------------------------------------
@@ -107,6 +110,9 @@ function populateTimePeriodSelector(firstMonth, lastMonth) {
     date = date.subtract(1, "month");
   }
 
+  // Store available months in state
+  STATE.availMonths = options;
+
   // Option labels in the dropdown are in the format "Jan 2025"
   timePeriodSelectEl.innerHTML = "";
   options.forEach((month) => {
@@ -121,6 +127,42 @@ function populateTimePeriodSelector(firstMonth, lastMonth) {
     STATE.selectedMonth = options[0];
   }
   timePeriodSelectEl.value = STATE.selectedMonth;
+  updateMonthNavigationButtons();
+  return STATE.selectedMonth;
+}
+
+// Update month navigation button states (enable/disable based on position)
+function updateMonthNavigationButtons() {
+  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === STATE.availMonths.length - 1;
+
+  prevMonthBtnEl.disabled = isLast; // Last month is oldest (earliest date)
+  nextMonthBtnEl.disabled = isFirst; // First month is newest (latest date)
+}
+
+// Navigate to previous month (older)
+async function navigateToPrevMonth() {
+  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
+  if (currentIndex < STATE.availMonths.length - 1) {
+    STATE.selectedMonth = STATE.availMonths[currentIndex + 1];
+    timePeriodSelectEl.value = STATE.selectedMonth;
+    updateURL();
+    updateMonthNavigationButtons();
+    await refreshData();
+  }
+}
+
+// Navigate to next month (newer)
+async function navigateToNextMonth() {
+  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
+  if (currentIndex > 0) {
+    STATE.selectedMonth = STATE.availMonths[currentIndex - 1];
+    timePeriodSelectEl.value = STATE.selectedMonth;
+    updateURL();
+    updateMonthNavigationButtons();
+    await refreshData();
+  }
 }
 
 // ------------------------------------------------------------
@@ -129,15 +171,13 @@ function populateTimePeriodSelector(firstMonth, lastMonth) {
 async function loadData() {
   try {
     showLoading();
-    await KPI_DATA.initialize();
+    await DATA.initialize();
 
-    // Update time period dropdown
-    const { firstMonth, lastMonth } = KPI_DATA.getAvailableMonths();
-    populateTimePeriodSelector(firstMonth, lastMonth);
-
+    // Update time period dropdown and get workday IDs from selected subdepartment
+    const { firstMonth, lastMonth } = DATA.getAvailableMonths();
+    const selectedMonth = populateTimePeriodSelector(firstMonth, lastMonth);
     const wdIds = getSelectedWorkdayIds();
-    const data = KPI_DATA.filterData(wdIds, STATE.selectedMonth);
-    showLoaded(data);
+    updateDashboard(wdIds, selectedMonth);
   } catch (error) {
     console.error("Error loading data:", error);
     showError(error);
@@ -148,9 +188,8 @@ async function refreshData() {
   try {
     showLoading();
     const wdIds = getSelectedWorkdayIds();
-    const data = KPI_DATA.filterData(wdIds, STATE.selectedMonth);
-    console.log(data);
-    showLoaded(data);
+    const selectedMonth = STATE.selectedMonth;
+    updateDashboard(wdIds, selectedMonth);
   } catch (error) {
     console.error("Error refreshing dashboard data:", error);
     showError(error);
@@ -172,6 +211,13 @@ function getSelectedWorkdayIds() {
   return selectedSubDept ? selectedSubDept.wd_ids : [];
 }
 
+function updateDashboard(wdIds, selectedMonth) {
+  const filteredData = DATA.filterData(wdIds);
+  const data = DATA.processData(filteredData, selectedMonth);
+  STATE.data = data;
+  showLoaded();
+}
+
 // ------------------------------------------------------------
 // Event handlers
 // ------------------------------------------------------------
@@ -182,8 +228,8 @@ function showLoading() {
 }
 
 function showLoaded(data) {
-  STATE.data = data;
   STATE.loading = false;
+  STATE.error = null;
   render();
 }
 
@@ -198,6 +244,7 @@ async function handleTimeChange(event) {
   if (newMonth !== STATE.selectedMonth) {
     STATE.selectedMonth = newMonth;
     updateURL();
+    updateMonthNavigationButtons();
     await refreshData();
   }
 }
@@ -300,6 +347,8 @@ async function init() {
   });
   retryButtonEl.addEventListener("click", loadData);
   timePeriodSelectEl.addEventListener("change", handleTimeChange);
+  prevMonthBtnEl.addEventListener("click", navigateToPrevMonth);
+  nextMonthBtnEl.addEventListener("click", navigateToNextMonth);
   unitSelectEl.addEventListener("change", handleUnitChange);
 
   // If this department has sub-departments, populate the "unit" dropdown
