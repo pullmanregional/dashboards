@@ -5,7 +5,6 @@ import "../components/data-chart.js";
 import "../components/income-stmt-table.js";
 import * as fig from "./fig.js";
 import * as metrics from "./metrics.js";
-import * as incomeStmt from "./income-stmt.js";
 import dayjs from "dayjs";
 
 // DOM elements
@@ -127,12 +126,12 @@ function populateTimePeriodSelector(firstMonth, lastMonth) {
     STATE.selectedMonth = options[0];
   }
   timePeriodSelectEl.value = STATE.selectedMonth;
-  updateMonthNavigationButtons();
+  updateMonthNavBtns();
   return STATE.selectedMonth;
 }
 
 // Update month navigation button states (enable/disable based on position)
-function updateMonthNavigationButtons() {
+function updateMonthNavBtns() {
   const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === STATE.availMonths.length - 1;
@@ -148,7 +147,7 @@ async function navigateToPrevMonth() {
     STATE.selectedMonth = STATE.availMonths[currentIndex + 1];
     timePeriodSelectEl.value = STATE.selectedMonth;
     updateURL();
-    updateMonthNavigationButtons();
+    updateMonthNavBtns();
     await refreshData();
   }
 }
@@ -160,7 +159,7 @@ async function navigateToNextMonth() {
     STATE.selectedMonth = STATE.availMonths[currentIndex - 1];
     timePeriodSelectEl.value = STATE.selectedMonth;
     updateURL();
-    updateMonthNavigationButtons();
+    updateMonthNavBtns();
     await refreshData();
   }
 }
@@ -212,8 +211,7 @@ function getSelectedWorkdayIds() {
 }
 
 function updateDashboard(wdIds, selectedMonth) {
-  const filteredData = DATA.filterData(wdIds);
-  const data = DATA.processData(filteredData, selectedMonth);
+  const data = DATA.processData(wdIds, selectedMonth);
   STATE.data = data;
   showLoaded();
 }
@@ -239,12 +237,12 @@ function showError(error) {
   render();
 }
 
-async function handleTimeChange(event) {
+async function handleMonthChange(event) {
   const newMonth = event.target.value;
   if (newMonth !== STATE.selectedMonth) {
     STATE.selectedMonth = newMonth;
     updateURL();
-    updateMonthNavigationButtons();
+    updateMonthNavBtns();
     await refreshData();
   }
 }
@@ -321,7 +319,7 @@ function render() {
     fig.populateVolumeChart(volumeChartEl, STATE.data);
     fig.populateRevenueChart(revenueChartEl, STATE.data);
     fig.populateProductivityChart(productivityChartEl, STATE.data);
-    incomeStmt.populateIncomeStmt(incomeStmtEl, STATE.data);
+    incomeStmtEl.data = STATE.data.incomeStmt;
   }
 }
 
@@ -346,7 +344,7 @@ async function init() {
     window.location.href = "index.html";
   });
   retryButtonEl.addEventListener("click", loadData);
-  timePeriodSelectEl.addEventListener("change", handleTimeChange);
+  timePeriodSelectEl.addEventListener("change", handleMonthChange);
   prevMonthBtnEl.addEventListener("click", navigateToPrevMonth);
   nextMonthBtnEl.addEventListener("click", navigateToNextMonth);
   unitSelectEl.addEventListener("change", handleUnitChange);
@@ -356,6 +354,7 @@ async function init() {
 
   // Finally fetch and read from db
   await loadData();
+  window.x = STATE;
 }
 
 // Initialize when DOM is ready

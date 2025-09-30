@@ -1,12 +1,6 @@
 import { INCOME_STMT_DEF } from "./income-stmt-def.js";
 import { DEPARTMENTS } from "../department-config.js";
 
-// Populates a <income-stmt-table> element with hierarchical income statement data
-export function populateIncomeStmt(incomeStmtEl, data) {
-  if (!incomeStmtEl || !data) return;
-  incomeStmtEl.data = transformIncomeStmtData(data.incomeStmt || []);
-}
-
 // Transforms raw financial data into hierarchical income statement structure
 // rawData: Array of financial records with ledger_acct, spend_category/revenue_category, actual, budget, etc.
 export function transformIncomeStmtData(rawData) {

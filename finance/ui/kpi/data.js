@@ -1,14 +1,73 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import { transformIncomeStmtData } from "./income-stmt.js";
+import dayjs from "dayjs";
+import dayOfYear from "dayjs/plugin/dayOfYear";
+dayjs.extend(dayOfYear);
 
-class KPIData {
+// ------------------------------------------------------------
+// Data classes
+// ------------------------------------------------------------
+// Immutable class for source data read from DB
+class SourceData {
+  constructor(data = {}) {
+    this.lastUpdated = data.lastUpdated || null;
+    this.volumes = data.volumes || null;
+    this.uos = data.uos || null;
+    this.budget = data.budget || null;
+    this.hours = data.hours || null;
+    this.contractedHours = data.contractedHours || null;
+    this.incomeStmt = data.incomeStmt || null;
+    this.contractedHoursUpdatedMonth = data.contractedHoursUpdatedMonth || null;
+    Object.freeze(this);
+  }
+}
+
+class DashboardData {
+  constructor(data = {}) {
+    this.volumes = data.volumes || null;
+    this.uos = data.uos || null;
+    this.hours = data.hours || null;
+    this.budget = data.budget || null;
+    this.contractedHours = data.contractedHours || null;
+    this.incomeStmt = data.incomeStmt || null;
+    this.contractedHoursUpdatedMonth = data.contractedHoursUpdatedMonth || null;
+    this.stats = data.stats || null;
+    Object.freeze(this);
+  }
+}
+
+// ------------------------------------------------------------
+// Utility functions to handle date based calculations
+// ------------------------------------------------------------
+function fteHrsInYear(year) {
+  const FTE_HOURS_PER_YEAR = 2080;
+  const FTE_HOURS_PER_LEAP_YEAR = 2088;
+  const isLeapYear = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+  return isLeapYear ? FTE_HOURS_PER_LEAP_YEAR : FTE_HOURS_PER_YEAR;
+}
+
+// Given a month string in the format "2023-01", return the percentage of the year that has passed up to that date.
+function pctOfYearThroughDate(monthStr) {
+  const month = dayjs(monthStr);
+  const daysThroughMonthEnd = month.endOf("month").dayOfYear();
+  const daysInYear = month.endOf("year").dayOfYear();
+  return daysThroughMonthEnd / daysInYear;
+}
+
+// ------------------------------------------------------------
+// Default export, which provides underlying dashboard data
+// ------------------------------------------------------------
+class DashboardDataManager {
   constructor() {
     this.db = null;
     this.sqlite3 = null;
-    this.data = null;
+    this.sourceData = null;
     this.kvData = null;
+    this.data = null;
     this.initialized = false;
   }
 
+  // Initialize SQLite and load db from API. This should be called once at startup.
   async initialize() {
     if (this.initialized) return;
 
@@ -29,9 +88,9 @@ class KPIData {
     }
   }
 
+  // Fetch SQLite database
   async loadData() {
     try {
-      // Fetch SQLite database
       const dbResponse = await fetch("/api/data");
       if (!dbResponse.ok) {
         throw new Error(`Failed to fetch database: ${dbResponse.statusText}`);
@@ -39,30 +98,20 @@ class KPIData {
       const dbArrayBuffer = await dbResponse.arrayBuffer();
       const dbUint8Array = new Uint8Array(dbArrayBuffer);
 
-      if (this.sqlite3.opfs) {
-        // Use OPFS (Origin Private File System) database when available
-        this.db = new this.sqlite3.opfs.OpfsDb("/finance.db");
-        await this.db.importDb(dbUint8Array);
-      } else {
-        // Fallback to in-memory database with manual loading
-        this.db = new this.sqlite3.oo1.DB(":memory:");
-
-        // Load data using the low-level API
-        const wasmPointer = this.sqlite3.wasm.allocFromTypedArray(dbUint8Array);
-        const rc = this.sqlite3.capi.sqlite3_deserialize(
-          this.db.pointer,
-          "main",
-          wasmPointer,
-          dbUint8Array.length,
-          dbUint8Array.length,
-          this.sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE
-        );
-
-        if (rc) {
-          throw new Error(`sqlite3_deserialize() failed with code ${rc}`);
-        }
+      // Load data into memory using the sqlite WASM API
+      this.db = new this.sqlite3.oo1.DB(":memory:");
+      const wasmPointer = this.sqlite3.wasm.allocFromTypedArray(dbUint8Array);
+      const rc = this.sqlite3.capi.sqlite3_deserialize(
+        this.db.pointer,
+        "main",
+        wasmPointer,
+        dbUint8Array.length,
+        dbUint8Array.length,
+        this.sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE
+      );
+      if (rc) {
+        throw new Error(`sqlite3_deserialize() failed with code ${rc}`);
       }
-
       console.log("Data loaded");
 
       // Fetch KV data
@@ -94,13 +143,14 @@ class KPIData {
     return results;
   }
 
-  getSourceData() {
+  // Read and cache source data from DB. Returns a SourceData object.
+  getSourceData(wdIds) {
     if (!this.initialized) {
       throw new Error("Dashboard data not initialized");
     }
 
-    if (!this.data) {
-      this.data = {
+    if (!this.sourceData) {
+      this.sourceData = new SourceData({
         lastUpdated: this.query("SELECT MAX(modified) as max_date FROM meta")[0]
           ?.max_date,
         volumes: this.query("SELECT * FROM volumes ORDER BY month DESC"),
@@ -111,13 +161,29 @@ class KPIData {
         incomeStmt: this.query("SELECT * FROM income_stmt ORDER BY month DESC"),
         contractedHoursUpdatedMonth:
           this.kvData?.contracted_hours_updated_month,
-      };
+      });
     }
-    return this.data;
+
+    // Filter data if specific department workday IDs provided
+    if (wdIds) {
+      const filterWdId = (row) => wdIds.includes(row.dept_wd_id);
+      return new SourceData({
+        volumes: this.sourceData.volumes.filter((row) => filterWdId(row)),
+        uos: this.sourceData.uos.filter((row) => filterWdId(row)),
+        hours: this.sourceData.hours.filter((row) => filterWdId(row)),
+        budget: this.sourceData.budget.filter((row) => filterWdId(row)),
+        incomeStmt: this.sourceData.incomeStmt.filter((row) => filterWdId(row)),
+        contractedHours: this.sourceData.contractedHours.filter((row) =>
+          filterWdId(row)
+        ),
+      });
+    }
+    return this.sourceData;
   }
 
+  // Return start and end months where volumes, UOS, hours, and income statement are all available
+  // Query database for info, which is orders of magnitude faster than sort/filtering in memory
   getAvailableMonths() {
-    // Return start and end months where Volumes, UOS, and Hours are all available
     let firstMonth = null;
     let lastMonth = null;
     const tables = ["volumes", "uos", "hours", "income_stmt"];
@@ -141,50 +207,43 @@ class KPIData {
     return { firstMonth, lastMonth };
   }
 
-  // Get department data filtered by department workday IDs and month
-  filterData(wdIds, month) {
-    const sourceData = this.getSourceData();
+  // Process raw data into stats for the dashboard, selecting the specific department workday IDs and month
+  processData(wdIds, month) {
+    const sourceData = this.getSourceData(wdIds);
 
-    // Filter data by workday ID
-    const volumes = sourceData.volumes.filter((row) =>
-      wdIds.includes(row.dept_wd_id)
+    // Calculate income statement
+    const [year] = month.split("-");
+    const incomeStmtData = sourceData.incomeStmt.filter(
+      (row) => row.month === month
     );
-    const uos = sourceData.uos.filter((row) => wdIds.includes(row.dept_wd_id));
-    const hours = sourceData.hours.filter((row) =>
-      wdIds.includes(row.dept_wd_id)
-    );
-    const budget = sourceData.budget.filter((row) =>
-      wdIds.includes(row.dept_wd_id)
-    );
-    const incomeStmt = sourceData.incomeStmt.filter((row) =>
-      wdIds.includes(row.dept_wd_id)
-    );
-    const contractedHours = sourceData.contractedHours.filter((row) =>
-      wdIds.includes(row.dept_wd_id)
-    );
+    const incomeStmt = transformIncomeStmtData(incomeStmtData);
 
-    return {
-      volumes: this.calculateVolumesHistory(volumes),
-      uos: this.calculateVolumesHistory(uos),
-      hours: this.calculateHoursHistory(hours),
-      incomeStmt: this.calcIncomeStmt(incomeStmt, month),
-      hoursForMonth: this.calculateHoursForMonth(hours, month),
-      hoursYTM: this.calculateHoursYTM(hours, month),
-      budget: budget,
-      contractedHours: contractedHours,
-      stats: this.calculateStats(wdIds, month, {
-        volumes,
-        uos,
-        hours,
-        budget,
-        incomeStmt,
-        contractedHours,
-      }),
-    };
+    // Calculate hours by month, which is used below for the hoursForMonth field as well
+    const hoursByMonth = this.calcHoursByMonth(sourceData.hours);
+
+    // Calculate scalar stats
+    const stats = this.calculateStats(sourceData, incomeStmt, month);
+
+    return new DashboardData({
+      volumes: this.calcVolumeByMonth(sourceData.volumes),
+      uos: this.calcVolumeByMonth(sourceData.uos),
+      hours: hoursByMonth,
+      hoursForMonth: hoursByMonth.find((row) => row.month === month),
+      incomeStmt: incomeStmt,
+      hoursYTM: this.calcHoursYTM(sourceData.hours, month),
+      budget: sourceData.budget,
+      contractedHours: sourceData.contractedHours,
+      stats: stats,
+    });
+  }
+
+  // Sort data object by it's month field, assuming string in YYYY-MM format. Returns array of objects.
+  sortByMonth(data) {
+    return data.sort((a, b) => a.month.localeCompare(b.month));
   }
 
   // Calculate volumes history (group by month, sum volume)
-  calculateVolumesHistory(data) {
+  calcVolumeByMonth(data) {
     const grouped = {};
     data.forEach((row) => {
       if (!grouped[row.month]) {
@@ -192,14 +251,11 @@ class KPIData {
       }
       grouped[row.month].volume += row.volume || 0;
     });
-
-    return Object.values(grouped).sort((a, b) =>
-      b.month.localeCompare(a.month)
-    );
+    return this.sortByMonth(Object.values(grouped));
   }
 
-  // Calculate hours history
-  calculateHoursHistory(data) {
+  // Calculate hours by month - sum hours and recalculate FTE
+  calcHoursByMonth(data) {
     const grouped = {};
     data.forEach((row) => {
       if (!grouped[row.month]) {
@@ -216,35 +272,14 @@ class KPIData {
       grouped[row.month].total_hrs += row.total_hrs || 0;
       grouped[row.month].total_fte += row.total_fte || 0;
     });
-
-    return Object.values(grouped).sort((a, b) =>
-      a.month.localeCompare(b.month)
-    );
+    return this.sortByMonth(Object.values(grouped));
   }
 
-  // Calculate hours for specific month
-  calculateHoursForMonth(data, month) {
-    const monthData = data.filter((row) => row.month === month);
-    if (monthData.length === 0) return {};
-
-    return monthData.reduce(
-      (sum, row) => ({
-        reg_hrs: (sum.reg_hrs || 0) + (row.reg_hrs || 0),
-        overtime_hrs: (sum.overtime_hrs || 0) + (row.overtime_hrs || 0),
-        prod_hrs: (sum.prod_hrs || 0) + (row.prod_hrs || 0),
-        nonprod_hrs: (sum.nonprod_hrs || 0) + (row.nonprod_hrs || 0),
-        total_hrs: (sum.total_hrs || 0) + (row.total_hrs || 0),
-        total_fte: (sum.total_fte || 0) + (row.total_fte || 0),
-      }),
-      {}
-    );
-  }
-
-  // Calculate year-to-month hours
-  calculateHoursYTM(data, month) {
+  // Calculate year-to-month hours. Month should be a string in YYYY-MM format.
+  calcHoursYTM(data, month) {
     const [year] = month.split("-");
     const ytmData = data.filter(
-      (row) => row.month.startsWith(year) && row.month <= month
+      (row) => row.month.startsWith(year) && row.month.localeCompare(month) <= 0
     );
 
     if (ytmData.length === 0) return {};
@@ -261,40 +296,30 @@ class KPIData {
       {}
     );
 
-    // Recalculate FTE for months after January
+    // Recalculate FTE for months after January. For Jan, just use data in the FTE column.
+    const yearNum = parseInt(year);
     const monthNum = parseInt(month.split("-")[1]);
     if (monthNum > 1) {
-      const fteHoursPerYear = 2080; // Standard FTE hours per year
-      const pctOfYearCompleted = monthNum / 12;
+      const fteHoursPerYear = fteHrsInYear(yearNum);
+      const pctOfYearCompleted = pctOfYearThroughDate(month);
       sum.total_fte = sum.total_hrs / (fteHoursPerYear * pctOfYearCompleted);
     }
 
     return sum;
   }
 
-  // Calculate income statement for specific month
-  calcIncomeStmt(data, month) {
-    return data.filter((row) => row.month === month);
-  }
-
   // Calculate key statistics and KPIs
-  calculateStats(deptIds, selectedMonth, data) {
-    const [selYear, selMonthNum] = selectedMonth.split("-").map(Number);
-    const priorYear = selYear - 1;
-    const monthInPriorYear = `${priorYear}-${selMonthNum
-      .toString()
-      .padStart(2, "0")}`;
-
+  calculateStats(data, incomeStmt, month) {
+    const [yearNum, monthNum] = month.split("-").map(Number);
     const stats = {};
 
     // Volume calculations
     const kpiData = data.uos.length > 0 ? data.uos : data.volumes;
 
     if (kpiData.length > 0) {
-      const currentMonth = kpiData.find((row) => row.month === selectedMonth);
+      const currentMonth = kpiData.find((row) => row.month === month);
       const ytmData = kpiData.filter(
-        (row) =>
-          row.month.startsWith(selYear.toString()) && row.month <= selectedMonth
+        (row) => row.month.startsWith(yearNum.toString()) && row.month <= month
       );
 
       stats.monthVolume = currentMonth?.volume || 0;
@@ -331,37 +356,21 @@ class KPIData {
 
     stats.budgetFTE = budgetSum.budget_fte;
     stats.monthBudgetVolume = budgetSum.budget_volume / 12;
-    stats.ytmBudgetVolume = budgetSum.budget_volume * (selMonthNum / 12);
+    stats.ytmBudgetVolume = budgetSum.budget_volume * (monthNum / 12);
 
-    // Revenue and expense calculations from income statement
-    const incomeStmtData = data.incomeStmt.filter(
-      (row) => row.month === selectedMonth
-    );
-
-    // Group income statement by category (simplified)
-    const revenues = incomeStmtData.filter(
-      (row) => row.tree && row.tree.includes("Revenue")
-    );
-    const expenses = incomeStmtData.filter(
-      (row) => row.tree && row.tree.includes("Expense")
-    );
-
-    stats.ytdRevenue = revenues.reduce(
-      (sum, row) => sum + (row.ytd_actual || 0),
-      0
-    );
-    stats.ytdBudgetRevenue = revenues.reduce(
-      (sum, row) => sum + (row.ytd_budget || 0),
-      0
-    );
-    stats.ytdExpense = expenses.reduce(
-      (sum, row) => sum + (row.ytd_actual || 0),
-      0
-    );
-    stats.ytdBudgetExpense = expenses.reduce(
-      (sum, row) => sum + (row.ytd_budget || 0),
-      0
-    );
+    // Get revenue and expense data from income statement
+    stats.ytdRevenue = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
+      "YTD Actual"
+    ];
+    stats.ytdBudgetRevenue = incomeStmt.find(
+      (row) => row.tree === "Net Revenue"
+    )?.["YTD Budget"];
+    stats.ytdExpense = incomeStmt.find(
+      (row) => row.tree === "Total Operating Expenses"
+    )?.["YTD Actual"];
+    stats.ytdBudgetExpense = incomeStmt.find(
+      (row) => row.tree === "Total Operating Expenses"
+    )?.["YTD Budget"];
 
     // Calculate KPIs
     const kpiVolume = stats.ytmVolume || 1;
@@ -397,6 +406,5 @@ class KPIData {
   }
 }
 
-// Create singleton instance
-export const KPI_DATA = new KPIData();
-export default KPI_DATA;
+// Create singleton instance, import with import DATA from "./data.js";
+export default new DashboardDataManager();

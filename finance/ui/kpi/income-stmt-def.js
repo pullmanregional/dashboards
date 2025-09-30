@@ -204,6 +204,7 @@ export const INCOME_STMT_DEF = [
     name: "Operating Margin",
     total: [
       "Patient Revenues/",
+      "Other Revenue/",
       "-Deductions/",
       "-Salaries & Benefits/",
       "-Other Direct Expenses/",
@@ -237,11 +238,6 @@ export const INCOME_STMT_DEF = [
     items: [{ account: "69900:Non-Operating Expenses", category: "*" }],
   },
   {
-    name: "Net Non-Operating Gain (Loss)",
-    total: ["Non-Operating Gains/", "-Non-Operating Expenses/"],
-    highlight: true,
-  },
-  {
     name: "Investments (Non-Operating)",
     items: [
       { account: "90000:Gain/Loss Investments (NOP)", category: "*" },
@@ -250,6 +246,15 @@ export const INCOME_STMT_DEF = [
         category: "*",
       },
     ],
+  },
+  {
+    name: "Net Non-Operating Gain (Loss)",
+    total: [
+      "Non-Operating Gains/",
+      "-Non-Operating Expenses/",
+      "Investments (Non-Operating)/",
+    ],
+    highlight: true,
   },
   {
     name: "Net Income",
