@@ -1,4 +1,5 @@
 import { LitElement, html } from "lit";
+import { formatCurrencyInThousands } from "../data/util.js";
 
 export class CompactMetric extends LitElement {
   // Disable shadow DOM to use DaisyUI
@@ -18,17 +19,6 @@ export class CompactMetric extends LitElement {
     super();
   }
 
-  formatAsThousands(value) {
-    // Parse the value to get numeric value
-    const numericValue = parseFloat(value.replace(/[$,]/g, ""));
-    if (isNaN(numericValue)) return value;
-
-    // Format as $XXXk with thousand separators
-    const valueInK = Math.round(numericValue / 1000);
-    const formattedValue = valueInK.toLocaleString("en-US");
-    return `$${formattedValue}k`;
-  }
-
   getStatusColor() {
     const absVariance = Math.abs(this.variancePct);
 
@@ -44,7 +34,7 @@ export class CompactMetric extends LitElement {
   render() {
     const variancePercent = Math.round(this.variancePct);
     const formattedValue = this.roundToThousands
-      ? this.formatAsThousands(this.value)
+      ? formatCurrencyInThousands(this.value)
       : this.value;
 
     return html`

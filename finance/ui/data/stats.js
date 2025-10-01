@@ -1,24 +1,5 @@
 import dayjs from "dayjs";
-import dayOfYear from "dayjs/plugin/dayOfYear";
-dayjs.extend(dayOfYear);
-
-// ------------------------------------------------------------
-// Date-based utility functions
-// ------------------------------------------------------------
-export function fteHrsInYear(year) {
-  const FTE_HOURS_PER_YEAR = 2080;
-  const FTE_HOURS_PER_LEAP_YEAR = 2088;
-  const isLeapYear = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
-  return isLeapYear ? FTE_HOURS_PER_LEAP_YEAR : FTE_HOURS_PER_YEAR;
-}
-
-// Calculate percentage of year completed through end of given month
-export function pctOfYearThroughDate(monthStr) {
-  const month = dayjs(monthStr);
-  const daysThroughMonthEnd = month.endOf("month").dayOfYear();
-  const daysInYear = month.endOf("year").dayOfYear();
-  return daysThroughMonthEnd / daysInYear;
-}
+import { fteHrsInYear, pctOfYearThroughDate } from "./util.js";
 
 // ------------------------------------------------------------
 // Data aggregation functions
@@ -155,10 +136,7 @@ export function calculateStats(data, incomeStmt, month) {
     );
 
     stats.monthVolume = currentMonth?.volume || 0;
-    stats.ytmVolume = ytmData.reduce(
-      (sum, row) => sum + (row.volume || 0),
-      0
-    );
+    stats.ytmVolume = ytmData.reduce((sum, row) => sum + (row.volume || 0), 0);
     // Remove anything in parentheses from unit
     let unit = volumes[0]?.unit || "Volume";
     unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
@@ -169,13 +147,11 @@ export function calculateStats(data, incomeStmt, month) {
   const budgetSum = data.budget.reduce(
     (sum, row) => ({
       budget_fte: (sum.budget_fte || 0) + (row.budget_fte || 0),
-      budget_prod_hrs:
-        (sum.budget_prod_hrs || 0) + (row.budget_prod_hrs || 0),
+      budget_prod_hrs: (sum.budget_prod_hrs || 0) + (row.budget_prod_hrs || 0),
       budget_volume: (sum.budget_volume || 0) + (row.budget_volume || 0),
       budget_uos: (sum.budget_uos || 0) + (row.budget_uos || 0),
       budget_prod_hrs_per_uos:
-        (sum.budget_prod_hrs_per_uos || 0) +
-        (row.budget_prod_hrs_per_uos || 0),
+        (sum.budget_prod_hrs_per_uos || 0) + (row.budget_prod_hrs_per_uos || 0),
       hourly_rate: (sum.hourly_rate || 0) + (row.hourly_rate || 0),
     }),
     {}
@@ -243,12 +219,4 @@ export function calculateStats(data, incomeStmt, month) {
   }
 
   return stats;
-}
-
-// ------------------------------------------------------------
-// Variance calculation functions
-// ------------------------------------------------------------
-// Calculate percentage variance between actual and budget
-export function calcVariance(actual, budget) {
-  return ((actual - budget) / budget) * 100;
 }

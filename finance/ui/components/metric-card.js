@@ -1,4 +1,5 @@
 import { LitElement, html, css } from "lit";
+import { formatCurrencyInThousands } from "../data/util.js";
 
 export class MetricCard extends LitElement {
   // Disable shadow DOM to use DaisyUI
@@ -12,6 +13,7 @@ export class MetricCard extends LitElement {
     variancePct: { type: Number, default: 0 },
     statusText: { type: String, default: "" },
     hideDetails: { type: Boolean, default: false },
+    roundToThousands: { type: Boolean, default: false },
   };
 
   constructor() {
@@ -31,12 +33,18 @@ export class MetricCard extends LitElement {
   }
 
   render() {
+    const formattedValue = this.roundToThousands
+      ? formatCurrencyInThousands(this.value)
+      : this.value;
+
     return html`
       <div class="stat border border-base-300 rounded-lg py-2 relative">
         <div class="stat-title text-xs font-bold mb-1 uppercase">
           ${this.title}
         </div>
-        <div class="stat-value text-lg/[1.2] font-mono mb-1">${this.value}</div>
+        <div class="stat-value text-lg/[1.2] font-mono mb-1">
+          ${formattedValue}
+        </div>
         ${!this.hideDetails
           ? html`
               <div class="stat-desc text-[0.6875rem]">${this.statusText}</div>
