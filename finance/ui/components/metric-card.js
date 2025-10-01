@@ -7,34 +7,23 @@ export class MetricCard extends LitElement {
   }
 
   static properties = {
-    title: { type: String },
-    value: { type: String },
-    budgetValue: { type: String },
-    variance: { type: Number },
-    isExpense: { type: Boolean },
+    title: { type: String, default: "" },
+    value: { type: String, default: "" },
+    variance: { type: Number, default: 0 },
+    statusText: { type: String, default: "" },
+    hideDetails: { type: Boolean, default: false },
   };
 
   constructor() {
     super();
-    this.title = "";
-    this.value = "";
-    this.budgetValue = "";
-    this.variance = 0;
-    this.isExpense = false;
   }
 
   getStatusColor() {
-    const threshold = 5;
     const absVariance = Math.abs(this.variance);
 
-    if (absVariance <= threshold) {
+    if (absVariance < 5) {
       return "text-success";
-    } else if (
-      (this.isExpense && this.variance < 0) ||
-      (!this.isExpense && this.variance > 0)
-    ) {
-      return "text-success";
-    } else if (absVariance <= threshold * 2) {
+    } else if (absVariance >= 5 && absVariance < 8) {
       return "text-warning";
     } else {
       return "text-error";
@@ -43,15 +32,26 @@ export class MetricCard extends LitElement {
 
   render() {
     return html`
-      <div class="stat border border-base-300 rounded-lg">
-        <div class="stat-title text-xs font-bold mb-2 uppercase">
+      <div class="stat border border-base-300 rounded-lg py-2 relative">
+        <div class="stat-title text-xs font-bold mb-1 uppercase">
           ${this.title}
         </div>
         <div class="stat-value text-lg/[1.2] font-mono mb-1">${this.value}</div>
-        <div class="stat-desc text-0.6875rem">Budget: ${this.budgetValue}</div>
-        <div class="stat-actions">
-          <span class="${this.getStatusColor()} text-lg">●</span>
-        </div>
+        ${!this.hideDetails
+          ? html`
+              <div class="stat-desc text-[0.6875rem]">${this.statusText}</div>
+              <div class="absolute right-4 top-1/2 -translate-y-1/2">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  class="${this.getStatusColor()}"
+                >
+                  <circle cx="12" cy="12" r="10" fill="currentColor" />
+                </svg>
+              </div>
+            `
+          : ""}
       </div>
     `;
   }
