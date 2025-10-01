@@ -42,12 +42,30 @@ export class MetricCard extends LitElement {
               <div class="stat-desc text-[0.6875rem]">${this.statusText}</div>
               <div class="absolute right-4 top-1/2 -translate-y-1/2">
                 <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
+                  width="36"
+                  height="36"
+                  viewBox="0 0 36 36"
                   class="${this.getStatusColor()}"
                 >
-                  <circle cx="12" cy="12" r="10" fill="currentColor" />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  />
+                  <text
+                    x="18"
+                    y="18"
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    font-size="10"
+                    font-weight="600"
+                    fill="currentColor"
+                  >
+                    ${Math.round(this.variancePct)}%
+                  </text>
                 </svg>
               </div>
             `
