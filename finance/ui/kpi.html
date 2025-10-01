@@ -21,14 +21,10 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
           <!-- Back Button. On mobile, center, otherwise left align. -->
           <div class="justify-self-center sm:justify-self-start">
-            <button
-              id="back-button"
-              class="btn btn-ghost btn-sm"
-              onclick="history.back()"
-            >
+            <a href="index.html" class="btn btn-ghost btn-sm" id="back-button">
               <i class="fas fa-chevron-left"></i>
-              Back
-            </button>
+              Home
+            </a>
           </div>
 
           <!-- Header title -->
@@ -99,72 +95,391 @@
                 checked
               />
               <div role="tabpanel" class="tab-content p-1 pt-3">
+                <!-- Key Performance Indicators -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                  <div class="lg:col-span-2">
+                    <div class="card bg-base-100 shadow-lg h-full">
+                      <div class="card-body px-4 pt-3 pb-3">
+                        <h2 class="card-title mb-2">
+                          Key Performance Indicators
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <metric-card
+                            id="revenue-per-volume-metric"
+                            title="Revenue per Unit"
+                          ></metric-card>
+                          <metric-card
+                            id="expense-per-volume-metric"
+                            title="Expense per Unit"
+                          ></metric-card>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="lg:col-span-1">
+                    <div class="card bg-base-100 shadow-lg h-full">
+                      <div class="card-body px-4 pt-3 pb-3 flex flex-col h-48">
+                        <h2 class="card-title mb-3">Feedback</h2>
+                        <form id="feedback-form" class="flex flex-col flex-1">
+                          <textarea
+                            id="feedback-text"
+                            name="feedback"
+                            class="textarea textarea-bordered w-full flex-1 resize-none text-xs"
+                            placeholder="Enter departmental comments..."
+                          ></textarea>
+                          <div class="flex justify-end mt-2">
+                            <button
+                              type="submit"
+                              id="feedback-save-btn"
+                              class="btn btn-primary btn-xs"
+                            >
+                              <span id="feedback-save-text">Save</span>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Financial Summary -->
-                <div class="card shadow-lg mb-4">
-                  <div class="card-body px-4 pt-3 pb-4">
-                    <h2 class="card-title">Financial Summary</h2>
-                    <div
-                      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
-                      id="financial-metrics"
-                    >
-                      <!-- Metric cards will be populated here -->
+                <div class="mb-4">
+                  <div class="card bg-base-100 shadow-lg">
+                    <div class="card-body px-4 pt-3 pb-4">
+                      <h2 class="card-title mb-3">
+                        Financial Summary
+                        <a
+                          href="#"
+                          class="text-xs text-gray-400 hover:text-primary font-normal ml-auto no-underline"
+                          id="income-statement-link"
+                          >Income Statement &gt;</a
+                        >
+                      </h2>
+                      <div
+                        class="flex flex-col md:flex-row gap-0 -mx-4"
+                        id="financial-metrics"
+                      >
+                        <!-- Month Section -->
+                        <div class="flex-1 px-4 py-3 min-w-0">
+                          <h3 class="text-sm font-bold mb-2">Month</h3>
+
+                          <!-- Metrics for month -->
+                          <div
+                            class="flex gap-10 mb-3 font-bold items-center justify-center flex-wrap"
+                          >
+                            <compact-metric
+                              id="month-rev-metric"
+                              title="Revenue"
+                              value="-"
+                              variance="0"
+                              isExpense="false"
+                            ></compact-metric>
+                            <compact-metric
+                              id="month-exp-metric"
+                              title="Expenses"
+                              value="-"
+                              variance="0"
+                              isExpense="true"
+                            ></compact-metric>
+                          </div>
+
+                          <!-- Summary table for month financials -->
+                          <div class="overflow-x-auto -mx-4 px-4">
+                            <table class="w-full text-[0.65rem]">
+                              <thead>
+                                <tr class="border-b border-base-300">
+                                  <th
+                                    class="text-left font-semibold pb-0.5 pr-1"
+                                  ></th>
+                                  <th
+                                    class="text-right font-semibold pb-0.5 px-0.5"
+                                  >
+                                    Actual
+                                  </th>
+                                  <th
+                                    class="text-right font-semibold pb-0.5 px-0.5"
+                                  >
+                                    Budget
+                                  </th>
+                                  <th
+                                    class="text-right font-semibold pb-0.5 px-0.5"
+                                  >
+                                    Variance
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td class="py-0.5 pr-1 whitespace-nowrap">
+                                    Rev
+                                  </td>
+                                  <td
+                                    id="month-rev-actual"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="month-rev-budget"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="month-rev-variance"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td class="py-0.5 pr-1 whitespace-nowrap">
+                                    Exp
+                                  </td>
+                                  <td
+                                    id="month-exp-actual"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="month-exp-budget"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="month-exp-variance"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                </tr>
+                                <tr
+                                  class="border-t-2 border-double border-base-300 font-bold"
+                                >
+                                  <td class="py-0.5 pr-1 whitespace-nowrap">
+                                    Net
+                                  </td>
+                                  <td
+                                    id="month-net-actual"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="month-net-budget"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="month-net-variance"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <!-- Vertical Divider, horizontal divider on mobile -->
+                        <div
+                          class="border-l border-base-300 hidden md:block"
+                        ></div>
+                        <div class="border-t border-base-300 md:hidden"></div>
+
+                        <!-- YTD Section -->
+                        <div class="flex-1 px-4 py-3 min-w-0">
+                          <h3 id="ytd-label" class="text-sm font-bold mb-2">
+                            Year to Date
+                          </h3>
+
+                          <!-- Metrics for YTD -->
+                          <div
+                            class="flex gap-10 mb-3 font-bold items-center justify-center flex-wrap"
+                          >
+                            <compact-metric
+                              id="ytd-rev-metric"
+                              title="Revenue"
+                              value="-"
+                              variance="0"
+                              isExpense="false"
+                            ></compact-metric>
+                            <compact-metric
+                              id="ytd-exp-metric"
+                              title="Expenses"
+                              value="-"
+                              variance="0"
+                              isExpense="true"
+                            ></compact-metric>
+                          </div>
+
+                          <!-- Summary table for YTD financials -->
+                          <div class="overflow-x-auto -mx-4 px-4">
+                            <table class="w-full text-[0.65rem]">
+                              <thead>
+                                <tr class="border-b border-base-300">
+                                  <th
+                                    class="text-left font-semibold pb-0.5 pr-1"
+                                  ></th>
+                                  <th
+                                    class="text-right font-semibold pb-0.5 px-0.5"
+                                  >
+                                    Actual
+                                  </th>
+                                  <th
+                                    class="text-right font-semibold pb-0.5 px-0.5"
+                                  >
+                                    Budget
+                                  </th>
+                                  <th
+                                    class="text-right font-semibold pb-0.5 px-0.5"
+                                  >
+                                    Variance
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td class="py-0.5 pr-1 whitespace-nowrap">
+                                    Rev
+                                  </td>
+                                  <td
+                                    id="ytd-rev-actual"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="ytd-rev-budget"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="ytd-rev-variance"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td class="py-0.5 pr-1 whitespace-nowrap">
+                                    Exp
+                                  </td>
+                                  <td
+                                    id="ytd-exp-actual"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="ytd-exp-budget"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="ytd-exp-variance"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                </tr>
+                                <tr
+                                  class="border-t-2 border-double border-base-300 font-bold"
+                                >
+                                  <td class="py-0.5 pr-1 whitespace-nowrap">
+                                    Net
+                                  </td>
+                                  <td
+                                    id="ytd-net-actual"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="ytd-net-budget"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                  <td
+                                    id="ytd-net-variance"
+                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                  >
+                                    -
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- KPI and Volume Tables -->
+                <!-- Volume and Productivity cards -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                   <div class="card shadow-lg mb-4">
                     <div class="card-body px-4 pt-3 pb-4">
-                      <h2 class="card-title">Key Performance Indicators</h2>
-                      <data-table id="kpi-table"></data-table>
-                    </div>
-                  </div>
-                  <div class="card shadow-lg mb-4">
-                    <div class="card-body px-4 pt-3 pb-4">
-                      <h2 class="card-title">Volumes</h2>
-                      <data-table
-                        id="volume-table"
-                        maxHeight="max-h-80"
-                      ></data-table>
-                    </div>
-                  </div>
-                </div>
+                      <h2 class="card-title mb-3">Volumes</h2>
 
-                <!-- Charts Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                  <div class="card shadow-lg mb-4">
-                    <div class="card-body px-4 pt-3 pb-4">
-                      <h2 class="card-title">Volume Trends</h2>
+                      <!-- Volume metrics -->
+                      <div
+                        class="flex gap-6 mb-3 font-bold items-center justify-center flex-wrap"
+                      >
+                        <compact-metric
+                          id="month-volume-metric"
+                          title="Month"
+                        ></compact-metric>
+                        <compact-metric
+                          id="ytd-volume-metric"
+                          title="YTD"
+                        ></compact-metric>
+                      </div>
+
+                      <!-- Volume chart -->
                       <data-chart
                         id="volume-chart"
                         title="Volume Trends"
-                        height="h-80"
+                        height="h-64"
                       ></data-chart>
                     </div>
                   </div>
-
                   <div class="card shadow-lg mb-4">
                     <div class="card-body px-4 pt-3 pb-4">
-                      <h2 class="card-title">Financial Performance</h2>
+                      <h2 class="card-title mb-3">Productivity</h2>
+
+                      <!-- Productivity metrics -->
+                      <div
+                        class="flex gap-6 mb-3 font-bold items-center justify-center flex-wrap"
+                      >
+                        <compact-metric
+                          id="fte-metric"
+                          title="FTE"
+                        ></compact-metric>
+                        <compact-metric
+                          id="overtime-metric"
+                          title="Overtime Hrs"
+                        ></compact-metric>
+                        <compact-metric
+                          id="traveler-fte-metric"
+                          title="Traveler FTE"
+                        ></compact-metric>
+                      </div>
+
+                      <!-- Productivity chart -->
                       <data-chart
-                        id="revenue-chart"
-                        title="Financial Performance"
-                        height="h-80"
+                        id="productivity-chart"
+                        title="Productivity Trends"
+                        height="h-64"
                       ></data-chart>
                     </div>
-                  </div>
-                </div>
-
-                <!-- Productivity Chart - Full Width -->
-                <div class="card shadow-lg mb-4">
-                  <div class="card-body px-4 pt-3 pb-4">
-                    <h2 class="card-title">Productivity Trends</h2>
-                    <data-chart
-                      id="productivity-chart"
-                      title="Productivity Trends"
-                      height="h-80"
-                    ></data-chart>
                   </div>
                 </div>
               </div>
