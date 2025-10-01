@@ -1,6 +1,13 @@
 import express from "express";
 import { S3Client } from "@aws-sdk/client-s3";
 import * as data from "./data.js";
+import {
+  initDB,
+  getFeedback,
+  getAllFeedbackForDept,
+  getAllFeedback,
+  saveFeedback,
+} from "./db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -8,6 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(express.json());
 
 const USER_HEADER = "x-auth-request-user";
 const EMAIL_HEADER = "x-auth-request-email";
@@ -127,12 +135,59 @@ async function main() {
     }
     res.type("application/octet-stream").send(DATA_FILE);
   });
-  app.get("/api/kvdata", checkAuth, (req, res) => {
-    if (!DATA.DATA_JSON) {
-      return res.status(503).json({ error: "KV data not available" });
+
+  // Feedback endpoints
+  app.get("/api/feedback", checkAuth, async (req, res) => {
+    try {
+      const feedback = await getAllFeedback();
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ error: "Failed to fetch feedback" });
     }
-    res.type("application/json").send(DATA.DATA_JSON);
   });
+
+  app.get("/api/feedback/:dept", checkAuth, async (req, res) => {
+    try {
+      const { dept } = req.params;
+      const feedback = await getAllFeedbackForDept(dept);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ error: "Failed to fetch feedback" });
+    }
+  });
+
+  app.get("/api/feedback/:dept/:month", checkAuth, async (req, res) => {
+    try {
+      const { dept, month } = req.params;
+      const feedback = await getFeedback(dept, month);
+      res.json(feedback || { comment: "" });
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ error: "Failed to fetch feedback" });
+    }
+  });
+
+  app.post("/api/feedback/:dept/:month", checkAuth, async (req, res) => {
+    try {
+      const { dept, month } = req.params;
+      const { comment } = req.body;
+
+      if (typeof comment !== "string") {
+        return res.status(400).json({ error: "Comment must be text" });
+      }
+
+      const result = await saveFeedback(dept, month, comment);
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error saving feedback:", error);
+      res.status(500).json({ error: "Failed to save feedback" });
+    }
+  });
+
+  // Initialize feedback database
+  await initDB();
 
   // Load data files and start server
   console.log("Fetching data...");

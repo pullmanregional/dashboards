@@ -4,9 +4,9 @@ Summary of how this project works. The root directory of this project is the cur
   - code in server/ runs an nodejs express server that will be behind oauth2-proxy.
   - The server is configured using server-config.js, which defines the global.APP_CONFIG object.
   - In dev, there is no oauth2-proxy, and authorization is turned off by setting APP_CONFIG.AUTH.ALLOWED_GROUPS = []
-  - It serves two endpoints: /api/data and /api/kvdata.
+  - It serves two main endpoints: /api/data and /api/feedback/\*
     - /api/data returns a sqlite3 file
-    - /api/kvdata returns a json blob
+    - /api/feedback reads/writes feedback per department and month and stores it in a local sqlite DB
   - It also serves any static UI files, which are compiled into ui/dist/
 - UI code
   - HTML and JS front end
