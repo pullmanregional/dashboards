@@ -21,15 +21,12 @@ export class DataTable extends LitElement {
     this.maxHeight = "";
   }
 
-  getStatusColor(variance, isExpense = false) {
-    const threshold = 5;
+  getStatusColor(variance) {
     const absVariance = Math.abs(variance);
 
-    if (absVariance <= threshold) {
+    if (absVariance < 5) {
       return "text-success";
-    } else if ((isExpense && variance < 0) || (!isExpense && variance > 0)) {
-      return "text-success";
-    } else if (absVariance <= threshold * 2) {
+    } else if (absVariance >= 5 && absVariance < 8) {
       return "text-warning";
     } else {
       return "text-error";
@@ -39,12 +36,12 @@ export class DataTable extends LitElement {
   renderCell(cell, index) {
     if (typeof cell === "object") {
       if (cell.type === "variance") {
-        const colorClass = cell.variance >= 0 ? "text-success" : "text-error";
+        const colorClass = this.getStatusColor(cell.variance);
         return html`<td class="text-right font-mono ${colorClass}">
           ${cell.value}
         </td>`;
       } else if (cell.type === "status") {
-        const statusColor = this.getStatusColor(cell.variance, cell.isExpense);
+        const statusColor = this.getStatusColor(cell.variance);
         return html`<td class="text-center">
           <span class="${statusColor} text-lg">●</span>
         </td>`;
