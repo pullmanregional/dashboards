@@ -36,7 +36,7 @@ function calculateBudgetLine(budget, monthsLength) {
     (sum, b) => sum + (b.budget_volume || 0),
     0
   );
-  const monthlyBudgetVolume = annualBudgetVolume / 12;
+  const monthlyBudgetVolume = Math.floor(annualBudgetVolume / 12);
   return new Array(monthsLength).fill(monthlyBudgetVolume);
 }
 
@@ -161,9 +161,9 @@ function extractProductivityData(hours) {
   const recentHours = hours.slice(-12);
   return {
     months: recentHours.map((h) => h.month),
-    prodHours: recentHours.map((h) => h.prod_hrs || 0),
-    nonprodHours: recentHours.map((h) => h.nonprod_hrs || 0),
-    fteValues: recentHours.map((h) => h.total_fte || 0),
+    prodHours: recentHours.map((h) => Math.round(h.prod_hrs || 0)),
+    nonprodHours: recentHours.map((h) => Math.round(h.nonprod_hrs || 0)),
+    fteValues: recentHours.map((h) => Math.round(h.total_fte || 0)),
   };
 }
 
@@ -179,7 +179,41 @@ function createProductivityChartOptions(
       ...CHART_CONFIG.commonOptions.title,
       text: "Productivity & FTE Trends",
     },
-    tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "line" },
+      formatter: (params) => {
+        let result = `<strong>${params[0].axisValue}</strong><br/>`;
+        let prodValue = 0;
+        let nonprodValue = 0;
+        let total = 0;
+
+        params.forEach((item) => {
+          if (item.seriesName === "Productive Hours") {
+            prodValue = item.value;
+          } else if (item.seriesName === "Non-Productive Hours") {
+            nonprodValue = item.value;
+          }
+        });
+
+        total = prodValue + nonprodValue;
+
+        params.forEach((item) => {
+          const marker = item.marker;
+          if (item.seriesName === "Productive Hours" && total > 0) {
+            const pct = Math.round((prodValue / total) * 100);
+            result += `${marker} ${item.seriesName}: ${item.value.toLocaleString()} (${pct}%)<br/>`;
+          } else if (item.seriesName === "Non-Productive Hours" && total > 0) {
+            const pct = Math.round((nonprodValue / total) * 100);
+            result += `${marker} ${item.seriesName}: ${item.value.toLocaleString()} (${pct}%)<br/>`;
+          } else {
+            result += `${marker} ${item.seriesName}: ${item.value.toLocaleString()}<br/>`;
+          }
+        });
+
+        return result;
+      }
+    },
     legend: {
       data: ["Productive Hours", "Non-Productive Hours", "Total FTE"],
       bottom: 0,

@@ -3,6 +3,8 @@ import DATA from "./data.js";
 import "../components/data-table.js";
 import "../components/data-chart.js";
 import "../components/income-stmt-table.js";
+import "../components/compact-metric.js";
+import "../components/metric-card.js";
 import * as fig from "./fig.js";
 import * as metrics from "./metrics.js";
 import dayjs from "dayjs";
@@ -15,18 +17,18 @@ const errorStateEl = document.getElementById("error-state");
 const errorMessageEl = document.getElementById("error-message");
 const dashboardContentEl = document.getElementById("dashboard-content");
 const financialMetricsEl = document.getElementById("financial-metrics");
-const kpiTableEl = document.getElementById("kpi-table");
-const volumeTableEl = document.getElementById("volume-table");
-const backButtonEl = document.getElementById("back-button");
 const retryButtonEl = document.getElementById("retry-button");
 const volumeChartEl = document.getElementById("volume-chart");
-const revenueChartEl = document.getElementById("revenue-chart");
 const productivityChartEl = document.getElementById("productivity-chart");
 const timePeriodSelectEl = document.getElementById("time-period-select");
 const prevMonthBtnEl = document.getElementById("prev-month-btn");
 const nextMonthBtnEl = document.getElementById("next-month-btn");
 const unitSelectEl = document.getElementById("unit-select");
 const incomeStmtEl = document.getElementById("income-stmt");
+const incomeStatementLinkEl = document.getElementById("income-statement-link");
+const feedbackFormEl = document.getElementById("feedback-form");
+const feedbackTextEl = document.getElementById("feedback-text");
+const feedbackSaveTextEl = document.getElementById("feedback-save-text");
 
 // State
 let STATE = {
@@ -37,6 +39,7 @@ let STATE = {
   deptConfig: null,
   selectedMonth: null,
   selectedUnit: null,
+  selectedTab: "KPIs",
   availMonths: [],
 };
 
@@ -144,6 +147,13 @@ function updateMonthNavBtns() {
 async function navigateToPrevMonth() {
   const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
   if (currentIndex < STATE.availMonths.length - 1) {
+    if (isFeedbackDirty()) {
+      if (
+        !confirm("You have unsaved feedback. Do you want to discard changes?")
+      ) {
+        return;
+      }
+    }
     STATE.selectedMonth = STATE.availMonths[currentIndex + 1];
     timePeriodSelectEl.value = STATE.selectedMonth;
     updateURL();
@@ -156,6 +166,13 @@ async function navigateToPrevMonth() {
 async function navigateToNextMonth() {
   const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
   if (currentIndex > 0) {
+    if (isFeedbackDirty()) {
+      if (
+        !confirm("You have unsaved feedback. Do you want to discard changes?")
+      ) {
+        return;
+      }
+    }
     STATE.selectedMonth = STATE.availMonths[currentIndex - 1];
     timePeriodSelectEl.value = STATE.selectedMonth;
     updateURL();
@@ -172,9 +189,13 @@ async function loadData() {
     showLoading();
     await DATA.initialize();
 
+    // Load all feedback for this department
+    await DATA.loadFeedbackForDept(STATE.deptId);
+
     // Update time period dropdown and get workday IDs from selected subdepartment
     const { firstMonth, lastMonth } = DATA.getAvailableMonths();
     const selectedMonth = populateTimePeriodSelector(firstMonth, lastMonth);
+    updateURL(); // Ensure URL has the month parameter
     const wdIds = getSelectedWorkdayIds();
     updateDashboard(wdIds, selectedMonth);
   } catch (error) {
@@ -213,6 +234,12 @@ function getSelectedWorkdayIds() {
 function updateDashboard(wdIds, selectedMonth) {
   const data = DATA.processData(wdIds, selectedMonth);
   STATE.data = data;
+
+  const comment = DATA.getFeedbackForMonth(selectedMonth);
+  feedbackTextEl.value = comment;
+  feedbackTextEl.defaultValue = comment;
+  updateFeedbackSaveBtn();
+
   showLoaded();
 }
 
@@ -240,6 +267,14 @@ function showError(error) {
 async function handleMonthChange(event) {
   const newMonth = event.target.value;
   if (newMonth !== STATE.selectedMonth) {
+    if (isFeedbackDirty()) {
+      if (
+        !confirm("You have unsaved feedback. Do you want to discard changes?")
+      ) {
+        timePeriodSelectEl.value = STATE.selectedMonth;
+        return;
+      }
+    }
     STATE.selectedMonth = newMonth;
     updateURL();
     updateMonthNavBtns();
@@ -251,10 +286,124 @@ async function handleUnitChange(event) {
   const newUnit = event.target.value;
   const newUnitIndex = newUnit === "" ? null : parseInt(newUnit);
   if (newUnitIndex !== STATE.selectedUnit) {
+    if (isFeedbackDirty()) {
+      if (
+        !confirm("You have unsaved feedback. Do you want to discard changes?")
+      ) {
+        unitSelectEl.value =
+          STATE.selectedUnit !== null ? STATE.selectedUnit.toString() : "";
+        return;
+      }
+    }
     STATE.selectedUnit = newUnitIndex;
     updateURL();
     await refreshData();
   }
+}
+
+function handleTabChange(event) {
+  const newTab = event.target.getAttribute("aria-label");
+  if (newTab !== STATE.selectedTab) {
+    STATE.selectedTab = newTab;
+    updateURL();
+  }
+}
+
+function handleGotoIncomeStmt(event) {
+  // Find and click the Income Statement tab
+  event.preventDefault();
+  const tabs = document.querySelectorAll('input[name="main_tabs"]');
+  tabs.forEach((tab) => {
+    if (tab.getAttribute("aria-label") === "Income Statement") {
+      tab.click();
+    }
+  });
+}
+
+async function handleSaveFeedback(event) {
+  event.preventDefault();
+  const comment = feedbackTextEl.value;
+  await DATA.saveFeedback(STATE.deptId, STATE.selectedMonth, comment);
+  feedbackTextEl.defaultValue = comment;
+  updateFeedbackSaveBtn();
+}
+
+function isFeedbackDirty() {
+  return feedbackTextEl.value !== feedbackTextEl.defaultValue;
+}
+
+function updateFeedbackSaveBtn() {
+  if (isFeedbackDirty()) {
+    feedbackSaveTextEl.textContent = "Save";
+  } else {
+    feedbackSaveTextEl.textContent = "Saved";
+  }
+}
+
+async function handlePopState() {
+  const changes = syncStateFromURL();
+
+  // Refresh data if month or unit changed
+  if (changes.month || changes.unit) {
+    await refreshData();
+  }
+}
+
+function handleBeforeUnload(e) {
+  if (isFeedbackDirty()) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+}
+
+// ------------------------------------------------------------
+// URL state synchronization
+// ------------------------------------------------------------
+function syncStateFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const newMonth = params.get("month") || null;
+  const newUnit = params.get("unit");
+  const newUnitIndex =
+    newUnit === "" || newUnit === null ? null : parseInt(newUnit);
+  const newTab = params.get("tab") || "KPIs";
+
+  const changes = {
+    month: newMonth !== STATE.selectedMonth,
+    unit: newUnitIndex !== STATE.selectedUnit,
+    tab: newTab !== STATE.selectedTab,
+  };
+
+  // Update state
+  if (changes.month) {
+    // Only update if newMonth is valid (don't overwrite with null)
+    if (newMonth) {
+      STATE.selectedMonth = newMonth;
+      if (timePeriodSelectEl.value) {
+        timePeriodSelectEl.value = STATE.selectedMonth;
+        updateMonthNavBtns();
+      }
+    }
+  }
+
+  if (changes.unit) {
+    STATE.selectedUnit = newUnitIndex;
+    if (unitSelectEl.value !== undefined) {
+      unitSelectEl.value =
+        STATE.selectedUnit !== null ? STATE.selectedUnit.toString() : "";
+    }
+  }
+
+  if (changes.tab) {
+    STATE.selectedTab = newTab;
+    const allTabs = document.querySelectorAll('input[name="main_tabs"]');
+    allTabs.forEach((tab) => {
+      if (tab.getAttribute("aria-label") === STATE.selectedTab) {
+        tab.checked = true;
+      }
+    });
+  }
+
+  return changes;
 }
 
 function updateURL() {
@@ -272,10 +421,19 @@ function updateURL() {
     params.delete("month");
   }
 
+  if (STATE.selectedTab && STATE.selectedTab !== "KPIs") {
+    params.set("tab", STATE.selectedTab);
+  } else {
+    params.delete("tab");
+  }
+
   const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.replaceState({}, "", newURL);
+  window.history.pushState({}, "", newURL);
 }
 
+// ------------------------------------------------------------
+// Rendering
+// ------------------------------------------------------------
 function updateNavbar() {
   const deptName = STATE.deptConfig?.name || "Department";
   titleEl.textContent = `PRH - ${deptName}`;
@@ -313,48 +471,61 @@ function render() {
     dashboardContentEl.classList.remove("hidden");
 
     // Populate dashboard
-    metrics.populateFinancialMetrics(financialMetricsEl, STATE.data);
-    metrics.populateKPITable(kpiTableEl, STATE.data);
-    metrics.populateVolumeTable(volumeTableEl, STATE.data);
+    metrics.populateFinancialMetrics(
+      financialMetricsEl,
+      STATE.data,
+      STATE.selectedMonth
+    );
+    metrics.populateKPIMetrics(dashboardContentEl, STATE.data);
+    metrics.populateVolumeMetrics(
+      dashboardContentEl,
+      STATE.data,
+      STATE.selectedMonth
+    );
+    metrics.populateProductivityMetrics(
+      dashboardContentEl,
+      STATE.data,
+      STATE.selectedMonth
+    );
     fig.populateVolumeChart(volumeChartEl, STATE.data);
-    fig.populateRevenueChart(revenueChartEl, STATE.data);
     fig.populateProductivityChart(productivityChartEl, STATE.data);
     incomeStmtEl.data = STATE.data.incomeStmt;
   }
 }
 
-// Main entry point - initialize UI
 async function init() {
   // Display based on URL parameters
   const params = new URLSearchParams(window.location.search);
   const deptId = params.get("dept");
-  const unitParam = params.get("unit");
-  const monthParam = params.get("month");
   const deptConfig = validateDepartment(deptId);
   if (!deptConfig) return;
 
   // Initialize state
   STATE.deptId = deptId;
   STATE.deptConfig = deptConfig;
-  STATE.selectedUnit = parseUnit(unitParam, deptConfig.sub_depts);
-  STATE.selectedMonth = monthParam || null;
+
+  // If this department has sub-departments, populate the "unit" dropdown
+  populateUnitSelector();
+
+  // Sync state from URL (handles unit, month, and tab)
+  syncStateFromURL();
 
   // Event handlers
-  backButtonEl.addEventListener("click", () => {
-    window.location.href = "index.html";
-  });
+  const allTabs = document.querySelectorAll('input[name="main_tabs"]');
   retryButtonEl.addEventListener("click", loadData);
   timePeriodSelectEl.addEventListener("change", handleMonthChange);
   prevMonthBtnEl.addEventListener("click", navigateToPrevMonth);
   nextMonthBtnEl.addEventListener("click", navigateToNextMonth);
   unitSelectEl.addEventListener("change", handleUnitChange);
-
-  // If this department has sub-departments, populate the "unit" dropdown
-  populateUnitSelector();
+  incomeStatementLinkEl.addEventListener("click", handleGotoIncomeStmt);
+  feedbackFormEl.addEventListener("submit", handleSaveFeedback);
+  feedbackTextEl.addEventListener("input", updateFeedbackSaveBtn);
+  allTabs.forEach((tab) => tab.addEventListener("change", handleTabChange));
+  window.addEventListener("popstate", handlePopState);
+  window.addEventListener("beforeunload", handleBeforeUnload);
 
   // Finally fetch and read from db
   await loadData();
-  window.x = STATE;
 }
 
 // Initialize when DOM is ready
