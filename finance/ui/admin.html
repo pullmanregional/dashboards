@@ -18,14 +18,10 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
           <!-- Back Button -->
           <div class="justify-self-center sm:justify-self-start">
-            <button
-              id="back-button"
-              class="btn btn-ghost btn-sm"
-              onclick="history.back()"
-            >
+            <a href="index.html" class="btn btn-ghost btn-sm" id="back-button">
               <i class="fas fa-chevron-left"></i>
-              Back
-            </button>
+              Home
+            </a>
           </div>
 
           <!-- Title Section -->
@@ -36,34 +32,137 @@
             <h2 id="subtitle" class="text-sm leading-tight"></h2>
           </div>
 
-          <!-- Controls Section - Shows first on mobile, last on desktop -->
+          <!-- Right side controls. Center on mobile, otherwise right align. -->
           <div
-            class="order-3 justify-self-end flex flex-wrap sm:justify-end gap-2"
+            class="order-3 justify-center flex flex-wrap sm:justify-end gap-2"
           >
-            <select id="time-period-select" class="select select-sm w-32">
-              <!-- Options will be populated here -->
-              <option value="">Select month</option>
-            </select>
+            <div class="flex gap-1 items-center">
+              <button
+                id="prev-month-btn"
+                class="btn btn-ghost btn-sm btn-square"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <select id="time-period-select" class="select select-sm w-28">
+                <!-- Options will be populated here -->
+                <option value="">Month</option>
+              </select>
+              <button
+                id="next-month-btn"
+                class="btn btn-ghost btn-sm btn-square"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Main Content -->
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body text-center py-20">
-          <div class="flex flex-col items-center justify-center space-y-4">
-            <div class="text-6xl text-base-300">
-              <i class="fas fa-tools"></i>
+      <!-- Loading State -->
+      <div id="loading-state" class="text-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+        <div class="text-lg mt-4">Loading dashboard data...</div>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="alert alert-error hidden">
+        <i class="fas fa-exclamation-triangle w-6"></i>
+        <div>
+          <h3 class="font-bold">Error loading dashboard</h3>
+          <div id="error-message">Failed to load data</div>
+        </div>
+        <button id="retry-button" class="btn btn-primary btn-sm">Retry</button>
+      </div>
+
+      <!-- Summary Metrics Card -->
+      <div id="summary-metrics" class="card bg-base-100 shadow-lg mb-4 hidden">
+        <div class="card-body px-4 py-1">
+          <div role="tablist" class="tabs tabs-border tabs-md">
+            <input
+              type="radio"
+              name="summary_tabs"
+              role="tab"
+              class="tab font-semibold"
+              aria-label="Year-to-Date Totals"
+              id="totals-tab"
+              checked
+            />
+            <div role="tabpanel" class="tab-content p-1 pt-3 pb-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <metric-card
+                  id="ytd-revenue-card"
+                  title="Net Revenue"
+                  hideDetails
+                ></metric-card>
+                <metric-card
+                  id="ytd-expenses-card"
+                  title="Operating Expenses"
+                  hideDetails
+                ></metric-card>
+                <metric-card
+                  id="ytd-net-income-card"
+                  title="Net Income"
+                  hideDetails
+                ></metric-card>
+              </div>
             </div>
-            <h2 class="text-2xl font-bold text-base-content">In Progress</h2>
-            <p class="text-base-content/70 max-w-md">
-              Administrative overview functionality is currently under
-              development. Please check back later for comprehensive
-              administrative tools and reports.
-            </p>
+
+            <input
+              type="radio"
+              name="summary_tabs"
+              role="tab"
+              class="tab font-semibold"
+              aria-label="Income Statement"
+              id="income-stmt-tab"
+            />
+            <div role="tabpanel" class="tab-content p-1 pt-3 pb-4">
+              <income-stmt-table id="admin-income-stmt"></income-stmt-table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Departments table -->
+      <div id="content" class="card bg-base-100 shadow-lg hidden">
+        <div class="card-body p-4">
+          <div class="overflow-x-auto">
+            <table class="table table-xs">
+              <thead class="bg-base-200 text-xs uppercase">
+                <tr>
+                  <th class="w-8">
+                    <button
+                      id="toggle-all-btn"
+                      class="btn btn-ghost btn-xs hover:bg-base-300 px-1 py-1 border-0"
+                      title="Collapse All"
+                    >
+                      <i
+                        id="toggle-all-icon"
+                        class="fa-regular fa-minus-square"
+                      ></i>
+                    </button>
+                  </th>
+                  <th class="text-left">Department</th>
+                  <th class="text-right">Month Revenue</th>
+                  <th class="text-right border-r-2 border-base-300">
+                    Month Expenses
+                  </th>
+                  <th class="text-right">YTD Revenue</th>
+                  <th class="text-right">YTD Expenses</th>
+                  <th class="text-right">Net Income</th>
+                  <th class="text-right">Variance to Budget</th>
+                  <th class="text-right">%</th>
+                  <th class="text-center"></th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body">
+                <!-- Table rows populated dynamically -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
+
+    <script type="module" src="./admin/admin.js"></script>
   </body>
 </html>
