@@ -133,7 +133,10 @@ async function main() {
     if (!DATA_FILE) {
       return res.status(503).json({ error: "Database not available" });
     }
-    res.type("application/octet-stream").send(DATA_FILE);
+    res
+      .type("application/octet-stream")
+      .set("Cache-Control", "private, max-age=14400")
+      .send(DATA_FILE);
   });
 
   // Feedback endpoints
