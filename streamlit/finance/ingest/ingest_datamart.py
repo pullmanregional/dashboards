@@ -180,12 +180,13 @@ def main():
             db_utils.TableData(table=db.IncomeStmt, df=out.income_stmt_df),
         ],
     )
+    db_utils.write_kv_table(out.kv, session, db.KvTable)
 
     # Update last ingest time and modified times for source data files
     db_utils.write_meta(session, db.Meta)
     session.commit()
 
-    # Write to the output key/value file as JSON
+    # Write to the output key/value file as JSON for backward compatibility
     with open(tmp_kv_file, "w") as f:
         json.dump(out.kv, f, indent=2)
 

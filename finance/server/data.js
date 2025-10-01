@@ -60,12 +60,8 @@ export async function s3fetch(s3client, bucket, filename) {
   }
 }
 
-export function readLocal(dataFile, jsonFile) {
-  console.log(`Reading ${dataFile}, ${jsonFile}`);
+export function readLocal(dataFile) {
+  console.log(`Reading ${dataFile}`);
   const sqlitePath = path.resolve(__dirname, dataFile);
-  const jsonPath = path.resolve(__dirname, jsonFile);
-  return {
-    dataFile: fs.readFileSync(sqlitePath),
-    jsonTxt: fs.readFileSync(jsonPath, "utf8"),
-  };
+  return fs.readFileSync(sqlitePath);
 }

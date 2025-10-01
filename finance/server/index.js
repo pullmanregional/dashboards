@@ -14,10 +14,8 @@ const EMAIL_HEADER = "x-auth-request-email";
 const GROUPS_HEADER = "x-auth-request-groups";
 
 // Configuration and data
-const DATA = {
-  DATA_FILE: null,
-  DATA_JSON: null,
-};
+let DATA_FILE = null;
+
 async function getAppConfig() {
   await import("../server-config.js");
   const config = global.APP_CONFIG;
@@ -77,13 +75,10 @@ async function main() {
   // Load data files
   let reloadTimer = null;
   async function loadDataFiles() {
-    let dataFile, jsonTxt;
-    if (CONFIG.DATA_FILE && CONFIG.DATA_JSON) {
+    let dataFile;
+    if (CONFIG.DATA_FILE) {
       // Use local files (development mode)
-      ({ dataFile, jsonTxt } = data.readLocal(
-        CONFIG.DATA_FILE,
-        CONFIG.DATA_JSON
-      ));
+      dataFile = data.readLocal(CONFIG.DATA_FILE);
     } else {
       // Fetch remote files
       const s3 = new S3Client({
@@ -96,14 +91,11 @@ async function main() {
       });
       const bucket = CONFIG.S3_BUCKET;
       const dbFile = await data.s3fetch(s3, bucket, "prh-finance.sqlite3.enc");
-      const jsonFile = await data.s3fetch(s3, bucket, "prh-finance.json.enc");
 
       // Decrypt
       dataFile = data.decrypt(dbFile, CONFIG.DATA_KEY);
-      jsonTxt = data.decrypt(jsonFile, CONFIG.DATA_KEY).toString("utf8");
     }
-    DATA.DATA_FILE = dataFile;
-    DATA.DATA_JSON = jsonTxt;
+    DATA_FILE = dataFile;
 
     // Refresh data files every 4 hours
     clearTimeout(reloadTimer);
@@ -122,7 +114,7 @@ async function main() {
   app.get("/health", (req, res) => {
     res.json({
       status: "ok",
-      datalen: DATA.DATA_FILE?.length,
+      datalen: DATA_FILE?.length,
     });
   });
   app.get("/api/reload", checkAuth, async (req, res) => {
@@ -130,10 +122,10 @@ async function main() {
     res.ok();
   });
   app.get("/api/data", checkAuth, (req, res) => {
-    if (!DATA.DATA_FILE) {
+    if (!DATA_FILE) {
       return res.status(503).json({ error: "Database not available" });
     }
-    res.type("application/octet-stream").send(DATA.DATA_FILE);
+    res.type("application/octet-stream").send(DATA_FILE);
   });
   app.get("/api/kvdata", checkAuth, (req, res) => {
     if (!DATA.DATA_JSON) {
@@ -145,9 +137,7 @@ async function main() {
   // Load data files and start server
   console.log("Fetching data...");
   await loadDataFiles();
-  console.log(
-    `DB: ${DATA.DATA_FILE.length / 1024} kb, KV: ${DATA.DATA_JSON.length} bytes`
-  );
+  console.log(`DB: ${DATA_FILE.length / 1024} kb`);
   app.listen(CONFIG.PORT, () => {
     console.log(`Server running on http://localhost:${CONFIG.PORT}`);
   });

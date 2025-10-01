@@ -84,3 +84,13 @@ class IncomeStmt(DatamartModel, table=True):
     budget: float
     actual_ytd: float
     budget_ytd: float
+
+
+class KvTable(DatamartModel, table=True):
+    """
+    Stores key/value data. This table will contains a single row with a JSON blob
+    """
+
+    __tablename__ = "_kv"
+    id: int | None = Field(default=None, primary_key=True)
+    data: str

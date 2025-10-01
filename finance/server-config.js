@@ -8,10 +8,9 @@ global.APP_CONFIG = {
   S3_URL: "",
   S3_BUCKET: "",
 
-  // If DATA_FILE/DATA_JSON is specified, we will use it instead of fetching from S3
+  // If DATA_FILE is specified, we will use it instead of fetching from S3
   // Files specified here are unencrypted and used in dev
   DATA_FILE: "../../../prh-warehouse/prh-finance.sqlite3",
-  DATA_JSON: "../../../prh-warehouse/prh-finance.json",
 
   AUTH: {
     // Allowed user groups that can access /api. Blank to allow all.

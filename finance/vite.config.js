@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "ui/index.html"),
         kpi: resolve(__dirname, "ui/kpi.html"),
+        admin: resolve(__dirname, "ui/admin.html"),
       },
     },
   },
