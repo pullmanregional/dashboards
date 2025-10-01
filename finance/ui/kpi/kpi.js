@@ -1,5 +1,5 @@
 import { getDepartmentConfig } from "../department-config.js";
-import DATA from "./data.js";
+import DATA from "../data/data.js";
 import "../components/data-table.js";
 import "../components/data-chart.js";
 import "../components/income-stmt-table.js";
@@ -232,8 +232,7 @@ function getSelectedWorkdayIds() {
 }
 
 function updateDashboard(wdIds, selectedMonth) {
-  const data = DATA.processData(wdIds, selectedMonth);
-  STATE.data = data;
+  STATE.data = DATA.processData(wdIds, selectedMonth);
 
   const comment = DATA.getFeedbackForMonth(selectedMonth);
   feedbackTextEl.value = comment;

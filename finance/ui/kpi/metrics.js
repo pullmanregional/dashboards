@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { calcVariance } from "../data/stats.js";
 
 // ------------------------------------------------------------
 // Formatting utilities
@@ -29,10 +30,6 @@ function formatNumber(value, decimals = 0) {
 // ------------------------------------------------------------
 // Variance calculations
 // ------------------------------------------------------------
-function calcVariance(actual, budget) {
-  return ((actual - budget) / budget) * 100;
-}
-
 function formatVariance(actual, budget) {
   if (!budget || budget === 0) return { value: "-", percent: "" };
   const variance = actual - budget;

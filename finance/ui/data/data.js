@@ -1,8 +1,11 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { transformIncomeStmtData } from "../income-stmt/income-stmt.js";
-import dayjs from "dayjs";
-import dayOfYear from "dayjs/plugin/dayOfYear";
-dayjs.extend(dayOfYear);
+import {
+  calcVolumeByMonth,
+  calcHoursByMonth,
+  calcHoursYTM,
+  calculateStats,
+} from "./stats.js";
 
 // ------------------------------------------------------------
 // Data classes
@@ -34,24 +37,6 @@ class DashboardData {
     this.stats = data.stats || null;
     Object.freeze(this);
   }
-}
-
-// ------------------------------------------------------------
-// Utility functions to handle date based calculations
-// ------------------------------------------------------------
-function fteHrsInYear(year) {
-  const FTE_HOURS_PER_YEAR = 2080;
-  const FTE_HOURS_PER_LEAP_YEAR = 2088;
-  const isLeapYear = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
-  return isLeapYear ? FTE_HOURS_PER_LEAP_YEAR : FTE_HOURS_PER_YEAR;
-}
-
-// Given a month string in the format "2023-01", return the percentage of the year that has passed up to that date.
-function pctOfYearThroughDate(monthStr) {
-  const month = dayjs(monthStr);
-  const daysThroughMonthEnd = month.endOf("month").dayOfYear();
-  const daysInYear = month.endOf("year").dayOfYear();
-  return daysThroughMonthEnd / daysInYear;
 }
 
 // ------------------------------------------------------------
@@ -217,202 +202,22 @@ class DashboardDataManager {
     const incomeStmt = transformIncomeStmtData(incomeStmtData);
 
     // Calculate hours by month, which is used below for the hoursForMonth field as well
-    const hoursByMonth = this.calcHoursByMonth(sourceData.hours);
+    const hoursByMonth = calcHoursByMonth(sourceData.hours);
 
     // Calculate scalar stats
-    const stats = this.calculateStats(sourceData, incomeStmt, month);
+    const stats = calculateStats(sourceData, incomeStmt, month);
 
     return new DashboardData({
-      volumes: this.calcVolumeByMonth(sourceData.volumes),
-      uos: this.calcVolumeByMonth(sourceData.uos),
+      volumes: calcVolumeByMonth(sourceData.volumes),
+      uos: calcVolumeByMonth(sourceData.uos),
       hours: hoursByMonth,
       hoursForMonth: hoursByMonth.find((row) => row.month === month),
       incomeStmt: incomeStmt,
-      hoursYTM: this.calcHoursYTM(sourceData.hours, month),
+      hoursYTM: calcHoursYTM(sourceData.hours, month),
       budget: sourceData.budget,
       contractedHours: sourceData.contractedHours,
       stats: stats,
     });
-  }
-
-  // Sort data object by it's month field, assuming string in YYYY-MM format. Returns array of objects.
-  sortByMonth(data) {
-    return data.sort((a, b) => a.month.localeCompare(b.month));
-  }
-
-  // Calculate volumes history (group by month, sum volume)
-  calcVolumeByMonth(data) {
-    const grouped = {};
-    data.forEach((row) => {
-      if (!grouped[row.month]) {
-        grouped[row.month] = { month: row.month, volume: 0, unit: row.unit };
-      }
-      grouped[row.month].volume += row.volume || 0;
-    });
-    return this.sortByMonth(Object.values(grouped));
-  }
-
-  // Calculate hours by month - sum hours and recalculate FTE
-  calcHoursByMonth(data) {
-    const grouped = {};
-    data.forEach((row) => {
-      if (!grouped[row.month]) {
-        grouped[row.month] = {
-          month: row.month,
-          prod_hrs: 0,
-          nonprod_hrs: 0,
-          total_hrs: 0,
-          total_fte: 0,
-          reg_hrs: 0,
-          overtime_hrs: 0,
-        };
-      }
-      grouped[row.month].prod_hrs += row.prod_hrs || 0;
-      grouped[row.month].nonprod_hrs += row.nonprod_hrs || 0;
-      grouped[row.month].total_hrs += row.total_hrs || 0;
-      grouped[row.month].total_fte += row.total_fte || 0;
-      grouped[row.month].reg_hrs += row.reg_hrs || 0;
-      grouped[row.month].overtime_hrs += row.overtime_hrs || 0;
-    });
-    return this.sortByMonth(Object.values(grouped));
-  }
-
-  // Calculate year-to-month hours. Month should be a string in YYYY-MM format.
-  calcHoursYTM(data, month) {
-    const [year] = month.split("-");
-    const ytmData = data.filter(
-      (row) => row.month.startsWith(year) && row.month.localeCompare(month) <= 0
-    );
-
-    if (ytmData.length === 0) return {};
-
-    const sum = ytmData.reduce(
-      (total, row) => ({
-        reg_hrs: (total.reg_hrs || 0) + (row.reg_hrs || 0),
-        overtime_hrs: (total.overtime_hrs || 0) + (row.overtime_hrs || 0),
-        prod_hrs: (total.prod_hrs || 0) + (row.prod_hrs || 0),
-        nonprod_hrs: (total.nonprod_hrs || 0) + (row.nonprod_hrs || 0),
-        total_hrs: (total.total_hrs || 0) + (row.total_hrs || 0),
-        total_fte: (total.total_fte || 0) + (row.total_fte || 0),
-      }),
-      {}
-    );
-
-    // Recalculate FTE for months after January. For Jan, just use data in the FTE column.
-    const yearNum = parseInt(year);
-    const monthNum = parseInt(month.split("-")[1]);
-    if (monthNum > 1) {
-      const fteHoursPerYear = fteHrsInYear(yearNum);
-      const pctOfYearCompleted = pctOfYearThroughDate(month);
-      sum.total_fte = sum.total_hrs / (fteHoursPerYear * pctOfYearCompleted);
-    }
-
-    return sum;
-  }
-
-  // Calculate key statistics and KPIs
-  calculateStats(data, incomeStmt, month) {
-    const [yearNum, monthNum] = month.split("-").map(Number);
-    const stats = {};
-
-    // Volume calculations
-    const volumes = data.volumes;
-
-    if (volumes.length > 0) {
-      const currentMonth = volumes.find((row) => row.month === month);
-      const ytmData = volumes.filter(
-        (row) => row.month.startsWith(yearNum.toString()) && row.month <= month
-      );
-
-      stats.monthVolume = currentMonth?.volume || 0;
-      stats.ytmVolume = ytmData.reduce(
-        (sum, row) => sum + (row.volume || 0),
-        0
-      );
-      // Remove anything in parentheses from unit (same transformation as volumes card)
-      let unit = volumes[0]?.unit || "Volume";
-      unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
-      stats.volumeUnit = unit;
-    }
-
-    // Budget calculations
-    const budgetSum = data.budget.reduce(
-      (sum, row) => ({
-        budget_fte: (sum.budget_fte || 0) + (row.budget_fte || 0),
-        budget_prod_hrs:
-          (sum.budget_prod_hrs || 0) + (row.budget_prod_hrs || 0),
-        budget_volume: (sum.budget_volume || 0) + (row.budget_volume || 0),
-        budget_uos: (sum.budget_uos || 0) + (row.budget_uos || 0),
-        budget_prod_hrs_per_uos:
-          (sum.budget_prod_hrs_per_uos || 0) +
-          (row.budget_prod_hrs_per_uos || 0),
-        hourly_rate: (sum.hourly_rate || 0) + (row.hourly_rate || 0),
-      }),
-      {}
-    );
-
-    // Recalculate averages for multiple departments
-    if (data.budget.length > 1) {
-      budgetSum.budget_prod_hrs_per_uos =
-        budgetSum.budget_prod_hrs /
-        Math.max(budgetSum.budget_uos, budgetSum.budget_volume, 1);
-      budgetSum.hourly_rate = budgetSum.hourly_rate / data.budget.length;
-    }
-
-    stats.budgetFTE = budgetSum.budget_fte;
-    stats.monthBudgetVolume = budgetSum.budget_volume / 12;
-    stats.ytmBudgetVolume = budgetSum.budget_volume * (monthNum / 12);
-
-    // Get revenue and expense data from income statement (current year)
-    stats.ytdRevenue = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
-      "YTD Actual"
-    ];
-    stats.ytdBudgetRevenue = incomeStmt.find(
-      (row) => row.tree === "Net Revenue"
-    )?.["YTD Budget"];
-    stats.ytdExpense = incomeStmt.find(
-      (row) => row.tree === "Total Operating Expenses"
-    )?.["YTD Actual"];
-    stats.ytdBudgetExpense = incomeStmt.find(
-      (row) => row.tree === "Total Operating Expenses"
-    )?.["YTD Budget"];
-
-    // Month data from income statement
-    stats.monthRevenue = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
-      "Actual"
-    ];
-    stats.monthBudgetRevenue = incomeStmt.find(
-      (row) => row.tree === "Net Revenue"
-    )?.["Budget"];
-    stats.monthExpense = incomeStmt.find(
-      (row) => row.tree === "Total Operating Expenses"
-    )?.["Actual"];
-    stats.monthBudgetExpense = incomeStmt.find(
-      (row) => row.tree === "Total Operating Expenses"
-    )?.["Budget"];
-
-    // Calculate KPIs
-    const kpiVolume = stats.ytmVolume || 1;
-    stats.revenuePerVolume = stats.ytdRevenue / kpiVolume;
-    stats.expensePerVolume = stats.ytdExpense / kpiVolume;
-
-    if (stats.ytdBudgetRevenue && stats.ytmBudgetVolume) {
-      stats.targetRevenuePerVolume =
-        stats.ytdBudgetRevenue / stats.ytmBudgetVolume;
-      stats.varianceRevenuePerVolume = Math.trunc(
-        (stats.revenuePerVolume / stats.targetRevenuePerVolume - 1) * 100
-      );
-    }
-
-    if (stats.ytdBudgetExpense && stats.ytmBudgetVolume) {
-      stats.targetExpensePerVolume =
-        stats.ytdBudgetExpense / stats.ytmBudgetVolume;
-      stats.varianceExpensePerVolume = Math.trunc(
-        (stats.expensePerVolume / stats.targetExpensePerVolume - 1) * 100
-      );
-    }
-
-    return stats;
   }
 
   // Load all feedback for a department
@@ -469,5 +274,5 @@ class DashboardDataManager {
   }
 }
 
-// Create singleton instance, import with import DATA from "./data.js";
+// Create singleton instance, import with import DATA from "../data/data.js";
 export default new DashboardDataManager();
