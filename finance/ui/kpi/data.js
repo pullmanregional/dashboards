@@ -1,5 +1,5 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
-import { transformIncomeStmtData } from "./income-stmt.js";
+import { transformIncomeStmtData } from "../income-stmt/income-stmt.js";
 import dayjs from "dayjs";
 import dayOfYear from "dayjs/plugin/dayOfYear";
 dayjs.extend(dayOfYear);
@@ -263,12 +263,16 @@ class DashboardDataManager {
           nonprod_hrs: 0,
           total_hrs: 0,
           total_fte: 0,
+          reg_hrs: 0,
+          overtime_hrs: 0,
         };
       }
       grouped[row.month].prod_hrs += row.prod_hrs || 0;
       grouped[row.month].nonprod_hrs += row.nonprod_hrs || 0;
       grouped[row.month].total_hrs += row.total_hrs || 0;
       grouped[row.month].total_fte += row.total_fte || 0;
+      grouped[row.month].reg_hrs += row.reg_hrs || 0;
+      grouped[row.month].overtime_hrs += row.overtime_hrs || 0;
     });
     return this.sortByMonth(Object.values(grouped));
   }
@@ -312,11 +316,11 @@ class DashboardDataManager {
     const stats = {};
 
     // Volume calculations
-    const kpiData = data.uos.length > 0 ? data.uos : data.volumes;
+    const volumes = data.volumes;
 
-    if (kpiData.length > 0) {
-      const currentMonth = kpiData.find((row) => row.month === month);
-      const ytmData = kpiData.filter(
+    if (volumes.length > 0) {
+      const currentMonth = volumes.find((row) => row.month === month);
+      const ytmData = volumes.filter(
         (row) => row.month.startsWith(yearNum.toString()) && row.month <= month
       );
 
@@ -325,7 +329,10 @@ class DashboardDataManager {
         (sum, row) => sum + (row.volume || 0),
         0
       );
-      stats.volumeUnit = kpiData[0]?.unit || "units";
+      // Remove anything in parentheses from unit (same transformation as volumes card)
+      let unit = volumes[0]?.unit || "Volume";
+      unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
+      stats.volumeUnit = unit;
     }
 
     // Budget calculations
@@ -356,7 +363,7 @@ class DashboardDataManager {
     stats.monthBudgetVolume = budgetSum.budget_volume / 12;
     stats.ytmBudgetVolume = budgetSum.budget_volume * (monthNum / 12);
 
-    // Get revenue and expense data from income statement
+    // Get revenue and expense data from income statement (current year)
     stats.ytdRevenue = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
       "YTD Actual"
     ];
@@ -369,6 +376,20 @@ class DashboardDataManager {
     stats.ytdBudgetExpense = incomeStmt.find(
       (row) => row.tree === "Total Operating Expenses"
     )?.["YTD Budget"];
+
+    // Month data from income statement
+    stats.monthRevenue = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
+      "Actual"
+    ];
+    stats.monthBudgetRevenue = incomeStmt.find(
+      (row) => row.tree === "Net Revenue"
+    )?.["Budget"];
+    stats.monthExpense = incomeStmt.find(
+      (row) => row.tree === "Total Operating Expenses"
+    )?.["Actual"];
+    stats.monthBudgetExpense = incomeStmt.find(
+      (row) => row.tree === "Total Operating Expenses"
+    )?.["Budget"];
 
     // Calculate KPIs
     const kpiVolume = stats.ytmVolume || 1;

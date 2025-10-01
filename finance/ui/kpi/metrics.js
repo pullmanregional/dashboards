@@ -203,7 +203,7 @@ function populateVolumeMetrics(metricEl, data, currentMonth) {
 
   // Get current month volume data to extract unit and actual volume
   const currentMonthVolume = volumes.find((row) => row.month === currentMonth);
-  let unit = currentMonthVolume?.unit || "units";
+  let unit = currentMonthVolume?.unit || "Volume";
 
   // Remove anything in parentheses from unit
   unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
