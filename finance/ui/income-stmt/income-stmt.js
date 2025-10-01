@@ -32,8 +32,10 @@ function applyStatementDefItem(item, srcData, incomeStatement, path) {
       "Ledger Account": item.name,
       Actual: null,
       Budget: null,
+      Variance: null,
       "YTD Actual": null,
       "YTD Budget": null,
+      "YTD Variance": null,
       bold: item.bold,
       highlight: item.highlight,
     });
@@ -52,8 +54,10 @@ function applyStatementDefItem(item, srcData, incomeStatement, path) {
         "Ledger Account": item.account,
         Actual: null,
         Budget: null,
+        Variance: null,
         "YTD Actual": null,
         "YTD Budget": null,
+        "YTD Variance": null,
         bold: item.bold,
         highlight: item.highlight,
       });
@@ -150,13 +154,20 @@ function addAccountData(
     const unitPath =
       needsUnitPrefixes && unitName ? `${curPath}-${unitName}` : curPath;
 
+    const actual = multiplier * aggregated.actual;
+    const budget = multiplier * aggregated.budget;
+    const ytdActual = multiplier * aggregated.actual_ytd;
+    const ytdBudget = multiplier * aggregated.budget_ytd;
+
     incomeStatement.push({
       tree: unitPath,
       "Ledger Account": finalDisplayText,
-      Actual: multiplier * aggregated.actual,
-      Budget: multiplier * aggregated.budget,
-      "YTD Actual": multiplier * aggregated.actual_ytd,
-      "YTD Budget": multiplier * aggregated.budget_ytd,
+      Actual: actual,
+      Budget: budget,
+      Variance: actual - budget,
+      "YTD Actual": ytdActual,
+      "YTD Budget": ytdBudget,
+      "YTD Variance": ytdActual - ytdBudget,
     });
   });
 }
@@ -227,8 +238,10 @@ function addTotalRow(item, incomeStatement, path) {
     "Ledger Account": item.name,
     Actual: actual,
     Budget: budget,
+    Variance: actual - budget,
     "YTD Actual": actualYtd,
     "YTD Budget": budgetYtd,
+    "YTD Variance": actualYtd - budgetYtd,
     bold: item.bold,
     highlight: item.highlight,
   });

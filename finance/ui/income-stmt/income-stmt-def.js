@@ -65,7 +65,9 @@ export const INCOME_STMT_DEF = [
       },
       {
         name: "Donations",
-        items: [{ account: "40200:Donations", negative: true }],
+        items: [
+          { account: "40200:Donations Revenue-Operating", negative: true },
+        ],
       },
       {
         name: "Other Operating Revenue",
@@ -240,10 +242,15 @@ export const INCOME_STMT_DEF = [
   {
     name: "Investments (Non-Operating)",
     items: [
-      { account: "90000:Gain/Loss Investments (NOP)", category: "*" },
+      {
+        account: "90000:Gain/Loss Investments (NOP)",
+        category: "*",
+        negative: true,
+      },
       {
         account: "90010:Rental Income - Medical Office Building - (NOP)",
         category: "*",
+        negative: true,
       },
     ],
   },
@@ -260,6 +267,7 @@ export const INCOME_STMT_DEF = [
     name: "Net Income",
     total: [
       "Patient Revenues/",
+      "Other Revenue/",
       "-Deductions/",
       "-Salaries & Benefits/",
       "-Other Direct Expenses/",
