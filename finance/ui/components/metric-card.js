@@ -9,7 +9,7 @@ export class MetricCard extends LitElement {
   static properties = {
     title: { type: String, default: "" },
     value: { type: String, default: "" },
-    variance: { type: Number, default: 0 },
+    variancePct: { type: Number, default: 0 },
     statusText: { type: String, default: "" },
     hideDetails: { type: Boolean, default: false },
   };
@@ -19,7 +19,7 @@ export class MetricCard extends LitElement {
   }
 
   getStatusColor() {
-    const absVariance = Math.abs(this.variance);
+    const absVariance = Math.abs(this.variancePct);
 
     if (absVariance < 5) {
       return "text-success";
