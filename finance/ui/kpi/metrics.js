@@ -165,32 +165,23 @@ function populateKPIMetrics(containerEl, data) {
 
   // Update Revenue per Volume metric
   const revenueMetric = containerEl.querySelector("#revenue-per-volume-metric");
-  revenueMetric.setAttribute(
-    "title",
-    `Revenue per ${stats.volumeUnit || "Volume"}`
-  );
+  const unit = stats.volumeUnit.replace(/s$/, "") || "Volume";
+  revenueMetric.setAttribute("title", `Revenue per ${unit}`);
   revenueMetric.setAttribute("value", formatCurrency(stats.revenuePerVolume));
   revenueMetric.setAttribute("variancePct", revenueVariance.toString());
   revenueMetric.setAttribute(
     "statusText",
-    `${revenueVariance}% from target of ${formatCurrency(
-      stats.targetRevenuePerVolume
-    )}`
+    `Target: ${formatCurrency(stats.targetRevenuePerVolume)}`
   );
 
   // Update Expense per Volume metric
   const expenseMetric = containerEl.querySelector("#expense-per-volume-metric");
-  expenseMetric.setAttribute(
-    "title",
-    `Expense per ${stats.volumeUnit || "Volume"}`
-  );
+  expenseMetric.setAttribute("title", `Expense per ${unit}`);
   expenseMetric.setAttribute("value", formatCurrency(stats.expensePerVolume));
   expenseMetric.setAttribute("variancePct", expenseVariance.toString());
   expenseMetric.setAttribute(
     "statusText",
-    `${expenseVariance}% from target of ${formatCurrency(
-      stats.targetExpensePerVolume
-    )}`
+    `Target: ${formatCurrency(stats.targetExpensePerVolume)}`
   );
 }
 
@@ -225,14 +216,14 @@ function populateVolumeMetrics(metricEl, data, currentMonth) {
 
   // Update Month volume metric
   const monthVolumeMetric = metricEl.querySelector("#month-volume-metric");
-  monthVolumeMetric.setAttribute("title", unit);
+  monthVolumeMetric.setAttribute("title", `${unit} in month`);
   monthVolumeMetric.setAttribute("value", formatNumber(monthVolume));
   monthVolumeMetric.setAttribute("variancePct", monthVariance.toString());
   monthVolumeMetric.showVariance = false;
 
   // Update YTD volume metric
   const ytdVolumeMetric = metricEl.querySelector("#ytd-volume-metric");
-  ytdVolumeMetric.setAttribute("title", `YTD ${unit}`);
+  ytdVolumeMetric.setAttribute("title", `${unit} YTD`);
   ytdVolumeMetric.setAttribute("value", formatNumber(ytdVolume));
   ytdVolumeMetric.setAttribute("variancePct", ytdVariance.toString());
   ytdVolumeMetric.showVariance = true;
@@ -242,11 +233,8 @@ function populateProductivityMetrics(metricEl, data, currentMonth) {
   const stats = data.stats;
   const contractedHours = data.contractedHours || [];
 
-  // Find hours for current month from the hours array
-  const hours = data.hours || [];
-  const hoursForMonth = hours.find((row) => row.month === currentMonth) || {};
-
   // Calculate FTE for current month
+  const hoursForMonth = data.hoursForMonth;
   const fte = hoursForMonth.total_fte || 0;
   const budgetFTE = stats.budgetFTE || 0;
   const fteVariance = budgetFTE ? calcVariance(fte, budgetFTE) : 0;

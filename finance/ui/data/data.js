@@ -10,7 +10,7 @@ import {
 // ------------------------------------------------------------
 // Data classes
 // ------------------------------------------------------------
-// Immutable class for source data read from DB
+// Immutable class for source data read from DB after filtering by wdIds
 class SourceData {
   constructor(data = {}) {
     this.lastUpdated = data.lastUpdated || null;
@@ -25,11 +25,13 @@ class SourceData {
   }
 }
 
+// Contains data for populating dashboard UI
 class DashboardData {
   constructor(data = {}) {
     this.volumes = data.volumes || null;
     this.uos = data.uos || null;
     this.hours = data.hours || null;
+    this.hoursForMonth = data.hoursForMonth || null;
     this.budget = data.budget || null;
     this.contractedHours = data.contractedHours || null;
     this.incomeStmt = data.incomeStmt || null;
