@@ -65,6 +65,7 @@ class DashboardDataManager {
     this.kvData = null;
     this.data = null;
     this.initialized = false;
+    this.allFeedback = {}; // Store all feedback comments by month for current dept
   }
 
   // Initialize SQLite and load db from API. This should be called once at startup.
@@ -114,12 +115,9 @@ class DashboardDataManager {
       }
       console.log("Data loaded");
 
-      // Fetch KV data
-      const kvResponse = await fetch("/api/kvdata");
-      if (!kvResponse.ok) {
-        throw new Error(`Failed to fetch KV data: ${kvResponse.statusText}`);
-      }
-      this.kvData = await kvResponse.json();
+      // Read KV data from _kv table
+      this.kvData = this.query("SELECT data FROM _kv LIMIT 1")[0]?.data;
+      this.kvData = JSON.parse(this.kvData);
       console.log("KV data loaded");
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -396,6 +394,49 @@ class DashboardDataManager {
     return stats;
   }
 
+  // Load all feedback for a department
+  async loadFeedbackForDept(dept) {
+    try {
+      const response = await fetch(`/api/feedback/${dept}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load feedback: ${response.statusText}`);
+      }
+      const feedbackList = await response.json();
+
+      // Store in cache indexed by month
+      this.allFeedback = {};
+      feedbackList.forEach((item) => {
+        this.allFeedback[item.month] = item.comment || "";
+      });
+    } catch (error) {
+      console.error("Error loading feedback:", error);
+      this.allFeedback = {};
+    }
+  }
+
+  // Get feedback for a specific month from cache
+  getFeedbackForMonth(month) {
+    return this.allFeedback[month] || "";
+  }
+
+  // Save feedback for a specific department and month
+  async saveFeedback(dept, month, comment) {
+    const response = await fetch(`/api/feedback/${dept}/${month}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ comment }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to save feedback: ${response.statusText}`);
+    }
+
+    this.allFeedback[month] = comment;
+    return await response.json();
+  }
+
   // Clean up resources
   destroy() {
     if (this.db) {
@@ -403,6 +444,7 @@ class DashboardDataManager {
       this.db = null;
     }
     this.initialized = false;
+    this.allFeedback = {};
   }
 }
 
