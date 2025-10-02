@@ -22,7 +22,7 @@ const CHART_CONFIG = {
       left: "3%",
       right: "4%",
       bottom: "15%",
-      top: "15%",
+      top: "30%",
       containLabel: true,
     },
   },
@@ -177,7 +177,7 @@ function createProductivityChartOptions(
     ...CHART_CONFIG.commonOptions,
     title: {
       ...CHART_CONFIG.commonOptions.title,
-      text: "Productivity & FTE Trends",
+      text: "Productivity & FTE",
     },
     tooltip: {
       trigger: "axis",
@@ -202,17 +202,23 @@ function createProductivityChartOptions(
           const marker = item.marker;
           if (item.seriesName === "Productive Hours" && total > 0) {
             const pct = Math.round((prodValue / total) * 100);
-            result += `${marker} ${item.seriesName}: ${item.value.toLocaleString()} (${pct}%)<br/>`;
+            result += `${marker} ${
+              item.seriesName
+            }: ${item.value.toLocaleString()} (${pct}%)<br/>`;
           } else if (item.seriesName === "Non-Productive Hours" && total > 0) {
             const pct = Math.round((nonprodValue / total) * 100);
-            result += `${marker} ${item.seriesName}: ${item.value.toLocaleString()} (${pct}%)<br/>`;
+            result += `${marker} ${
+              item.seriesName
+            }: ${item.value.toLocaleString()} (${pct}%)<br/>`;
           } else {
-            result += `${marker} ${item.seriesName}: ${item.value.toLocaleString()}<br/>`;
+            result += `${marker} ${
+              item.seriesName
+            }: ${item.value.toLocaleString()}<br/>`;
           }
         });
 
         return result;
-      }
+      },
     },
     legend: {
       data: ["Productive Hours", "Non-Productive Hours", "Total FTE"],
