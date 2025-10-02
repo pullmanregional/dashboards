@@ -1,44 +1,11 @@
 import dayjs from "dayjs";
-import { calcVariance } from "../data/stats.js";
-
-// ------------------------------------------------------------
-// Formatting utilities
-// ------------------------------------------------------------
-const FORMATTERS = {
-  currency: new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }),
-
-  number: (decimals = 0) =>
-    new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }),
-};
-
-function formatCurrency(value) {
-  return FORMATTERS.currency.format(value || 0);
-}
-
-function formatNumber(value, decimals = 0) {
-  return FORMATTERS.number(decimals).format(value || 0);
-}
-
-// ------------------------------------------------------------
-// Variance calculations
-// ------------------------------------------------------------
-function formatVariance(actual, budget) {
-  if (!budget || budget === 0) return { value: "-", percent: "" };
-  const variance = actual - budget;
-  const percentVariance = Math.round((variance / budget) * 100);
-  return {
-    value: formatCurrency(variance),
-    percent: `${percentVariance}%`,
-  };
-}
+import {
+  calcVariance,
+  formatCurrency,
+  formatCurrencyInThousands,
+  formatNumber,
+  formatVariancePct,
+} from "../data/util.js";
 
 // ------------------------------------------------------------
 // Metrics displays
@@ -60,27 +27,27 @@ function populateFinancialMetrics(metricEl, data, currentMonth) {
   const ytdExpVariance = calcVariance(stats.ytdExpense, stats.ytdBudgetExpense);
 
   // Format variances for display
-  const monthRevVar = formatVariance(
+  const monthRevVar = formatVariancePct(
     stats.monthRevenue,
     stats.monthBudgetRevenue
   );
-  const monthExpVar = formatVariance(
+  const monthExpVar = formatVariancePct(
     stats.monthExpense,
     stats.monthBudgetExpense
   );
-  const ytdRevVar = formatVariance(stats.ytdRevenue, stats.ytdBudgetRevenue);
-  const ytdExpVar = formatVariance(stats.ytdExpense, stats.ytdBudgetExpense);
+  const ytdRevVar = formatVariancePct(stats.ytdRevenue, stats.ytdBudgetRevenue);
+  const ytdExpVar = formatVariancePct(stats.ytdExpense, stats.ytdBudgetExpense);
 
   // Calculate Net values
   const monthNet = (stats.monthRevenue || 0) - (stats.monthExpense || 0);
   const monthBudgetNet =
     (stats.monthBudgetRevenue || 0) - (stats.monthBudgetExpense || 0);
-  const monthNetVar = formatVariance(monthNet, monthBudgetNet);
+  const monthNetVar = formatVariancePct(monthNet, monthBudgetNet);
 
   const ytdNet = (stats.ytdRevenue || 0) - (stats.ytdExpense || 0);
   const ytdBudgetNet =
     (stats.ytdBudgetRevenue || 0) - (stats.ytdBudgetExpense || 0);
-  const ytdNetVar = formatVariance(ytdNet, ytdBudgetNet);
+  const ytdNetVar = formatVariancePct(ytdNet, ytdBudgetNet);
 
   // Update YTD label
   const ytdLabelEl = metricEl.querySelector("#ytd-label");
@@ -216,7 +183,7 @@ function populateVolumeMetrics(metricEl, data, currentMonth) {
 
   // Update Month volume metric
   const monthVolumeMetric = metricEl.querySelector("#month-volume-metric");
-  monthVolumeMetric.setAttribute("title", `${unit} in month`);
+  monthVolumeMetric.setAttribute("title", `${unit} This Month`);
   monthVolumeMetric.setAttribute("value", formatNumber(monthVolume));
   monthVolumeMetric.setAttribute("variancePct", monthVariance.toString());
   monthVolumeMetric.showVariance = false;
@@ -233,13 +200,13 @@ function populateProductivityMetrics(metricEl, data, currentMonth) {
   const stats = data.stats;
   const contractedHours = data.contractedHours || [];
 
-  // Calculate FTE for current month
-  const hoursForMonth = data.hoursForMonth;
-  const fte = hoursForMonth.total_fte || 0;
+  // Get FTE for YTD
+  const fte = data.hoursYTM.total_fte || 0;
   const budgetFTE = stats.budgetFTE || 0;
   const fteVariance = budgetFTE ? calcVariance(fte, budgetFTE) : 0;
 
   // Calculate Overtime % (overtime / (regular + overtime) * 100)
+  const hoursForMonth = data.hoursForMonth;
   const regHours = hoursForMonth.reg_hrs || 0;
   const overtimeHours = hoursForMonth.overtime_hrs || 0;
   const totalProductiveHours = regHours + overtimeHours;
