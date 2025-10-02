@@ -95,23 +95,275 @@
                 checked
               />
               <div role="tabpanel" class="tab-content p-1 pt-3">
-                <!-- Key Performance Indicators -->
+                <!-- Financial Summary and Feedback -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                   <div class="lg:col-span-2">
                     <div class="card bg-base-100 shadow-lg h-full">
-                      <div class="card-body px-4 pt-3 pb-3">
-                        <h2 class="card-title mb-2">
-                          Key Performance Indicators
+                      <div class="card-body px-4 pt-3 pb-4">
+                        <h2 class="card-title mb-3">
+                          Financial Summary
+                          <a
+                            href="#"
+                            class="text-xs text-gray-400 hover:text-primary font-normal ml-auto no-underline"
+                            id="income-statement-link"
+                            >Income Statement &gt;</a
+                          >
                         </h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <metric-card
-                            id="revenue-per-volume-metric"
-                            title="Revenue per Unit"
-                          ></metric-card>
-                          <metric-card
-                            id="expense-per-volume-metric"
-                            title="Expense per Unit"
-                          ></metric-card>
+                        <div
+                          class="flex flex-col md:flex-row gap-0 -mx-4"
+                          id="financial-metrics"
+                        >
+                          <!-- Month Section -->
+                          <div class="flex-1 px-4 py-3 min-w-0">
+                            <h3 class="text-sm font-bold mb-2">Month</h3>
+
+                            <!-- Metrics for month -->
+                            <div
+                              class="flex gap-10 mb-3 font-bold items-center justify-center flex-wrap"
+                            >
+                              <compact-metric
+                                id="month-rev-metric"
+                                title="Revenue"
+                                value="-"
+                                variance="0"
+                              ></compact-metric>
+                              <compact-metric
+                                id="month-exp-metric"
+                                title="Expenses"
+                                value="-"
+                                variance="0"
+                              ></compact-metric>
+                            </div>
+
+                            <!-- Summary table for month financials -->
+                            <div class="overflow-x-auto -mx-4 px-4">
+                              <table class="w-full text-[0.65rem]">
+                                <thead>
+                                  <tr class="border-b border-base-300">
+                                    <th
+                                      class="text-left font-semibold pb-0.5 pr-1"
+                                    ></th>
+                                    <th
+                                      class="text-right font-semibold pb-0.5 px-0.5"
+                                    >
+                                      Actual
+                                    </th>
+                                    <th
+                                      class="text-right font-semibold pb-0.5 px-0.5"
+                                    >
+                                      Budget
+                                    </th>
+                                    <th
+                                      class="text-right font-semibold pb-0.5 px-0.5"
+                                    >
+                                      Variance
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td class="py-0.5 pr-1 whitespace-nowrap">
+                                      Rev
+                                    </td>
+                                    <td
+                                      id="month-rev-actual"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="month-rev-budget"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="month-rev-variance"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td class="py-0.5 pr-1 whitespace-nowrap">
+                                      Exp
+                                    </td>
+                                    <td
+                                      id="month-exp-actual"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="month-exp-budget"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="month-exp-variance"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                  </tr>
+                                  <tr
+                                    class="border-t-2 border-double border-base-300 font-bold"
+                                  >
+                                    <td class="py-0.5 pr-1 whitespace-nowrap">
+                                      Net
+                                    </td>
+                                    <td
+                                      id="month-net-actual"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="month-net-budget"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="month-net-variance"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                          <!-- Vertical Divider, horizontal divider on mobile -->
+                          <div
+                            class="border-l border-base-300 hidden md:block"
+                          ></div>
+                          <div class="border-t border-base-300 md:hidden"></div>
+
+                          <!-- YTD Section -->
+                          <div class="flex-1 px-4 py-3 min-w-0">
+                            <h3 id="ytd-label" class="text-sm font-bold mb-2">
+                              Year to Date
+                            </h3>
+
+                            <!-- Metrics for YTD -->
+                            <div
+                              class="flex gap-10 mb-3 font-bold items-center justify-center flex-wrap"
+                            >
+                              <compact-metric
+                                id="ytd-rev-metric"
+                                title="Revenue YTD"
+                              ></compact-metric>
+                              <compact-metric
+                                id="ytd-exp-metric"
+                                title="Expenses YTD"
+                              ></compact-metric>
+                            </div>
+
+                            <!-- Summary table for YTD financials -->
+                            <div class="overflow-x-auto -mx-4 px-4">
+                              <table class="w-full text-[0.65rem]">
+                                <thead>
+                                  <tr class="border-b border-base-300">
+                                    <th
+                                      class="text-left font-semibold pb-0.5 pr-1"
+                                    ></th>
+                                    <th
+                                      class="text-right font-semibold pb-0.5 px-0.5"
+                                    >
+                                      Actual
+                                    </th>
+                                    <th
+                                      class="text-right font-semibold pb-0.5 px-0.5"
+                                    >
+                                      Budget
+                                    </th>
+                                    <th
+                                      class="text-right font-semibold pb-0.5 px-0.5"
+                                    >
+                                      Variance
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td class="py-0.5 pr-1 whitespace-nowrap">
+                                      Rev
+                                    </td>
+                                    <td
+                                      id="ytd-rev-actual"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="ytd-rev-budget"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="ytd-rev-variance"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td class="py-0.5 pr-1 whitespace-nowrap">
+                                      Exp
+                                    </td>
+                                    <td
+                                      id="ytd-exp-actual"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="ytd-exp-budget"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="ytd-exp-variance"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                  </tr>
+                                  <tr
+                                    class="border-t-2 border-double border-base-300 font-bold"
+                                  >
+                                    <td class="py-0.5 pr-1 whitespace-nowrap">
+                                      Net
+                                    </td>
+                                    <td
+                                      id="ytd-net-actual"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="ytd-net-budget"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                    <td
+                                      id="ytd-net-variance"
+                                      class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
+                                    >
+                                      -
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -142,279 +394,6 @@
                   </div>
                 </div>
 
-                <!-- Financial Summary -->
-                <div class="mb-4">
-                  <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body px-4 pt-3 pb-4">
-                      <h2 class="card-title mb-3">
-                        Financial Summary
-                        <a
-                          href="#"
-                          class="text-xs text-gray-400 hover:text-primary font-normal ml-auto no-underline"
-                          id="income-statement-link"
-                          >Income Statement &gt;</a
-                        >
-                      </h2>
-                      <div
-                        class="flex flex-col md:flex-row gap-0 -mx-4"
-                        id="financial-metrics"
-                      >
-                        <!-- Month Section -->
-                        <div class="flex-1 px-4 py-3 min-w-0">
-                          <h3 class="text-sm font-bold mb-2">Month</h3>
-
-                          <!-- Metrics for month -->
-                          <div
-                            class="flex gap-10 mb-3 font-bold items-center justify-center flex-wrap"
-                          >
-                            <compact-metric
-                              id="month-rev-metric"
-                              title="Revenue"
-                              value="-"
-                              variance="0"
-                            ></compact-metric>
-                            <compact-metric
-                              id="month-exp-metric"
-                              title="Expenses"
-                              value="-"
-                              variance="0"
-                            ></compact-metric>
-                          </div>
-
-                          <!-- Summary table for month financials -->
-                          <div class="overflow-x-auto -mx-4 px-4">
-                            <table class="w-full text-[0.65rem]">
-                              <thead>
-                                <tr class="border-b border-base-300">
-                                  <th
-                                    class="text-left font-semibold pb-0.5 pr-1"
-                                  ></th>
-                                  <th
-                                    class="text-right font-semibold pb-0.5 px-0.5"
-                                  >
-                                    Actual
-                                  </th>
-                                  <th
-                                    class="text-right font-semibold pb-0.5 px-0.5"
-                                  >
-                                    Budget
-                                  </th>
-                                  <th
-                                    class="text-right font-semibold pb-0.5 px-0.5"
-                                  >
-                                    Variance
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  <td class="py-0.5 pr-1 whitespace-nowrap">
-                                    Rev
-                                  </td>
-                                  <td
-                                    id="month-rev-actual"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="month-rev-budget"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="month-rev-variance"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td class="py-0.5 pr-1 whitespace-nowrap">
-                                    Exp
-                                  </td>
-                                  <td
-                                    id="month-exp-actual"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="month-exp-budget"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="month-exp-variance"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                </tr>
-                                <tr
-                                  class="border-t-2 border-double border-base-300 font-bold"
-                                >
-                                  <td class="py-0.5 pr-1 whitespace-nowrap">
-                                    Net
-                                  </td>
-                                  <td
-                                    id="month-net-actual"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="month-net-budget"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="month-net-variance"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        <!-- Vertical Divider, horizontal divider on mobile -->
-                        <div
-                          class="border-l border-base-300 hidden md:block"
-                        ></div>
-                        <div class="border-t border-base-300 md:hidden"></div>
-
-                        <!-- YTD Section -->
-                        <div class="flex-1 px-4 py-3 min-w-0">
-                          <h3 id="ytd-label" class="text-sm font-bold mb-2">
-                            Year to Date
-                          </h3>
-
-                          <!-- Metrics for YTD -->
-                          <div
-                            class="flex gap-10 mb-3 font-bold items-center justify-center flex-wrap"
-                          >
-                            <compact-metric
-                              id="ytd-rev-metric"
-                              title="Revenue"
-                            ></compact-metric>
-                            <compact-metric
-                              id="ytd-exp-metric"
-                              title="Expenses"
-                            ></compact-metric>
-                          </div>
-
-                          <!-- Summary table for YTD financials -->
-                          <div class="overflow-x-auto -mx-4 px-4">
-                            <table class="w-full text-[0.65rem]">
-                              <thead>
-                                <tr class="border-b border-base-300">
-                                  <th
-                                    class="text-left font-semibold pb-0.5 pr-1"
-                                  ></th>
-                                  <th
-                                    class="text-right font-semibold pb-0.5 px-0.5"
-                                  >
-                                    Actual
-                                  </th>
-                                  <th
-                                    class="text-right font-semibold pb-0.5 px-0.5"
-                                  >
-                                    Budget
-                                  </th>
-                                  <th
-                                    class="text-right font-semibold pb-0.5 px-0.5"
-                                  >
-                                    Variance
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  <td class="py-0.5 pr-1 whitespace-nowrap">
-                                    Rev
-                                  </td>
-                                  <td
-                                    id="ytd-rev-actual"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="ytd-rev-budget"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="ytd-rev-variance"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td class="py-0.5 pr-1 whitespace-nowrap">
-                                    Exp
-                                  </td>
-                                  <td
-                                    id="ytd-exp-actual"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="ytd-exp-budget"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="ytd-exp-variance"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                </tr>
-                                <tr
-                                  class="border-t-2 border-double border-base-300 font-bold"
-                                >
-                                  <td class="py-0.5 pr-1 whitespace-nowrap">
-                                    Net
-                                  </td>
-                                  <td
-                                    id="ytd-net-actual"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="ytd-net-budget"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                  <td
-                                    id="ytd-net-variance"
-                                    class="text-right py-0.5 px-0.5 font-mono whitespace-nowrap"
-                                  >
-                                    -
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 <!-- Volume and Productivity cards -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                   <div class="card shadow-lg mb-4">
@@ -423,7 +402,7 @@
 
                       <!-- Volume metrics -->
                       <div
-                        class="flex gap-6 mb-3 font-bold items-center justify-center flex-wrap"
+                        class="flex gap-6 font-bold items-center justify-center flex-wrap"
                       >
                         <compact-metric
                           id="month-volume-metric"
@@ -439,7 +418,7 @@
                       <data-chart
                         id="volume-chart"
                         title="Volume Trends"
-                        height="h-64"
+                        height="h-48"
                       ></data-chart>
                     </div>
                   </div>
@@ -449,11 +428,11 @@
 
                       <!-- Productivity metrics -->
                       <div
-                        class="flex gap-6 mb-3 font-bold items-center justify-center flex-wrap"
+                        class="flex gap-6 font-bold items-center justify-center flex-wrap"
                       >
                         <compact-metric
                           id="fte-metric"
-                          title="FTE"
+                          title="Month FTE"
                         ></compact-metric>
                         <compact-metric
                           id="overtime-metric"
@@ -469,8 +448,41 @@
                       <data-chart
                         id="productivity-chart"
                         title="Productivity Trends"
-                        height="h-64"
+                        height="h-48"
                       ></data-chart>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Key Performance Indicators -->
+                <div class="mb-4">
+                  <div class="card bg-base-100 shadow-lg">
+                    <div class="card-body px-4 pt-3 pb-3">
+                      <h2 class="card-title mb-2">Secondary Metrics</h2>
+                      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <metric-card
+                          id="revenue-per-volume-metric"
+                          title="Revenue per Unit"
+                        ></metric-card>
+                        <metric-card
+                          id="expense-per-volume-metric"
+                          title="Expense per Unit"
+                        ></metric-card>
+                        <metric-card
+                          id="revenue-per-uos-metric"
+                          title="Revenue per Unit of Service"
+                          value="$0"
+                          statusText="-"
+                          variancePct="0"
+                        ></metric-card>
+                        <metric-card
+                          id="expense-per-uos-metric"
+                          title="Expense per Unit of Service"
+                          value="$0"
+                          statusText="-"
+                          variancePct="0"
+                        ></metric-card>
+                      </div>
                     </div>
                   </div>
                 </div>
