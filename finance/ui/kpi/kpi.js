@@ -194,8 +194,11 @@ async function loadData() {
 
     // Update time period dropdown and get workday IDs from selected subdepartment
     const { firstMonth, lastMonth } = DATA.getAvailableMonths();
+    const urlHasMonth = new URLSearchParams(window.location.search).has("month");
     const selectedMonth = populateTimePeriodSelector(firstMonth, lastMonth);
-    updateURL(); // Ensure URL has the month parameter
+    if (!urlHasMonth && selectedMonth) {
+      updateURL(); // Add month parameter if not present
+    }
     const wdIds = getSelectedWorkdayIds();
     updateDashboard(wdIds, selectedMonth);
   } catch (error) {
