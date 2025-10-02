@@ -24,7 +24,8 @@ export function pctOfYearThroughDate(monthStr) {
 // Accounting utilities
 // ------------------------------------------------------------
 export function calcVariance(actual, budget) {
-  return ((actual - budget) / budget) * 100;
+  const variance = ((actual - budget) / budget) * 100;
+  return variance || 0;
 }
 
 // ------------------------------------------------------------
@@ -55,7 +56,8 @@ export function formatNumber(value, decimals = 0) {
 
 export function formatCurrencyInThousands(value) {
   // Get numeric value
-  const num = parseFloat(value.toString().replace(/[$,]/g, ""));
+  value = value?.toString() || "0";
+  const num = parseFloat(value.replace(/[$,]/g, ""));
   if (isNaN(num)) return value;
 
   // Format as $XXXk with thousand separators

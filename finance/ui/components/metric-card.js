@@ -38,16 +38,12 @@ export class MetricCard extends LitElement {
       : this.value;
 
     return html`
-      <div class="stat border border-base-300 rounded-lg py-2 relative">
-        <div class="stat-title text-xs font-bold mb-1 uppercase">
-          ${this.title}
-        </div>
-        <div class="stat-value text-lg/[1.2] font-mono mb-1">
-          ${formattedValue}
-        </div>
+      <div class="stat border border-base-300 rounded-lg p-0 relative">
+        <div class="stat-title text-xs font-bold uppercase">${this.title}</div>
+        <div class="text-base font-mono">${formattedValue}</div>
         ${!this.hideDetails
           ? html`
-              <div class="stat-desc text-[0.6875rem]">${this.statusText}</div>
+              <div class="text-[0.6875rem]">${this.statusText}</div>
               <div class="absolute right-4 top-1/2 -translate-y-1/2">
                 <svg
                   width="36"

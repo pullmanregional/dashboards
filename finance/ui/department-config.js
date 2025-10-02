@@ -114,7 +114,6 @@ export const DEPARTMENTS = {
       { name: "Pullman Surgical Associates", wd_ids: ["CC_72780"] },
       { name: "Sports Medicine", wd_ids: ["CC_72730"] },
       { name: "Palouse Medical", wd_ids: ["CC_72710"] },
-      { name: "Travel Clinic", wd_ids: ["CC_72301"] },
     ],
   },
 };
