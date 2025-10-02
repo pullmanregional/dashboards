@@ -1,4 +1,4 @@
-@import "../index.css";
+@import "../common.css";
 
 /* ----------------------------------------
    Compact white space on smaller screens
@@ -32,7 +32,7 @@
 /* Metric card styles */
 .stat {
   /* Decrease whitespace and add contrasted background */ 
-  padding: 0.875rem;
+  padding: 0.6rem;
   background: linear-gradient(135deg, var(--color-base-100) 0%, var(--color-base-200) 40%);
 }
 
