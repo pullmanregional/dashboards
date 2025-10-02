@@ -32,6 +32,7 @@ class DashboardData {
     this.uos = data.uos || null;
     this.hours = data.hours || null;
     this.hoursForMonth = data.hoursForMonth || null;
+    this.hoursYTM = data.hoursYTM || null;
     this.budget = data.budget || null;
     this.contractedHours = data.contractedHours || null;
     this.incomeStmt = data.incomeStmt || null;
@@ -213,7 +214,7 @@ class DashboardDataManager {
       volumes: calcVolumeByMonth(sourceData.volumes),
       uos: calcVolumeByMonth(sourceData.uos),
       hours: hoursByMonth,
-      hoursForMonth: hoursByMonth.find((row) => row.month === month),
+      hoursForMonth: hoursByMonth.find((row) => row.month === month) || [],
       incomeStmt: incomeStmt,
       hoursYTM: calcHoursYTM(sourceData.hours, month),
       budget: sourceData.budget,
