@@ -15,6 +15,7 @@ const CHART_CONFIG = {
   commonOptions: {
     title: {
       left: "center",
+      top: "0px",
       textStyle: { fontSize: 16, fontWeight: "bold", color: "#1f2937" },
     },
     tooltip: { trigger: "axis" },
@@ -22,7 +23,7 @@ const CHART_CONFIG = {
       left: "3%",
       right: "4%",
       bottom: "15%",
-      top: "30%",
+      top: "25%",
       containLabel: true,
     },
   },
