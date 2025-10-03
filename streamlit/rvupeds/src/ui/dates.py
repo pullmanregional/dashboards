@@ -28,7 +28,7 @@ def get_dates(date_range: str) -> date:
         start_date = end_date.floor("year")
     elif date_range == "Last 12 months":
         end_date = today
-        start_date = end_date.shift(years=-1, days=1).floor("month")
+        start_date = end_date.shift(years=-1, days=1)
     elif date_range == "Last 4 completed quarters":
         end_date = today.floor("quarter").shift(days=-1)
         start_date = end_date.shift(quarters=-3).floor("quarter")
