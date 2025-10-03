@@ -38,7 +38,9 @@ export class MetricCard extends LitElement {
       : this.value;
 
     return html`
-      <div class="stat border border-base-300 rounded-lg p-0 relative">
+      <div
+        class="stat border border-base-300 rounded-lg p-3 relative bg-base-100"
+      >
         <div class="stat-title text-xs font-bold uppercase">${this.title}</div>
         <div class="text-base font-mono">${formattedValue}</div>
         ${!this.hideDetails

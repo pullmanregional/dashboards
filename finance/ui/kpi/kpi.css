@@ -29,13 +29,6 @@
    COMPONENT STYLES
    ======================================== */
 
-/* Metric card styles */
-.stat {
-  /* Decrease whitespace and add contrasted background */ 
-  padding: 0.6rem;
-  background: linear-gradient(135deg, var(--color-base-100) 0%, var(--color-base-200) 40%);
-}
-
 /* Tree styles: both tree table and table cards */
 .table th,
 .table.table-sm td {
