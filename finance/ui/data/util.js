@@ -50,6 +50,12 @@ export function formatCurrency(value) {
   return FORMATTERS.currency.format(value || 0);
 }
 
+export function formatAccounting(value) {
+  const absValue = Math.abs(value || 0);
+  const currency = FORMATTERS.currency.format(absValue);
+  return value < 0 ? `(${currency})` : currency;
+}
+
 export function formatNumber(value, decimals = 0) {
   return FORMATTERS.number(decimals).format(value || 0);
 }
