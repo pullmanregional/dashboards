@@ -56,13 +56,6 @@ function validateDepartment(deptId) {
   return config;
 }
 
-// Parse unit parameter
-function parseUnit(unitParam, subDepts) {
-  if (!subDepts || unitParam === null) return null;
-  const index = parseInt(unitParam);
-  return index >= 0 && index < subDepts.length ? index : null;
-}
-
 // Populate the Select unit dropdown with list of sub-departments
 function populateUnitSelector() {
   // Hide unit dropdown if there are no sub-departments
@@ -133,54 +126,6 @@ function populateTimePeriodSelector(firstMonth, lastMonth) {
   return STATE.selectedMonth;
 }
 
-// Update month navigation button states (enable/disable based on position)
-function updateMonthNavBtns() {
-  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
-  const isFirst = currentIndex === 0;
-  const isLast = currentIndex === STATE.availMonths.length - 1;
-
-  prevMonthBtnEl.disabled = isLast; // Last month is oldest (earliest date)
-  nextMonthBtnEl.disabled = isFirst; // First month is newest (latest date)
-}
-
-// Navigate to previous month (older)
-async function navigateToPrevMonth() {
-  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
-  if (currentIndex < STATE.availMonths.length - 1) {
-    if (isFeedbackDirty()) {
-      if (
-        !confirm("You have unsaved feedback. Do you want to discard changes?")
-      ) {
-        return;
-      }
-    }
-    STATE.selectedMonth = STATE.availMonths[currentIndex + 1];
-    timePeriodSelectEl.value = STATE.selectedMonth;
-    updateURL();
-    updateMonthNavBtns();
-    await refreshData();
-  }
-}
-
-// Navigate to next month (newer)
-async function navigateToNextMonth() {
-  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
-  if (currentIndex > 0) {
-    if (isFeedbackDirty()) {
-      if (
-        !confirm("You have unsaved feedback. Do you want to discard changes?")
-      ) {
-        return;
-      }
-    }
-    STATE.selectedMonth = STATE.availMonths[currentIndex - 1];
-    timePeriodSelectEl.value = STATE.selectedMonth;
-    updateURL();
-    updateMonthNavBtns();
-    await refreshData();
-  }
-}
-
 // ------------------------------------------------------------
 // Data functions
 // ------------------------------------------------------------
@@ -188,13 +133,13 @@ async function loadData() {
   try {
     showLoading();
     await DATA.initialize();
-
-    // Load all feedback for this department
     await DATA.loadFeedbackForDept(STATE.deptId);
 
     // Update time period dropdown and get workday IDs from selected subdepartment
     const { firstMonth, lastMonth } = DATA.getAvailableMonths();
-    const urlHasMonth = new URLSearchParams(window.location.search).has("month");
+    const urlHasMonth = new URLSearchParams(window.location.search).has(
+      "month"
+    );
     const selectedMonth = populateTimePeriodSelector(firstMonth, lastMonth);
     if (!urlHasMonth && selectedMonth) {
       updateURL(); // Add month parameter if not present
@@ -237,7 +182,7 @@ function getSelectedWorkdayIds() {
 function updateDashboard(wdIds, selectedMonth) {
   STATE.data = DATA.processData(wdIds, selectedMonth);
 
-  const comment = DATA.getFeedbackForMonth(selectedMonth);
+  const comment = DATA.getFeedbackForMonth(STATE.deptId, selectedMonth);
   feedbackTextEl.value = comment;
   feedbackTextEl.defaultValue = comment;
   updateFeedbackSaveBtn();
@@ -278,6 +223,54 @@ async function handleMonthChange(event) {
       }
     }
     STATE.selectedMonth = newMonth;
+    updateURL();
+    updateMonthNavBtns();
+    await refreshData();
+  }
+}
+
+// Update month navigation button states (enable/disable based on position)
+function updateMonthNavBtns() {
+  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === STATE.availMonths.length - 1;
+
+  prevMonthBtnEl.disabled = isLast; // Last month is oldest (earliest date)
+  nextMonthBtnEl.disabled = isFirst; // First month is newest (latest date)
+}
+
+async function handleGotoPrevMonth() {
+  // Navigate to previous month
+  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
+  if (currentIndex < STATE.availMonths.length - 1) {
+    if (isFeedbackDirty()) {
+      if (
+        !confirm("You have unsaved feedback. Do you want to discard changes?")
+      ) {
+        return;
+      }
+    }
+    STATE.selectedMonth = STATE.availMonths[currentIndex + 1];
+    timePeriodSelectEl.value = STATE.selectedMonth;
+    updateURL();
+    updateMonthNavBtns();
+    await refreshData();
+  }
+}
+
+async function handleGotoNextMonth() {
+  // Navigate to next month (newer)
+  const currentIndex = STATE.availMonths.indexOf(STATE.selectedMonth);
+  if (currentIndex > 0) {
+    if (isFeedbackDirty()) {
+      if (
+        !confirm("You have unsaved feedback. Do you want to discard changes?")
+      ) {
+        return;
+      }
+    }
+    STATE.selectedMonth = STATE.availMonths[currentIndex - 1];
+    timePeriodSelectEl.value = STATE.selectedMonth;
     updateURL();
     updateMonthNavBtns();
     await refreshData();
@@ -516,8 +509,8 @@ async function init() {
   const allTabs = document.querySelectorAll('input[name="main_tabs"]');
   retryButtonEl.addEventListener("click", loadData);
   timePeriodSelectEl.addEventListener("change", handleMonthChange);
-  prevMonthBtnEl.addEventListener("click", navigateToPrevMonth);
-  nextMonthBtnEl.addEventListener("click", navigateToNextMonth);
+  prevMonthBtnEl.addEventListener("click", handleGotoPrevMonth);
+  nextMonthBtnEl.addEventListener("click", handleGotoNextMonth);
   unitSelectEl.addEventListener("change", handleUnitChange);
   incomeStatementLinkEl.addEventListener("click", handleGotoIncomeStmt);
   feedbackFormEl.addEventListener("submit", handleSaveFeedback);

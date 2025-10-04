@@ -123,43 +123,8 @@
       </div>
 
       <!-- Departments table -->
-      <div id="content" class="card bg-base-100 shadow-lg hidden">
-        <div class="card-body p-4">
-          <div class="overflow-x-auto">
-            <table class="table table-xs">
-              <thead class="bg-base-200 text-xs uppercase">
-                <tr>
-                  <th class="w-8">
-                    <button
-                      id="toggle-all-btn"
-                      class="btn btn-ghost btn-xs hover:bg-base-300 px-1 py-1 border-0"
-                      title="Collapse All"
-                    >
-                      <i
-                        id="toggle-all-icon"
-                        class="fa-regular fa-minus-square"
-                      ></i>
-                    </button>
-                  </th>
-                  <th class="text-left">Department</th>
-                  <th class="text-right">Month Revenue</th>
-                  <th class="text-right border-r-2 border-base-300">
-                    Month Expenses
-                  </th>
-                  <th class="text-right">YTD Revenue</th>
-                  <th class="text-right">YTD Expenses</th>
-                  <th class="text-right">Net Income</th>
-                  <th class="text-right">Variance to Budget</th>
-                  <th class="text-right">%</th>
-                  <th class="text-center"></th>
-                </tr>
-              </thead>
-              <tbody id="admin-table-body">
-                <!-- Table rows populated dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div id="content" class="hidden">
+        <depts-summary id="depts-summary"></depts-summary>
       </div>
     </div>
 

@@ -233,10 +233,36 @@ class DashboardDataManager {
       const feedbackList = await response.json();
 
       // Store in cache indexed by month
-      this.allFeedback = {};
+      const allFeedback = {};
+      const deptFeedback = {};
+      allFeedback[dept] = deptFeedback;
       feedbackList.forEach((item) => {
-        this.allFeedback[item.month] = item.comment || "";
+        deptFeedback[item.month] = item.comment || "";
       });
+      this.allFeedback = allFeedback;
+    } catch (error) {
+      console.error("Error loading feedback:", error);
+      this.allFeedback = {};
+    }
+  }
+
+  // Load all feedback comments for all departments
+  async loadAllFeedback() {
+    try {
+      const response = await fetch("/api/feedback");
+      if (!response.ok) {
+        throw new Error(`Failed to load feedback: ${response.statusText}`);
+      }
+      const feedbackList = await response.json();
+
+      // Store feedback indexed by dept and month
+      const allFeedback = {};
+      feedbackList.forEach((item) => {
+        const deptFeedback = allFeedback[item.dept] || {};
+        deptFeedback[item.month] = item.comment || "";
+        allFeedback[item.dept] = deptFeedback;
+      });
+      this.allFeedback = allFeedback;
     } catch (error) {
       console.error("Error loading feedback:", error);
       this.allFeedback = {};
@@ -244,8 +270,8 @@ class DashboardDataManager {
   }
 
   // Get feedback for a specific month from cache
-  getFeedbackForMonth(month) {
-    return this.allFeedback[month] || "";
+  getFeedbackForMonth(dept, month) {
+    return this.allFeedback[dept]?.[month] || "";
   }
 
   // Save feedback for a specific department and month

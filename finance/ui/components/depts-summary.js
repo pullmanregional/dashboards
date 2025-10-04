@@ -40,7 +40,7 @@ export class DeptsSummary extends LitElement {
     deptData: { type: Array }, // array of [DeptData]
     selectedMonth: { type: String },
     expandedRows: { type: Set },
-    feedback: { type: Object },
+    feedback: { type: Object }, // object of { dept: { month: comment } }
   };
 
   constructor() {
@@ -164,8 +164,7 @@ export class DeptsSummary extends LitElement {
   }
 
   renderExpandedRow(dept) {
-    const feedbackKey = `${dept.id}-${this.selectedMonth}`;
-    const feedbackComment = this.feedback[feedbackKey] || "";
+    const feedbackComment = this.feedback[dept.id]?.[this.selectedMonth] || "";
     const escapedComment = escapeHtml(feedbackComment);
     const commentColor = escapedComment ? "" : "text-base-content/40";
     return html`
