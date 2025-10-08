@@ -86,6 +86,24 @@ class IncomeStmt(DatamartModel, table=True):
     budget_ytd: float
 
 
+class BalanceSheet(DatamartModel, table=True):
+    __tablename__ = "balance_sheet"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    month: str = Field(max_length=7)
+    tree: str
+    line_num: int
+    ledger_acct: str
+    actual: float | None
+
+
+class AgedAR(DatamartModel, table=True):
+    __tablename__ = "aged_ar"
+    id: int | None = Field(default=None, primary_key=True)
+    date: str = Field(max_length=10)
+    aged_days: str = Field(max_length=10)
+    total: float
+
+
 class KvTable(DatamartModel, table=True):
     """
     Stores key/value data. This table will contains a single row with a JSON blob

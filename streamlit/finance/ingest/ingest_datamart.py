@@ -29,6 +29,8 @@ class SrcData:
     contracted_hours_df: pd.DataFrame = None
     contracted_hours_meta_df: pd.DataFrame = None
     income_stmt_df: pd.DataFrame = None
+    balance_sheet_df: pd.DataFrame = None
+    aged_ar_df: pd.DataFrame = None
 
 
 @dataclass
@@ -39,6 +41,8 @@ class OutData:
     hours_df: pd.DataFrame
     contracted_hours_df: pd.DataFrame
     income_stmt_df: pd.DataFrame
+    balance_sheet_df: pd.DataFrame
+    aged_ar_df: pd.DataFrame
 
     kv: dict
 
@@ -63,6 +67,10 @@ def read_source_tables(prw_engine) -> SrcData:
         "prw_contracted_hours_meta", prw_engine, index_col="id"
     )
     income_stmt_df = pd.read_sql_table("prw_income_stmt", prw_engine, index_col="id")
+    balance_sheet_df = pd.read_sql_table(
+        "prw_balance_sheet", prw_engine, index_col="id"
+    )
+    aged_ar_df = pd.read_sql_table("prw_aged_ar", prw_engine, index_col="id")
 
     return SrcData(
         volumes_df=volumes_df,
@@ -72,6 +80,8 @@ def read_source_tables(prw_engine) -> SrcData:
         contracted_hours_df=contracted_hours_df,
         contracted_hours_meta_df=contracted_hours_meta_df,
         income_stmt_df=income_stmt_df,
+        balance_sheet_df=balance_sheet_df,
+        aged_ar_df=aged_ar_df,
     )
 
 
@@ -90,6 +100,8 @@ def transform(src: SrcData) -> OutData:
     hours_df = src.hours_df
     contracted_hours_df = src.contracted_hours_df
     income_stmt_df = src.income_stmt_df
+    balance_sheet_df = src.balance_sheet_df
+    aged_ar_df = src.aged_ar_df
 
     # Only keep latest year of budget data
     budget_df = budget_df[budget_df["year"] == budget_df["year"].max()]
@@ -105,6 +117,8 @@ def transform(src: SrcData) -> OutData:
         hours_df=hours_df,
         contracted_hours_df=contracted_hours_df,
         income_stmt_df=income_stmt_df,
+        balance_sheet_df=balance_sheet_df,
+        aged_ar_df=aged_ar_df,
         kv={
             "contracted_hours_updated_month": contracted_hours_updated_month,
         },
@@ -178,6 +192,8 @@ def main():
             db_utils.TableData(table=db.Hours, df=out.hours_df),
             db_utils.TableData(table=db.ContractedHours, df=out.contracted_hours_df),
             db_utils.TableData(table=db.IncomeStmt, df=out.income_stmt_df),
+            db_utils.TableData(table=db.BalanceSheet, df=out.balance_sheet_df),
+            db_utils.TableData(table=db.AgedAR, df=out.aged_ar_df),
         ],
     )
     db_utils.write_kv_table(out.kv, session, db.KvTable)
