@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { fteHrsInYear, pctOfYearThroughDate } from "./util.js";
+import { transformIncomeStmtData } from "../income-stmt/income-stmt.js";
 
 // ------------------------------------------------------------
 // Data aggregation functions
@@ -79,29 +80,29 @@ export function calcHoursYTM(data, month) {
   return sum;
 }
 
-export function calcBalanceSheet(month, data) {
-  const lastMonth = dayjs(month).subtract(1, "month").format("YYYY-MM");
-  const lastYear = dayjs(month).subtract(1, "year").format("YYYY-12");
-  const monthData = data.filter((row) => row.month === month);
-  const lastMonthData = data.filter((row) => row.month === lastMonth);
-  const lastYearData = data.filter((row) => row.month === lastYear);
+function calcAvgRevAndExpense(incomeStmtData, month, numMonths = 3) {
+  // Filter income statment data to the prior numMonths from the given month
+  const endMonth = dayjs(month).subtract(1, "months").format("YYYY-MM");
+  const startMonth = dayjs(month)
+    .subtract(numMonths, "months")
+    .format("YYYY-MM");
+  incomeStmtData = incomeStmtData.filter(
+    (row) =>
+      row.month.localeCompare(startMonth) >= 0 &&
+      row.month.localeCompare(endMonth) <= 0
+  );
 
-  // Add columns for last month, change from last month, last year, and change from last year.
-  // Left join to current month's rows by value of "tree" column
-  monthData.forEach((row) => {
-    const lastMonthRow = lastMonthData.find((l) => l.tree === row.tree);
-    const lastYearRow = lastYearData.find((l) => l.tree === row.tree);
-    if (lastMonthRow?.actual != null) {
-      row.lastMonth = lastMonthRow.actual || 0;
-      row.changeFromLastMonth = row.actual - lastMonthRow.actual || 0;
-    }
-    if (lastYearRow?.actual != null) {
-      row.lastYear = lastYearRow.actual || 0;
-      row.changeFromLastYear = row.actual - lastYearRow.actual || 0;
-      console.log(row.ledger_acct, row.changeFromLastYear);
-    }
-  });
-  return monthData;
+  // Get the overall income statement and calculate rolling average
+  const incomeStmt = transformIncomeStmtData(incomeStmtData);
+  const ttlRev = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
+    "Actual"
+  ];
+  const ttlExpense = incomeStmt.find(
+    (row) => row.tree === "Total Operating Expenses"
+  )?.["Actual"];
+  const avgMonthlyRevenue = (ttlRev || 0) / numMonths;
+  const avgMonthlyExpenses = (ttlExpense || 0) / numMonths;
+  return { avgMonthlyRevenue, avgMonthlyExpenses };
 }
 
 // ------------------------------------------------------------
@@ -221,6 +222,13 @@ export function calculateStats(data, incomeStmt, month) {
   stats.monthBudgetExpense = incomeStmt.find(
     (row) => row.tree === "Total Operating Expenses"
   )?.["Budget"];
+
+  // AR (accounts receivable) calculations
+  const { avgMonthlyRevenue, avgMonthlyExpenses } = calcAvgRevAndExpense(
+    data.incomeStmt,
+    month
+  );
+  const agedAR = data.agedAR;
 
   // Calculate KPIs
   const kpiVolume = stats.ytmVolume || 1;

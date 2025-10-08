@@ -1,7 +1,6 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { transformIncomeStmtData } from "../income-stmt/income-stmt.js";
 import {
-  calcBalanceSheet,
   calcVolumeByMonth,
   calcHoursByMonth,
   calcHoursYTM,
@@ -215,8 +214,11 @@ class DashboardDataManager {
     );
     const incomeStmt = transformIncomeStmtData(incomeStmtData);
 
-    // Calculate balance sheet data
-    const balanceSheet = calcBalanceSheet(month, sourceData.balanceSheet);
+    // Filter accounts receivable amounts by month and total
+    const agedAR = sourceData.agedAR.filter((row) =>
+      row.date.startsWith(month)
+    );
+    agedAR.total = agedAR.reduce((ttl, row) => row.total, 0);
 
     // Calculate hours by month, which is used below for the hoursForMonth field as well
     const hoursByMonth = calcHoursByMonth(sourceData.hours);
@@ -230,7 +232,8 @@ class DashboardDataManager {
       hours: hoursByMonth,
       hoursForMonth: hoursByMonth.find((row) => row.month === month) || [],
       incomeStmt: incomeStmt,
-      balanceSheet: balanceSheet,
+      balanceSheet: sourceData.balanceSheet,
+      agedAR: agedAR,
       hoursYTM: calcHoursYTM(sourceData.hours, month),
       budget: sourceData.budget,
       contractedHours: sourceData.contractedHours,

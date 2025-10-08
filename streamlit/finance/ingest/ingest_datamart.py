@@ -106,6 +106,14 @@ def transform(src: SrcData) -> OutData:
     # Only keep latest year of budget data
     budget_df = budget_df[budget_df["year"] == budget_df["year"].max()]
 
+    # Calculate balance sheet variances
+    balance_sheet_df["diff_prev_month"] = (
+        balance_sheet_df["actual"] - balance_sheet_df["actual_prev_month"]
+    )
+    balance_sheet_df["diff_prev_year"] = (
+        balance_sheet_df["actual"] - balance_sheet_df["actual_prev_year"]
+    )
+
     contracted_hours_updated_month = src.contracted_hours_meta_df.iloc[0][
         "contracted_hours_updated_month"
     ]

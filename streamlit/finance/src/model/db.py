@@ -94,6 +94,10 @@ class BalanceSheet(DatamartModel, table=True):
     line_num: int
     ledger_acct: str
     actual: float | None
+    actual_prev_month: float | None
+    diff_prev_month: float | None
+    actual_prev_year: float | None
+    diff_prev_year: float | None
 
 
 class AgedAR(DatamartModel, table=True):

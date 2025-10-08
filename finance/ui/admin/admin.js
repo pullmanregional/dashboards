@@ -124,7 +124,7 @@ async function refreshData() {
 
 // Calculate financial metrics and trends for all departments
 function calcDepartmentData(month) {
-  // Calculate overall org income statement (not filtered by department)
+  // Calculate overall org income statement and balance sheet (not filtered by department)
   // This includes all WD IDs, even those not shown in the department table
   const orgData = DATA.processData(null, month);
   STATE.orgIncomeStmt = orgData.incomeStmt;
@@ -355,9 +355,12 @@ function updateNavbar() {
 
 // Render summary metric cards and organization income statement
 function renderSummaryMetrics() {
-  // Get the YTD Actual values from the income statement summary rows
+  // Update the income statement and balance sheet tables
   const incomeStmt = STATE.orgIncomeStmt;
-  const balanceSheet = STATE.orgBalanceSheet;
+  adminIncomeStmtEl.data = incomeStmt;
+  balanceSheetEl.data = STATE.orgBalanceSheet;
+
+  // Get the YTD Actual values from the income statement summary rows
   const netRevenueRow = incomeStmt.find((row) => row.tree === "Net Revenue");
   const expensesRow = incomeStmt.find(
     (row) => row.tree === "Total Operating Expenses"
@@ -368,13 +371,9 @@ function renderSummaryMetrics() {
   const ttlYTDExpense = expensesRow?.["YTD Actual"] || 0;
   const ttlYTDNetIncome = netIncomeRow?.["YTD Actual"] || 0;
 
-  // Calculate overall variance percentage
+  // Overall variance percentage
   const ttlVariancePct =
     ttlYTDRevenue > 0 ? (ttlYTDNetIncome / ttlYTDRevenue) * 100 : 0;
-
-  // Update the income statement tables
-  adminIncomeStmtEl.data = incomeStmt;
-  balanceSheetEl.data = balanceSheet;
 
   // Update the metric cards
   const ytdRevenueCard = document.getElementById("ytd-revenue-card");
