@@ -71,9 +71,10 @@ export class IncomeStmtTable extends LitElement {
     return (value, header, row) => {
       if (header.summable) {
         // Format financial values as currency
-        if (value === null || value === undefined || value === "") return "-";
         const num = parseFloat(value);
-        if (isNaN(num)) return "-";
+        if (isNaN(num)) {
+          return "-";
+        }
 
         // Format with parentheses for negative values
         const formatted = new Intl.NumberFormat("en-US", {

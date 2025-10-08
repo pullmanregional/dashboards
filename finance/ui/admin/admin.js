@@ -6,6 +6,7 @@ import { calculateVolumeTrend, calculateFTETrend } from "../data/stats.js";
 import "../components/data-chart.js";
 import "../components/metric-card.js";
 import "../components/income-stmt-table.js";
+import "../components/balance-sheet-table.js";
 import "../components/depts-summary.js";
 import dayjs from "dayjs";
 
@@ -18,6 +19,7 @@ const errorMessageEl = document.getElementById("error-message");
 const contentEl = document.getElementById("content");
 const summaryMetricsEl = document.getElementById("summary-metrics");
 const adminIncomeStmtEl = document.getElementById("admin-income-stmt");
+const balanceSheetEl = document.getElementById("balance-sheet");
 const timePeriodSelectEl = document.getElementById("time-period-select");
 const deptsSummaryEl = document.getElementById("depts-summary");
 const retryButtonEl = document.getElementById("retry-button");
@@ -126,6 +128,7 @@ function calcDepartmentData(month) {
   // This includes all WD IDs, even those not shown in the department table
   const orgData = DATA.processData(null, month);
   STATE.orgIncomeStmt = orgData.incomeStmt;
+  STATE.orgBalanceSheet = orgData.balanceSheet;
 
   // Return cached department data for this month if already calculated
   STATE.departmentData = departmentDataCache[month] || [];
@@ -354,6 +357,7 @@ function updateNavbar() {
 function renderSummaryMetrics() {
   // Get the YTD Actual values from the income statement summary rows
   const incomeStmt = STATE.orgIncomeStmt;
+  const balanceSheet = STATE.orgBalanceSheet;
   const netRevenueRow = incomeStmt.find((row) => row.tree === "Net Revenue");
   const expensesRow = incomeStmt.find(
     (row) => row.tree === "Total Operating Expenses"
@@ -368,10 +372,9 @@ function renderSummaryMetrics() {
   const ttlVariancePct =
     ttlYTDRevenue > 0 ? (ttlYTDNetIncome / ttlYTDRevenue) * 100 : 0;
 
-  // Update the income statement table
-  if (adminIncomeStmtEl) {
-    adminIncomeStmtEl.data = incomeStmt;
-  }
+  // Update the income statement tables
+  adminIncomeStmtEl.data = incomeStmt;
+  balanceSheetEl.data = balanceSheet;
 
   // Update the metric cards
   const ytdRevenueCard = document.getElementById("ytd-revenue-card");

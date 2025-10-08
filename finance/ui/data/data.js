@@ -1,6 +1,7 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { transformIncomeStmtData } from "../income-stmt/income-stmt.js";
 import {
+  calcBalanceSheet,
   calcVolumeByMonth,
   calcHoursByMonth,
   calcHoursYTM,
@@ -20,6 +21,8 @@ class SourceData {
     this.hours = data.hours || null;
     this.contractedHours = data.contractedHours || null;
     this.incomeStmt = data.incomeStmt || null;
+    this.balanceSheet = data.balanceSheet || null;
+    this.agedAR = data.agedAR || null;
     this.contractedHoursUpdatedMonth = data.contractedHoursUpdatedMonth || null;
     Object.freeze(this);
   }
@@ -36,6 +39,8 @@ class DashboardData {
     this.budget = data.budget || null;
     this.contractedHours = data.contractedHours || null;
     this.incomeStmt = data.incomeStmt || null;
+    this.balanceSheet = data.balanceSheet || null;
+    this.agedAR = data.agedAR || null;
     this.contractedHoursUpdatedMonth = data.contractedHoursUpdatedMonth || null;
     this.stats = data.stats || null;
     Object.freeze(this);
@@ -145,6 +150,10 @@ class DashboardDataManager {
         hours: this.query("SELECT * FROM hours ORDER BY month DESC"),
         contractedHours: this.query("SELECT * FROM contracted_hours"),
         incomeStmt: this.query("SELECT * FROM income_stmt ORDER BY month DESC"),
+        balanceSheet: this.query(
+          "SELECT * FROM balance_sheet ORDER BY month DESC"
+        ),
+        agedAR: this.query("SELECT * FROM aged_ar"),
         contractedHoursUpdatedMonth:
           this.kvData?.contracted_hours_updated_month,
       });
@@ -159,6 +168,8 @@ class DashboardDataManager {
         hours: this.sourceData.hours.filter((row) => filterWdId(row)),
         budget: this.sourceData.budget.filter((row) => filterWdId(row)),
         incomeStmt: this.sourceData.incomeStmt.filter((row) => filterWdId(row)),
+        balanceSheet: this.sourceData.balanceSheet,
+        agedAR: this.sourceData.agedAR,
         contractedHours: this.sourceData.contractedHours.filter((row) =>
           filterWdId(row)
         ),
@@ -204,6 +215,9 @@ class DashboardDataManager {
     );
     const incomeStmt = transformIncomeStmtData(incomeStmtData);
 
+    // Calculate balance sheet data
+    const balanceSheet = calcBalanceSheet(month, sourceData.balanceSheet);
+
     // Calculate hours by month, which is used below for the hoursForMonth field as well
     const hoursByMonth = calcHoursByMonth(sourceData.hours);
 
@@ -216,6 +230,7 @@ class DashboardDataManager {
       hours: hoursByMonth,
       hoursForMonth: hoursByMonth.find((row) => row.month === month) || [],
       incomeStmt: incomeStmt,
+      balanceSheet: balanceSheet,
       hoursYTM: calcHoursYTM(sourceData.hours, month),
       budget: sourceData.budget,
       contractedHours: sourceData.contractedHours,

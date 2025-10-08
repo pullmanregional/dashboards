@@ -79,6 +79,31 @@ export function calcHoursYTM(data, month) {
   return sum;
 }
 
+export function calcBalanceSheet(month, data) {
+  const lastMonth = dayjs(month).subtract(1, "month").format("YYYY-MM");
+  const lastYear = dayjs(month).subtract(1, "year").format("YYYY-12");
+  const monthData = data.filter((row) => row.month === month);
+  const lastMonthData = data.filter((row) => row.month === lastMonth);
+  const lastYearData = data.filter((row) => row.month === lastYear);
+
+  // Add columns for last month, change from last month, last year, and change from last year.
+  // Left join to current month's rows by value of "tree" column
+  monthData.forEach((row) => {
+    const lastMonthRow = lastMonthData.find((l) => l.tree === row.tree);
+    const lastYearRow = lastYearData.find((l) => l.tree === row.tree);
+    if (lastMonthRow?.actual != null) {
+      row.lastMonth = lastMonthRow.actual || 0;
+      row.changeFromLastMonth = row.actual - lastMonthRow.actual || 0;
+    }
+    if (lastYearRow?.actual != null) {
+      row.lastYear = lastYearRow.actual || 0;
+      row.changeFromLastYear = row.actual - lastYearRow.actual || 0;
+      console.log(row.ledger_acct, row.changeFromLastYear);
+    }
+  });
+  return monthData;
+}
+
 // ------------------------------------------------------------
 // Trend calculation functions
 // ------------------------------------------------------------
