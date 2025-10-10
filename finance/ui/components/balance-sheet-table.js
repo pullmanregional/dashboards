@@ -1,3 +1,7 @@
+// This module defines the UI for the balance sheet. Similar to income statement table,
+// but data is ingested directly from WorkDay balance sheet, and comes as individual lines in order.
+// This component primarily works to calculate totals for rows where they are not present in the custom Workday report
+// and specify formatting for bolding and highlighting rows.
 import { LitElement, html } from "lit";
 import "./tree-table.js";
 import { formatAccounting } from "../data/util.js";
