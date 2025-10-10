@@ -232,7 +232,9 @@ class DashboardDataManager {
       hours: hoursByMonth,
       hoursForMonth: hoursByMonth.find((row) => row.month === month) || [],
       incomeStmt: incomeStmt,
-      balanceSheet: sourceData.balanceSheet,
+      balanceSheet: sourceData.balanceSheet.filter(
+        (row) => row.month === month
+      ),
       agedAR: agedAR,
       hoursYTM: calcHoursYTM(sourceData.hours, month),
       budget: sourceData.budget,

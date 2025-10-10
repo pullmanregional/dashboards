@@ -37,6 +37,36 @@ const BALANCE_SHEET_HEADERS = [
   },
 ];
 
+const BALANCE_SHEET_CUSTOM_TOTALS = [
+  "Assets|Current Assets",
+  "Assets|Other Receivables",
+];
+
+const BALANCE_SHEET_FORMATTING = {
+  expanded: ["Assets", "Liabilities and Fund Balance"],
+  bold: [
+    "Assets",
+    "Assets|Net Patient Accounts Receivable",
+    "Assets|Total Current Assets",
+    "Assets|Net Fixed Assets",
+    "Assets|Total Other Assets",
+    "Assets|Total Assets",
+    "Liabilities and Fund Balance",
+    "Liabilities and Fund Balance|Liabilities",
+    "Liabilities and Fund Balance|Total Current Liabilities",
+    "Liabilities and Fund Balance|Total Long Term Liabilities",
+    "Liabilities and Fund Balance|Total Liabilities",
+    "Liabilities and Fund Balance|Total Fund Balance",
+    "Liabilities and Fund Balance|Total Liabilities and Fund Balance",
+    "Liabilities and Fund Balance|Total Balance Sheet",
+  ],
+  highlight: [
+    "Assets|Total Assets",
+    "Liabilities and Fund Balance|Total Liabilities",
+    "Liabilities and Fund Balance|Total Fund Balance",
+  ],
+};
+
 export class BalanceSheetTable extends LitElement {
   // Disable shadow DOM to use DaisyUI
   createRenderRoot() {
@@ -55,18 +85,59 @@ export class BalanceSheetTable extends LitElement {
     this.maxHeight = "";
 
     // Default expanded paths
-    this.expandedPaths = new Set([
-      "Assets",
-      "Assets|Current Assets",
-      "Assets|Net Patient Accounts Receivable|Third Party Settlement Receivables",
-      "Assets|Net Patient Accounts Receivable",
-      "Assets|Fixed Assets",
-      "Assets|Other Assets",
-      "Liabilities and Fund Balance",
-      "Liabilities and Fund Balance|Current Liabilities",
-      "Liabilities and Fund Balance|Long Term Liabilities",
-      "Liabilities and Fund Balance|Fund Balance",
-    ]);
+    this.expandedPaths = new Set(BALANCE_SHEET_FORMATTING.expanded);
+  }
+
+  updated(changedProperties) {
+    super.updated(changedProperties);
+    if (changedProperties.has("data")) {
+      this.applyRowFormatting(this.data, BALANCE_SHEET_FORMATTING);
+      this.applyCustomTotals(this.data, BALANCE_SHEET_CUSTOM_TOTALS);
+    }
+  }
+
+  applyCustomTotals(data, customTotals) {
+    // Sum custom row totals
+    for (const tree of customTotals) {
+      // Skip if target row already has actual values
+      const t = data.find((row) => row.tree === tree);
+      if (t.actual) {
+        continue;
+      }
+      // Get direct children of target row
+      const rows = data.filter((row) =>
+        row.tree.match(new RegExp(`^${tree.replace("|", "\\|")}\\|[^\\|]+$`))
+      );
+      t.actual = rows.reduce((acc, r) => acc + (r.actual || 0), 0);
+      t.actual_prev_month = rows.reduce(
+        (acc, r) => acc + (r.actual_prev_month || 0),
+        0
+      );
+      t.actual_prev_year = rows.reduce(
+        (acc, row) => acc + (row.actual_prev_year || 0),
+        0
+      );
+      t.diff_prev_month = rows.reduce(
+        (acc, row) => acc + (row.diff_prev_month || 0),
+        0
+      );
+      t.diff_prev_year = rows.reduce(
+        (acc, row) => acc + (row.diff_prev_year || 0),
+        0
+      );
+    }
+  }
+
+  // Apply custom bold and highlighting to data rows
+  applyRowFormatting(data, formatting) {
+    for (const row of data) {
+      if (formatting.bold.includes(row.tree)) {
+        row.bold = true;
+      }
+      if (formatting.highlight.includes(row.tree)) {
+        row.highlight = true;
+      }
+    }
   }
 
   // Finance number formatter
