@@ -129,6 +129,7 @@ function calcDepartmentData(month) {
   const orgData = DATA.processData(null, month);
   STATE.orgIncomeStmt = orgData.incomeStmt;
   STATE.orgBalanceSheet = orgData.balanceSheet;
+  STATE.orgStats = orgData.stats;
 
   // Return cached department data for this month if already calculated
   STATE.departmentData = departmentDataCache[month] || [];
@@ -371,35 +372,30 @@ function renderSummaryMetrics() {
   const ttlYTDExpense = expensesRow?.["YTD Actual"] || 0;
   const ttlYTDNetIncome = netIncomeRow?.["YTD Actual"] || 0;
 
-  // Overall variance percentage
-  const ttlVariancePct =
-    ttlYTDRevenue > 0 ? (ttlYTDNetIncome / ttlYTDRevenue) * 100 : 0;
-
   // Update the metric cards
   const ytdRevenueCard = document.getElementById("ytd-revenue-card");
   const ytdExpensesCard = document.getElementById("ytd-expenses-card");
   const ytdNetIncomeCard = document.getElementById("ytd-net-income-card");
+  const ttlCashCard = document.getElementById("ttl-cash-card");
+  const ttlARCard = document.getElementById("ttl-ar-card");
 
-  if (ytdRevenueCard) {
-    ytdRevenueCard.value = formatAccounting(ttlYTDRevenue);
-    ytdRevenueCard.variancePct = ttlVariancePct;
-    ytdRevenueCard.statusText = `${Math.round(ttlVariancePct)}% of revenue`;
-    ytdRevenueCard.showDetails = false;
-  }
+  ytdRevenueCard.value = formatAccounting(ttlYTDRevenue);
+  ytdExpensesCard.value = formatAccounting(ttlYTDExpense);
+  ytdNetIncomeCard.value = formatAccounting(ttlYTDNetIncome);
 
-  if (ytdExpensesCard) {
-    ytdExpensesCard.value = formatAccounting(ttlYTDExpense);
-    ytdExpensesCard.variancePct = ttlVariancePct;
-    ytdExpensesCard.statusText = `${Math.round(ttlVariancePct)}% of revenue`;
-    ytdExpensesCard.showDetails = false;
-  }
+  ttlCashCard.value = formatAccounting(STATE.orgStats.ttlCash);
+  ttlCashCard.statusText = `${
+    STATE.orgStats.daysCash
+  } days based on ${formatAccounting(
+    STATE.orgStats.avgDailyExpenses
+  )} avg expenses / day`;
 
-  if (ytdNetIncomeCard) {
-    ytdNetIncomeCard.value = formatAccounting(ttlYTDNetIncome);
-    ytdNetIncomeCard.variancePct = ttlVariancePct;
-    ytdNetIncomeCard.statusText = `${Math.round(ttlVariancePct)}% of revenue`;
-    ytdNetIncomeCard.showDetails = false;
-  }
+  ttlARCard.value = formatAccounting(STATE.orgStats.ttlAR);
+  ttlARCard.statusText = `${
+    STATE.orgStats.daysAR
+  } days based on ${formatAccounting(
+    STATE.orgStats.avgDailyRevenue
+  )} avg revenue / day`;
 }
 
 // Main render function - orchestrates all UI updates

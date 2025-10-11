@@ -87,8 +87,8 @@
               id="totals-tab"
               checked
             />
-            <div role="tabpanel" class="tab-content p-1 pt-3 pb-4">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div role="tabpanel" class="tab-content p-1 pt-2 pb-2">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                 <metric-card
                   id="ytd-revenue-card"
                   title="Net Revenue"
@@ -104,6 +104,15 @@
                   title="Net Income"
                   hideDetails
                 ></metric-card>
+              </div>
+              <div class="sm:mx-10 lg:mx-50 md:mx-25">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <metric-card id="ttl-cash-card" title="Cash"></metric-card>
+                  <metric-card
+                    id="ttl-ar-card"
+                    title="Accounts Receivable"
+                  ></metric-card>
+                </div>
               </div>
             </div>
 

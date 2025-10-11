@@ -82,27 +82,40 @@ export function calcHoursYTM(data, month) {
 
 function calcAvgRevAndExpense(incomeStmtData, month, numMonths = 3) {
   // Filter income statment data to the prior numMonths from the given month
-  const endMonth = dayjs(month).subtract(1, "months").format("YYYY-MM");
+  const endMonth = dayjs(month).endOf("month");
   const startMonth = dayjs(month)
-    .subtract(numMonths, "months")
-    .format("YYYY-MM");
+    .subtract(numMonths - 1, "months")
+    .startOf("month");
+  const endMonthStr = endMonth.format("YYYY-MM");
+  const startMonthStr = startMonth.format("YYYY-MM");
+  const numDays = dayjs(endMonth).diff(dayjs(startMonth), "days") + 1;
   incomeStmtData = incomeStmtData.filter(
     (row) =>
-      row.month.localeCompare(startMonth) >= 0 &&
-      row.month.localeCompare(endMonth) <= 0
+      startMonthStr.localeCompare(row.month) <= 0 &&
+      endMonthStr.localeCompare(row.month) >= 0
   );
 
   // Get the overall income statement and calculate rolling average
   const incomeStmt = transformIncomeStmtData(incomeStmtData);
-  const ttlRev = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
-    "Actual"
-  ];
+  const ptRev = incomeStmt.reduce(
+    (ttl, r) => ttl + (r.tree.match(/^Patient Revenues\|/) ? r.Actual || 0 : 0),
+    0
+  );
   const ttlExpense = incomeStmt.find(
     (row) => row.tree === "Total Operating Expenses"
   )?.["Actual"];
-  const avgMonthlyRevenue = (ttlRev || 0) / numMonths;
-  const avgMonthlyExpenses = (ttlExpense || 0) / numMonths;
-  return { avgMonthlyRevenue, avgMonthlyExpenses };
+  const depreciation = incomeStmt.reduce(
+    (ttl, r) =>
+      ttl +
+      (r.tree.match(/^Other Direct Expenses\|Depreciation\|/)
+        ? r.Actual || 0
+        : 0),
+    0
+  );
+  const expMinusDeprec = ttlExpense - depreciation;
+  const avgDailyRevenue = (ptRev || 0) / numDays;
+  const avgDailyExpenses = (expMinusDeprec || 0) / numDays;
+  return { avgDailyRevenue, avgDailyExpenses };
 }
 
 // ------------------------------------------------------------
@@ -148,7 +161,7 @@ export function calculateFTETrend(hours, endMonth) {
 // KPI calculation functions
 // ------------------------------------------------------------
 // Calculate key statistics and KPIs from source data
-export function calculateStats(data, incomeStmt, month) {
+export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
   const [yearNum, monthNum] = month.split("-").map(Number);
   const stats = {};
 
@@ -223,12 +236,26 @@ export function calculateStats(data, incomeStmt, month) {
     (row) => row.tree === "Total Operating Expenses"
   )?.["Budget"];
 
-  // AR (accounts receivable) calculations
-  const { avgMonthlyRevenue, avgMonthlyExpenses } = calcAvgRevAndExpense(
+  // Days of cash available and in AR. Calculated based on total cash on balance sheet and aged AR.
+  const ttlCash =
+    balanceSheet.find(
+      (row) =>
+        row.tree === "Assets|Current Assets|Cash and Short Term Investments"
+    )?.actual || 0;
+  const ttlAR = agedAR.total || 0;
+  const { avgDailyRevenue, avgDailyExpenses } = calcAvgRevAndExpense(
+    // provide all raw income statement data for all months, to calculate rolling 3 month average
     data.incomeStmt,
     month
   );
-  const agedAR = data.agedAR;
+  stats.avgDailyRevenue = avgDailyRevenue;
+  stats.avgDailyExpenses = avgDailyExpenses;
+  stats.ttlCash = ttlCash;
+  stats.daysCash = avgDailyExpenses
+    ? Math.floor(ttlCash / avgDailyExpenses)
+    : 0;
+  stats.ttlAR = ttlAR;
+  stats.daysAR = avgDailyRevenue ? Math.floor(ttlAR / avgDailyRevenue) : 0;
 
   // Calculate KPIs
   const kpiVolume = stats.ytmVolume || 1;

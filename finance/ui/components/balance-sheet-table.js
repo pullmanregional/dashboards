@@ -104,28 +104,28 @@ export class BalanceSheetTable extends LitElement {
     // Sum custom row totals
     for (const tree of customTotals) {
       // Skip if target row already has actual values
-      const t = data.find((row) => row.tree === tree);
-      if (t.actual) {
+      const targetRow = data.find((row) => row.tree === tree);
+      if (!targetRow || targetRow.actual) {
         continue;
       }
       // Get direct children of target row
       const rows = data.filter((row) =>
         row.tree.match(new RegExp(`^${tree.replace("|", "\\|")}\\|[^\\|]+$`))
       );
-      t.actual = rows.reduce((acc, r) => acc + (r.actual || 0), 0);
-      t.actual_prev_month = rows.reduce(
+      targetRow.actual = rows.reduce((acc, r) => acc + (r.actual || 0), 0);
+      targetRow.actual_prev_month = rows.reduce(
         (acc, r) => acc + (r.actual_prev_month || 0),
         0
       );
-      t.actual_prev_year = rows.reduce(
+      targetRow.actual_prev_year = rows.reduce(
         (acc, row) => acc + (row.actual_prev_year || 0),
         0
       );
-      t.diff_prev_month = rows.reduce(
+      targetRow.diff_prev_month = rows.reduce(
         (acc, row) => acc + (row.diff_prev_month || 0),
         0
       );
-      t.diff_prev_year = rows.reduce(
+      targetRow.diff_prev_year = rows.reduce(
         (acc, row) => acc + (row.diff_prev_year || 0),
         0
       );

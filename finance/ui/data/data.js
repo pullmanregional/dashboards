@@ -207,24 +207,32 @@ class DashboardDataManager {
   processData(wdIds, month) {
     const sourceData = this.getSourceData(wdIds);
 
-    // Calculate income statement
+    // Calculate income statement and balance sheet
     const [year] = month.split("-");
     const incomeStmtData = sourceData.incomeStmt.filter(
       (row) => row.month === month
     );
     const incomeStmt = transformIncomeStmtData(incomeStmtData);
-
+    const balanceSheet = sourceData.balanceSheet.filter(
+      (row) => row.month === month
+    );
     // Filter accounts receivable amounts by month and total
     const agedAR = sourceData.agedAR.filter((row) =>
       row.date.startsWith(month)
     );
-    agedAR.total = agedAR.reduce((ttl, row) => row.total, 0);
+    agedAR.total = agedAR.reduce((ttl, row) => ttl + (row.total || 0), 0);
 
     // Calculate hours by month, which is used below for the hoursForMonth field as well
     const hoursByMonth = calcHoursByMonth(sourceData.hours);
 
     // Calculate scalar stats
-    const stats = calculateStats(sourceData, incomeStmt, month);
+    const stats = calculateStats(
+      sourceData,
+      incomeStmt,
+      balanceSheet,
+      agedAR,
+      month
+    );
 
     return new DashboardData({
       volumes: calcVolumeByMonth(sourceData.volumes),
@@ -232,9 +240,7 @@ class DashboardDataManager {
       hours: hoursByMonth,
       hoursForMonth: hoursByMonth.find((row) => row.month === month) || [],
       incomeStmt: incomeStmt,
-      balanceSheet: sourceData.balanceSheet.filter(
-        (row) => row.month === month
-      ),
+      balanceSheet: balanceSheet,
       agedAR: agedAR,
       hoursYTM: calcHoursYTM(sourceData.hours, month),
       budget: sourceData.budget,

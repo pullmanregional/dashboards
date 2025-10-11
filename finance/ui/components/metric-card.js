@@ -36,6 +36,36 @@ export class MetricCard extends LitElement {
     const formattedValue = this.roundToThousands
       ? formatCurrencyInThousands(this.value)
       : this.value;
+    const varianceHtml = !isNaN(this.variancePct)
+      ? html`
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            class="${this.getStatusColor()}"
+          >
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+            />
+            <text
+              x="18"
+              y="18"
+              text-anchor="middle"
+              dominant-baseline="central"
+              font-size="10"
+              font-weight="600"
+              fill="currentColor"
+            >
+              ${Math.round(this.variancePct)}%
+            </text>
+          </svg>
+        `
+      : "";
 
     return html`
       <div
@@ -47,32 +77,7 @@ export class MetricCard extends LitElement {
           ? html`
               <div class="text-[0.6875rem]">${this.statusText}</div>
               <div class="absolute right-4 top-1/2 -translate-y-1/2">
-                <svg
-                  width="36"
-                  height="36"
-                  viewBox="0 0 36 36"
-                  class="${this.getStatusColor()}"
-                >
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="3"
-                  />
-                  <text
-                    x="18"
-                    y="18"
-                    text-anchor="middle"
-                    dominant-baseline="central"
-                    font-size="10"
-                    font-weight="600"
-                    fill="currentColor"
-                  >
-                    ${Math.round(this.variancePct)}%
-                  </text>
-                </svg>
+                ${varianceHtml}
               </div>
             `
           : ""}
