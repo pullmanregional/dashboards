@@ -1,0 +1,16 @@
+# Start and enable the oauth2-proxy.service systemd service
+
+# Reload systemd to recognize the new service
+sudo systemctl daemon-reload
+
+# Enable the service to start on boot
+sudo systemctl enable oauth2-proxy
+
+# Start the service
+sudo systemctl start oauth2-proxy
+
+# Check the status
+sudo systemctl status oauth2-proxy
+
+# Tail logs
+sudo journalctl -u oauth2-proxy -f
