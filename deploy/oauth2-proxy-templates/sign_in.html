@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0;url=/oauth2/start?rd={{.Redirect}}" />
+    <title>Redirecting...</title>
+  </head>
+  <body
+    style="
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+      margin: 0;
+    "
+  >
+    <p style="font-size: 1.2rem; color: #333">Redirecting to sign in...</p>
+    <p style="margin-top: 20px">
+      <a
+        href="/oauth2/start?rd={{.Redirect}}"
+        style="color: #007bff; text-decoration: none; font-size: 1rem"
+        >Click here if you are not redirected automatically</a
+      >
+    </p>
+    <script>
+      window.location.href = "/oauth2/start?rd={{.Redirect}}";
+    </script>
+  </body>
+</html>
