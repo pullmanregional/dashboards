@@ -13,8 +13,11 @@ global.APP_CONFIG = {
   DATA_FILE: "../../../prh-warehouse/prh-finance.sqlite3",
 
   AUTH: {
-    // Allowed user groups that can access /api. Blank to allow all.
+    // Allowed user groups IDs and emails that can access /api.
+    // Request is authorized if matches group OR email.
+    // Disable check by setting to empty list.
     ALLOWED_GROUPS: [],
+    ALLOWED_EMAILS: [],
   },
 
   // Server configuration

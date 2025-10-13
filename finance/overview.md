@@ -3,11 +3,12 @@ Summary of how this project works. The root directory of this project is the cur
 - Server code
   - code in server/ runs an nodejs express server that will be behind oauth2-proxy.
   - The server is configured using server-config.js, which defines the global.APP_CONFIG object.
-  - In dev, there is no oauth2-proxy, and authorization is turned off by setting APP_CONFIG.AUTH.ALLOWED_GROUPS = []
+  - In dev, there is no oauth2-proxy, and authorization is turned off by setting both APP_CONFIG.AUTH.ALLOWED_GROUPS = [] and APP_CONFIG.AUTH.ALLOWED_EMAILS = []
   - It serves two main endpoints: /api/data and /api/feedback/\*
     - /api/data returns a sqlite3 file
     - /api/feedback reads/writes feedback per department and month and stores it in a local sqlite DB
   - It also serves any static UI files, which are compiled into ui/dist/
+  - For authenticated requests, the header x-user-email is returned in responses identifying the authenticated user's email address, or "none" if authentication is disabled.
 - UI code
   - HTML and JS front end
   - Code is built with vite. When running with the server, use `vite build --watch` and `npm run server`, then the UI output will be built by vite into ui/dist and served by the server.

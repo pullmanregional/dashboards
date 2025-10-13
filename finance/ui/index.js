@@ -10,6 +10,7 @@ const deptMenu = document.getElementById("dept-menu");
 const deptLinkText = document.getElementById("dept-link-text");
 const deptLinkUrl = document.getElementById("dept-link-url");
 const viewDeptBtn = document.getElementById("btn-view-dept");
+const userEmailEl = document.getElementById("user-email");
 
 // Update the departmental dashboard to view
 function setDepartment(deptId, deptName) {
@@ -22,9 +23,9 @@ function setDepartment(deptId, deptName) {
 
   if (deptId) {
     // Show direct link to dashboard for sharing
-    const baseUrl =
-      window.location.origin +
-      window.location.pathname.replace("index.html", "");
+    const url = new URL(window.location.href);
+    const path = url.pathname.substring(0, url.pathname.lastIndexOf("/") + 1);
+    const baseUrl = url.origin + path;
     const dashboardUrl = `${baseUrl}kpi.html?dept=${deptId}`;
     deptLinkText.textContent = "Share:";
     deptLinkUrl.textContent = dashboardUrl;
@@ -49,7 +50,23 @@ function handleDepartmentChange(event) {
   );
 }
 
+async function populateAcctMenu() {
+  userEmailEl.textContent = "Not logged in";
+  try {
+    const resp = await fetch(window.location.href);
+    const userEmail = resp?.headers?.get("x-user-email");
+    if (userEmail) {
+      userEmailEl.textContent = userEmail;
+    }
+  } catch (e) {
+    console.error("Unable to fetch user info:", e);
+  }
+}
+
 function init() {
+  // Fill in account menu with user's email
+  populateAcctMenu();
+
   // Populate department menu
   getAllDepartments().forEach((dept) => {
     const li = document.createElement("li");

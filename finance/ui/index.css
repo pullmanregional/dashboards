@@ -10,3 +10,13 @@
   --color-base-300: #e2e8f0;
   --color-base-content: #0f172a;
 }
+
+/* Make logo visible in dark mode */
+@media (prefers-color-scheme: dark) {
+  img[src*="prh-logo"] {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+}

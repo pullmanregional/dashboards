@@ -12,9 +12,9 @@
     <link rel="stylesheet" href="./common.css" />
   </head>
   <body class="bg-base-200 min-h-screen">
-    <div class="container mx-auto p-4 max-w-7xl">
-      <!-- Header Section -->
-      <div class="bg-base-100 rounded-lg shadow-lg mb-3 p-4">
+    <!-- Header Section -->
+    <div class="sticky top-0 z-50 bg-base-100 shadow-lg p-2">
+      <div class="container mx-auto max-w-7xl">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
           <!-- Back Button -->
           <div class="justify-self-center sm:justify-self-start">
@@ -57,7 +57,9 @@
           </div>
         </div>
       </div>
+    </div>
 
+    <div class="container mx-auto p-4 max-w-7xl">
       <!-- Loading State -->
       <div id="loading-state" class="text-center py-12">
         <span class="loading loading-spinner loading-lg"></span>

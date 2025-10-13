@@ -17,8 +17,38 @@
       <div class="rounded-3xl shadow-2xl backdrop-blur-lg bg-opacity-95 p-8">
         <!-- Header Section -->
         <div class="text-center mb-10">
-          <div class="flex justify-center mx-auto mb-6">
+          <div class="relative flex justify-center mx-auto mb-6">
             <img src="./static/prh-logo.svg" alt="PRH Logo" />
+
+            <!-- User Menu Dropdown -->
+            <div class="dropdown dropdown-end absolute right-0 top-0">
+              <label tabindex="0" class="btn btn-ghost btn-circle">
+                <i class="fas fa-user-circle text-2xl text-base-content/40"></i>
+              </label>
+              <ul
+                tabindex="0"
+                class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-[16rem] mt-1 border border-base-300"
+              >
+                <div
+                  class="px-4 pt-1 pb-2 border-b border-base-300 max-w-[15rem] whitespace-nowrap overflow-hidden"
+                >
+                  <span
+                    id="user-email"
+                    class="text-xs font-medium text-base-content/60 select-none block"
+                    >Loading...</span
+                  >
+                </div>
+                <li>
+                  <a
+                    href="/oauth2/sign_out?rd=https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Flogout"
+                    class="text-base"
+                  >
+                    <i class="fas fa-sign-out-alt"></i>
+                    Log out
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
           <h1 class="text-4xl font-bold text-base-content">
             Financial Dashboards

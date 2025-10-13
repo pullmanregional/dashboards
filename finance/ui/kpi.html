@@ -15,9 +15,9 @@
   <body
     class="min-h-screen bg-gradient-to-br from-base-200 via-base-300 to-base-300"
   >
-    <div class="container mx-auto p-4 max-w-7xl">
-      <!-- Header Section -->
-      <div class="bg-base-100 rounded-lg shadow-lg mb-3 p-4">
+    <!-- Header Section -->
+    <div class="sticky top-0 z-50 bg-base-100 shadow-lg p-2">
+      <div class="container mx-auto max-w-7xl">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
           <!-- Back Button. On mobile, center, otherwise left align. -->
           <div class="justify-self-center sm:justify-self-start">
@@ -63,7 +63,9 @@
           </div>
         </div>
       </div>
+    </div>
 
+    <div class="container mx-auto p-4 max-w-7xl">
       <!-- Loading State -->
       <div id="loading-state" class="text-center py-12">
         <span class="loading loading-spinner loading-lg"></span>
