@@ -1,0 +1,16 @@
+{
+  "name": "echo",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "debug": "node index.js",
+    "start": "nohup node index.js > /dev/null 2>&1 & echo $! > echo.pid && echo \"Server started with PID $(cat echo.pid)\"",
+    "stop": "if [ -f echo.pid ]; then kill $(cat echo.pid) && rm echo.pid && echo \"Server stopped\"; else echo \"No PID file found\"; fi",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0"
+  }
+}
