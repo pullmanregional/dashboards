@@ -1,0 +1,8 @@
+#!/bin/bash
+npm exec -- vite build --mode production
+[ $? -ne 0 ] && { exit 1; }
+
+node server/index.js &> nohup.out & echo $! > server.pid
+[ $? -ne 0 ] && { echo "Failed to start server"; exit 1; }
+
+echo "Server started. PID saved to server.pid"
