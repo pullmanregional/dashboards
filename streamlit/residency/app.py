@@ -13,15 +13,9 @@ from common import auth, st_util
 
 def run():
     """Main streamlit app entry point"""
-    # Authenticate user
-    user = auth.oidc_auth()
-    if not user:
-        return st.stop()
-
     # Add a logout link with an icon
-    if st.sidebar.button("Log out", icon=":material/logout:", use_container_width=True):
-        st.logout()
-        st.rerun()
+    with st.sidebar:
+        st_util.st_add_logout_button()
 
     # Read, parse, and cache (via @st.cache_data) source data
     src_data = source_data.read()
@@ -47,12 +41,5 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
     menu_items=None,
 )
-hide_streamlit_style = """
-            <style>
-                /* Hide the Streamlit header and menu, see https://discuss.streamlit.io/t/hiding-the-header-in-1-31-1/63398/2 */
-                header {visibility: hidden;}
-                .stMainBlockContainer {padding-top: 2rem;}
-            </style>
-            """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+st_util.st_hide_header()
 run()

@@ -12,6 +12,22 @@ def st_clear_cache_page():
     )
 
 
+def st_hide_header():
+    """
+    Hide Streamlit header bar, but leave the expand sidebar button
+    """
+    hide_streamlit_style = """
+    <style>
+        /* Hide the Streamlit header and menu, see https://discuss.streamlit.io/t/hiding-the-header-in-1-31-1/63398/2 */
+        header { min-height: 2rem !important; z-index: 0 !important; }
+        .stAppDeployButton {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
+        .stMainBlockContainer {padding-top: 0px;}
+    </style>
+    """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
 def st_sidebar_prh_logo(y: int = 20):
     """
     Add PRH Logo to side bar - https://discuss.streamlit.io/t/put-logo-and-title-above-on-top-of-page-navigation-in-sidebar-of-multipage-app/28213/5
@@ -31,6 +47,16 @@ def st_sidebar_prh_logo(y: int = 20):
         </style>
         """,
         unsafe_allow_html=True,
+    )
+
+
+def st_add_logout_button():
+    """Add a logout button the links to the Entra ID logout page"""
+    st.link_button(
+        "Log out",
+        "https://data.prh.app/oauth2/sign_out?rd=https://login.microsoftonline.com/common/oauth2/logout",
+        icon=":material/logout:",
+        use_container_width=True,
     )
 
 
@@ -82,6 +108,7 @@ def st_card(title: str, content: str, description: str = ""):
 
 def st_card_container(key: str, padding_css: str = "0px 16px"):
     from streamlit_extras.stylable_container import stylable_container
+
     with stylable_container(
         key=key,
         css_styles=f"""

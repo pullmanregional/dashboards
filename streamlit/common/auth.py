@@ -68,7 +68,7 @@ def oidc_auth(auto_redirect=False):
                 """
                 <style>
                     div.st-key-sign-in {
-                        text-align: center;
+                        align-self: center;
                     }
                 </style>
                 """,
