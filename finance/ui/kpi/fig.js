@@ -32,6 +32,16 @@ const CHART_CONFIG = {
 // ------------------------------------------------------------
 // Volume chart utilities
 // ------------------------------------------------------------
+// Filter data from the start of the selected month's year through the selected month
+function filterDataForYear(dataArray, selectedMonth) {
+  const [year] = selectedMonth.split("-");
+  const yearStart = `${parseInt(year) - 1}-01`;
+
+  return dataArray.filter((item) => {
+    return item.month >= yearStart;
+  });
+}
+
 function calculateBudgetLine(budget, monthsLength) {
   const annualBudgetVolume = budget.reduce(
     (sum, b) => sum + (b.budget_volume || 0),
@@ -75,10 +85,11 @@ function createVolumeChartOptions(months, actualVolumes, budgetLine) {
   };
 }
 
-function populateVolumeChart(chartEl, data) {
+function populateVolumeChart(chartEl, data, selectedMonth) {
   const { volumes = [], budget = [] } = data;
-  const months = volumes.slice(-12).map((v) => v.month);
-  const actualVolumes = volumes.slice(-12).map((v) => v.volume || 0);
+  const filteredVolumes = filterDataForYear(volumes, selectedMonth);
+  const months = filteredVolumes.map((v) => v.month);
+  const actualVolumes = filteredVolumes.map((v) => v.volume || 0);
   const budgetLine = calculateBudgetLine(budget, months.length);
 
   chartEl.options = createVolumeChartOptions(months, actualVolumes, budgetLine);
@@ -158,13 +169,13 @@ function populateRevenueChart(chartEl, data) {
 // ------------------------------------------------------------
 // Productivity chart utilities
 // ------------------------------------------------------------
-function extractProductivityData(hours) {
-  const recentHours = hours.slice(-12);
+function extractProductivityData(hours, selectedMonth) {
+  const filteredHours = filterDataForYear(hours, selectedMonth);
   return {
-    months: recentHours.map((h) => h.month),
-    prodHours: recentHours.map((h) => Math.round(h.prod_hrs || 0)),
-    nonprodHours: recentHours.map((h) => Math.round(h.nonprod_hrs || 0)),
-    fteValues: recentHours.map((h) => Math.round(h.total_fte || 0)),
+    months: filteredHours.map((h) => h.month),
+    prodHours: filteredHours.map((h) => Math.round(h.prod_hrs || 0)),
+    nonprodHours: filteredHours.map((h) => Math.round(h.nonprod_hrs || 0)),
+    fteValues: filteredHours.map((h) => Math.round(h.total_fte || 0)),
   };
 }
 
@@ -273,10 +284,10 @@ function createProductivityChartOptions(
   };
 }
 
-function populateProductivityChart(chartEl, data) {
+function populateProductivityChart(chartEl, data, selectedMonth) {
   const { hours = [] } = data;
   const { months, prodHours, nonprodHours, fteValues } =
-    extractProductivityData(hours);
+    extractProductivityData(hours, selectedMonth);
   chartEl.options = createProductivityChartOptions(
     months,
     prodHours,

@@ -482,8 +482,8 @@ function render() {
       STATE.data,
       STATE.selectedMonth
     );
-    fig.populateVolumeChart(volumeChartEl, STATE.data);
-    fig.populateProductivityChart(productivityChartEl, STATE.data);
+    fig.populateVolumeChart(volumeChartEl, STATE.data, STATE.selectedMonth);
+    fig.populateProductivityChart(productivityChartEl, STATE.data, STATE.selectedMonth);
     incomeStmtEl.data = STATE.data.incomeStmt;
   }
 }
