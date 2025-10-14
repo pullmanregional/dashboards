@@ -257,7 +257,28 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
   stats.ttlAR = ttlAR;
   stats.daysAR = avgDailyRevenue ? Math.floor(ttlAR / avgDailyRevenue) : 0;
 
-  // Calculate KPIs
+  // UOS calculations
+  const uosData = data.uos;
+
+  if (uosData.length > 0) {
+    const currentMonthUOS = uosData.find((row) => row.month === month);
+    const ytmUOSData = uosData.filter(
+      (row) => row.month.startsWith(yearNum.toString()) && row.month <= month
+    );
+
+    stats.monthUOS = currentMonthUOS?.volume || 0;
+    stats.ytmUOS = ytmUOSData.reduce((sum, row) => sum + (row.volume || 0), 0);
+    // Remove anything in parentheses from unit
+    let uosUnit = uosData[0]?.unit || "UOS";
+    uosUnit = uosUnit.replace(/\s*\([^)]*\)/g, "").trim();
+    stats.uosUnit = uosUnit;
+  }
+
+  // Budget UOS calculations
+  stats.monthBudgetUOS = budgetSum.budget_uos / 12;
+  stats.ytmBudgetUOS = budgetSum.budget_uos * (monthNum / 12);
+
+  // Calculate KPIs - Volume based
   const kpiVolume = stats.ytmVolume || 1;
   stats.revenuePerVolume = stats.ytdRevenue / kpiVolume;
   stats.expensePerVolume = stats.ytdExpense / kpiVolume;
@@ -275,6 +296,25 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
       stats.ytdBudgetExpense / stats.ytmBudgetVolume;
     stats.varianceExpensePerVolume = Math.trunc(
       (stats.expensePerVolume / stats.targetExpensePerVolume - 1) * 100
+    );
+  }
+
+  // Calculate KPIs - UOS based
+  const kpiUOS = stats.ytmUOS || 1;
+  stats.revenuePerUOS = stats.ytdRevenue / kpiUOS;
+  stats.expensePerUOS = stats.ytdExpense / kpiUOS;
+
+  if (stats.ytdBudgetRevenue && stats.ytmBudgetUOS) {
+    stats.targetRevenuePerUOS = stats.ytdBudgetRevenue / stats.ytmBudgetUOS;
+    stats.varianceRevenuePerUOS = Math.trunc(
+      (stats.revenuePerUOS / stats.targetRevenuePerUOS - 1) * 100
+    );
+  }
+
+  if (stats.ytdBudgetExpense && stats.ytmBudgetUOS) {
+    stats.targetExpensePerUOS = stats.ytdBudgetExpense / stats.ytmBudgetUOS;
+    stats.varianceExpensePerUOS = Math.trunc(
+      (stats.expensePerUOS / stats.targetExpensePerUOS - 1) * 100
     );
   }
 

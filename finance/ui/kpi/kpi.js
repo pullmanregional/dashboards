@@ -19,6 +19,7 @@ const dashboardContentEl = document.getElementById("dashboard-content");
 const financialMetricsEl = document.getElementById("financial-metrics");
 const retryButtonEl = document.getElementById("retry-button");
 const volumeChartEl = document.getElementById("volume-chart");
+const uosChartEl = document.getElementById("uos-chart");
 const productivityChartEl = document.getElementById("productivity-chart");
 const timePeriodSelectEl = document.getElementById("time-period-select");
 const prevMonthBtnEl = document.getElementById("prev-month-btn");
@@ -477,13 +478,23 @@ function render() {
       STATE.data,
       STATE.selectedMonth
     );
+    metrics.populateUOSMetrics(
+      dashboardContentEl,
+      STATE.data,
+      STATE.selectedMonth
+    );
     metrics.populateProductivityMetrics(
       dashboardContentEl,
       STATE.data,
       STATE.selectedMonth
     );
     fig.populateVolumeChart(volumeChartEl, STATE.data, STATE.selectedMonth);
-    fig.populateProductivityChart(productivityChartEl, STATE.data, STATE.selectedMonth);
+    fig.populateUOSChart(uosChartEl, STATE.data, STATE.selectedMonth);
+    fig.populateProductivityChart(
+      productivityChartEl,
+      STATE.data,
+      STATE.selectedMonth
+    );
     incomeStmtEl.data = STATE.data.incomeStmt;
   }
 }

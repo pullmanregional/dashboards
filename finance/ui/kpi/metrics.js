@@ -150,6 +150,29 @@ function populateKPIMetrics(containerEl, data) {
     "details",
     `Target: ${formatCurrency(stats.targetExpensePerVolume)}`
   );
+
+  // Update Revenue per UOS metric
+  const revenueUOSMetric = containerEl.querySelector("#revenue-per-uos-metric");
+  const uosUnit = stats.uosUnit || "UOS";
+  const revenueUOSVariance = stats.varianceRevenuePerUOS || 0;
+  revenueUOSMetric.setAttribute("title", `Revenue per ${uosUnit}`);
+  revenueUOSMetric.setAttribute("value", formatCurrency(stats.revenuePerUOS));
+  revenueUOSMetric.setAttribute("variancePct", revenueUOSVariance.toString());
+  revenueUOSMetric.setAttribute(
+    "details",
+    `Target: ${formatCurrency(stats.targetRevenuePerUOS)}`
+  );
+
+  // Update Expense per UOS metric
+  const expenseUOSMetric = containerEl.querySelector("#expense-per-uos-metric");
+  const expenseUOSVariance = stats.varianceExpensePerUOS || 0;
+  expenseUOSMetric.setAttribute("title", `Expense per ${uosUnit}`);
+  expenseUOSMetric.setAttribute("value", formatCurrency(stats.expensePerUOS));
+  expenseUOSMetric.setAttribute("variancePct", expenseUOSVariance.toString());
+  expenseUOSMetric.setAttribute(
+    "details",
+    `Target: ${formatCurrency(stats.targetExpensePerUOS)}`
+  );
 }
 
 function populateVolumeMetrics(metricEl, data, currentMonth) {
@@ -194,6 +217,47 @@ function populateVolumeMetrics(metricEl, data, currentMonth) {
   ytdVolumeMetric.setAttribute("value", formatNumber(ytdVolume));
   ytdVolumeMetric.setAttribute("variancePct", ytdVariance.toString());
   ytdVolumeMetric.showVariance = true;
+}
+
+function populateUOSMetrics(metricEl, data, currentMonth) {
+  const stats = data.stats;
+  const uosData = data.uos;
+
+  // Get current month UOS data to extract unit and actual UOS
+  const currentMonthUOS = uosData.find((row) => row.month === currentMonth);
+  let unit = currentMonthUOS?.unit || "UOS";
+
+  // Calculate month and YTD UOS directly from UOS data
+  const monthUOS = currentMonthUOS?.volume || 0;
+
+  // Calculate YTD UOS by summing all UOS in the current year up to current month
+  const [year] = currentMonth.split("-");
+  const ytdUOSData = uosData.filter(
+    (row) => row.month.startsWith(year) && row.month <= currentMonth
+  );
+  const ytdUOS = ytdUOSData.reduce((sum, row) => sum + (row.volume || 0), 0);
+
+  // Calculate variance based on budget_uos
+  const monthVariance = stats.monthBudgetUOS
+    ? calcVariance(monthUOS, stats.monthBudgetUOS)
+    : 0;
+  const ytdVariance = stats.ytmBudgetUOS
+    ? calcVariance(ytdUOS, stats.ytmBudgetUOS)
+    : 0;
+
+  // Update Month UOS metric
+  const monthUOSMetric = metricEl.querySelector("#month-uos-metric");
+  monthUOSMetric.setAttribute("title", `${unit} This Month`);
+  monthUOSMetric.setAttribute("value", formatNumber(monthUOS, 1));
+  monthUOSMetric.setAttribute("variancePct", monthVariance.toString());
+  monthUOSMetric.showVariance = false;
+
+  // Update YTD UOS metric
+  const ytdUOSMetric = metricEl.querySelector("#ytd-uos-metric");
+  ytdUOSMetric.setAttribute("title", `${unit} YTD`);
+  ytdUOSMetric.setAttribute("value", formatNumber(ytdUOS, 1));
+  ytdUOSMetric.setAttribute("variancePct", ytdVariance.toString());
+  ytdUOSMetric.showVariance = true;
 }
 
 function populateProductivityMetrics(metricEl, data, currentMonth) {
@@ -248,5 +312,6 @@ export {
   populateFinancialMetrics,
   populateKPIMetrics,
   populateVolumeMetrics,
+  populateUOSMetrics,
   populateProductivityMetrics,
 };

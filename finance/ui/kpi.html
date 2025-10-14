@@ -396,34 +396,79 @@
                   </div>
                 </div>
 
-                <!-- Volume and Productivity cards -->
+                <!-- Volume and UOS tabs, and Productivity card -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                  <!-- Volumes and UOS Tabs -->
                   <div class="card shadow-lg mb-4">
-                    <div class="card-body px-4 pt-3 pb-4">
-                      <h2 class="card-title mb-3">Volumes</h2>
+                    <div class="card-body px-2 pt-2 pb-4">
+                      <div role="tablist" class="tabs mb-3">
+                        <!-- Volumes Tab -->
+                        <input
+                          type="radio"
+                          name="volume_tabs"
+                          role="tab"
+                          class="tab font-semibold h-7 !border-b-0"
+                          aria-label="Volumes"
+                          checked
+                        />
+                        <div role="tabpanel" class="tab-content pt-0">
+                          <!-- Volume metrics -->
+                          <div
+                            class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2 pt-3 border-base-300 border-t"
+                          >
+                            <compact-metric
+                              id="month-volume-metric"
+                              title="Month"
+                            ></compact-metric>
+                            <compact-metric
+                              id="ytd-volume-metric"
+                              title="YTD"
+                            ></compact-metric>
+                          </div>
 
-                      <!-- Volume metrics -->
-                      <div
-                        class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2"
-                      >
-                        <compact-metric
-                          id="month-volume-metric"
-                          title="Month"
-                        ></compact-metric>
-                        <compact-metric
-                          id="ytd-volume-metric"
-                          title="YTD"
-                        ></compact-metric>
+                          <!-- Volume chart -->
+                          <data-chart
+                            id="volume-chart"
+                            title="Volume Trends"
+                            height="h-48"
+                          ></data-chart>
+                        </div>
+
+                        <!-- UOS Tab with separator -->
+                        <input
+                          type="radio"
+                          name="volume_tabs"
+                          role="tab"
+                          class="tab font-semibold h-7"
+                          aria-label="Units of Service"
+                        />
+                        <div role="tabpanel" class="tab-content pt-0">
+                          <!-- UOS metrics -->
+                          <div
+                            class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2 pt-3 border-base-300 border-t"
+                          >
+                            <compact-metric
+                              id="month-uos-metric"
+                              title="Month"
+                            ></compact-metric>
+                            <compact-metric
+                              id="ytd-uos-metric"
+                              title="YTD"
+                            ></compact-metric>
+                          </div>
+
+                          <!-- UOS chart -->
+                          <data-chart
+                            id="uos-chart"
+                            title="UOS Trends"
+                            height="h-48"
+                          ></data-chart>
+                        </div>
                       </div>
-
-                      <!-- Volume chart -->
-                      <data-chart
-                        id="volume-chart"
-                        title="Volume Trends"
-                        height="h-48"
-                      ></data-chart>
                     </div>
                   </div>
+
+                  <!-- Productivity card -->
                   <div class="card shadow-lg mb-4">
                     <div class="card-body px-4 pt-3 pb-4">
                       <h2 class="card-title mb-3">Productivity</h2>

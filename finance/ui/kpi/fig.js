@@ -103,6 +103,62 @@ function populateVolumeChart(chartEl, data, selectedMonth) {
 }
 
 // ------------------------------------------------------------
+// UOS chart utilities
+// ------------------------------------------------------------
+function calculateUOSBudgetLine(budget, monthsLength) {
+  const annualBudgetUOS = budget.reduce(
+    (sum, b) => sum + (b.budget_uos || 0),
+    0
+  );
+  const monthlyBudgetUOS = annualBudgetUOS / 12;
+  return new Array(monthsLength).fill(monthlyBudgetUOS);
+}
+
+function createUOSChartOptions(months, actualUOS, budgetLine) {
+  return {
+    ...CHART_CONFIG.commonOptions,
+    title: {
+      ...CHART_CONFIG.commonOptions.title,
+      text: "UOS vs Targets",
+    },
+    legend: { data: ["Actual UOS", "Target"], bottom: 0 },
+    xAxis: {
+      type: "category",
+      data: months,
+      axisLabel: { rotate: 45 },
+    },
+    yAxis: { type: "value", name: "UOS" },
+    series: [
+      {
+        name: "Actual UOS",
+        type: "line",
+        data: actualUOS,
+        smooth: true,
+        itemStyle: { color: CHART_CONFIG.colors.primary },
+        areaStyle: { opacity: 0.3, color: CHART_CONFIG.colors.primary },
+      },
+      {
+        name: "Target",
+        type: "line",
+        data: budgetLine,
+        lineStyle: { type: "dashed", color: CHART_CONFIG.colors.secondary },
+        itemStyle: { color: CHART_CONFIG.colors.secondary },
+      },
+    ],
+  };
+}
+
+function populateUOSChart(chartEl, data, selectedMonth) {
+  const { uos = [], budget = [] } = data;
+  const filteredUOS = filterDataForYear(uos, selectedMonth);
+  const months = filteredUOS.map((u) => u.month);
+  const actualUOS = filteredUOS.map((u) => u.volume || 0);
+  const budgetLine = calculateUOSBudgetLine(budget, months.length);
+
+  chartEl.options = createUOSChartOptions(months, actualUOS, budgetLine);
+}
+
+// ------------------------------------------------------------
 // Revenue chart utilities
 // ------------------------------------------------------------
 function createRevenueDataPoints(stats) {
@@ -303,4 +359,9 @@ function populateProductivityChart(chartEl, data, selectedMonth) {
   );
 }
 
-export { populateVolumeChart, populateRevenueChart, populateProductivityChart };
+export {
+  populateVolumeChart,
+  populateUOSChart,
+  populateRevenueChart,
+  populateProductivityChart,
+};
