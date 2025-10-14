@@ -137,7 +137,7 @@ function populateKPIMetrics(containerEl, data) {
   revenueMetric.setAttribute("value", formatCurrency(stats.revenuePerVolume));
   revenueMetric.setAttribute("variancePct", revenueVariance.toString());
   revenueMetric.setAttribute(
-    "statusText",
+    "details",
     `Target: ${formatCurrency(stats.targetRevenuePerVolume)}`
   );
 
@@ -147,7 +147,7 @@ function populateKPIMetrics(containerEl, data) {
   expenseMetric.setAttribute("value", formatCurrency(stats.expensePerVolume));
   expenseMetric.setAttribute("variancePct", expenseVariance.toString());
   expenseMetric.setAttribute(
-    "statusText",
+    "details",
     `Target: ${formatCurrency(stats.targetExpensePerVolume)}`
   );
 }

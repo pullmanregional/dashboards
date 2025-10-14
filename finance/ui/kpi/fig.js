@@ -46,9 +46,9 @@ function createVolumeChartOptions(months, actualVolumes, budgetLine) {
     ...CHART_CONFIG.commonOptions,
     title: {
       ...CHART_CONFIG.commonOptions.title,
-      text: "Volume vs Budget",
+      text: "Volume vs Targets",
     },
-    legend: { data: ["Actual Volume", "Budget"], bottom: 0 },
+    legend: { data: ["Actual Volume", "Target"], bottom: 0 },
     xAxis: {
       type: "category",
       data: months,
@@ -178,7 +178,7 @@ function createProductivityChartOptions(
     ...CHART_CONFIG.commonOptions,
     title: {
       ...CHART_CONFIG.commonOptions.title,
-      text: "Productivity & FTE",
+      text: "Hours & FTE",
     },
     tooltip: {
       trigger: "axis",

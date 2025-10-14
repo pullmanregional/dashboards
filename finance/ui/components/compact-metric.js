@@ -36,45 +36,46 @@ export class CompactMetric extends LitElement {
     const formattedValue = this.roundToThousands
       ? formatCurrencyInThousands(this.value)
       : this.value;
+    const varianceHtml = this.showVariance
+      ? html`
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            class="flex-shrink-0 ${this.getStatusColor()}"
+          >
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <text
+              x="18"
+              y="18"
+              text-anchor="middle"
+              dominant-baseline="central"
+              font-size="10"
+              font-weight="600"
+              fill="currentColor"
+            >
+              ${variancePercent}%
+            </text>
+          </svg>
+        `
+      : "";
 
     return html`
-      <div class="flex items-center gap-1.5 border-0">
-        <div class="min-w-0">
+      <div class="flex items-center gap-1.5">
+        ${varianceHtml}
+        <div class="ml-1">
           <div class="text-[0.6rem] text-gray-500">${this.title}</div>
           <div class="text-xs font-mono font-semibold truncate">
             ${formattedValue}
           </div>
         </div>
-        ${this.showVariance
-          ? html`
-              <svg
-                width="36"
-                height="36"
-                viewBox="0 0 36 36"
-                class="flex-shrink-0 ${this.getStatusColor()}"
-              >
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="16"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                />
-                <text
-                  x="18"
-                  y="18"
-                  text-anchor="middle"
-                  dominant-baseline="central"
-                  font-size="10"
-                  font-weight="600"
-                  fill="currentColor"
-                >
-                  ${variancePercent}%
-                </text>
-              </svg>
-            `
-          : ""}
       </div>
     `;
   }

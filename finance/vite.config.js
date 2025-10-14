@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   root: "ui",
+  base: "/finance/",
   plugins: [tailwindcss()],
   build: {
     rollupOptions: {
@@ -16,8 +17,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // In development mode, proxy /api requests to server at :3001
-      "/api": "http://localhost:3001",
+      // In development mode, proxy /finance/api requests to server at :8505
+      "/finance/api": "http://localhost:8505",
     },
     // CORS headers required for SQLite WASM in dev. See https://github.com/sqlite/sqlite-wasm#usage-with-vite
     headers: {

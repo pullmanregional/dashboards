@@ -90,30 +90,82 @@
               checked
             />
             <div role="tabpanel" class="tab-content p-1 pt-2 pb-2">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                <metric-card
-                  id="ytd-revenue-card"
-                  title="Net Revenue"
-                  hideDetails
-                ></metric-card>
-                <metric-card
-                  id="ytd-expenses-card"
-                  title="Operating Expenses"
-                  hideDetails
-                ></metric-card>
-                <metric-card
-                  id="ytd-net-income-card"
-                  title="Net Income"
-                  hideDetails
-                ></metric-card>
-              </div>
-              <div class="sm:mx-10 lg:mx-50 md:mx-25">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <metric-card id="ttl-cash-card" title="Cash"></metric-card>
-                  <metric-card
-                    id="ttl-ar-card"
-                    title="Accounts Receivable"
-                  ></metric-card>
+              <div class="border rounded-lg border-base-300">
+                <div class="flex justify-center">
+                  <div
+                    class="stats stats-vertical sm:stats-horizontal border-b border-dashed border-base-300"
+                  >
+                    <div class="stat place-items-center py-3">
+                      <div class="stat-title">Net Revenue</div>
+                      <div
+                        id="ytd-revenue-card"
+                        class="stat-value text-2xl"
+                      ></div>
+                    </div>
+                    <div class="stat place-items-center py-3">
+                      <div class="stat-title">Operating Expenses</div>
+                      <div
+                        id="ytd-expenses-card"
+                        class="stat-value text-2xl"
+                      ></div>
+                    </div>
+                    <div class="stat place-items-center py-3">
+                      <div class="stat-title">Net Income</div>
+                      <div
+                        id="ytd-net-income-card"
+                        class="stat-value text-2xl"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex justify-center relative">
+                  <div class="stats stats-vertical sm:stats-horizontal">
+                    <div class="stat place-items-center py-3">
+                      <div class="stat-title">Cash</div>
+                      <div id="ttl-cash-stat" class="stat-value text-2xl"></div>
+                      <div id="ttl-cash-stat-desc" class="stat-desc"></div>
+                    </div>
+                    <div class="stat place-items-center py-3">
+                      <div class="stat-title">Accounts Receivable</div>
+                      <div id="ttl-ar-stat" class="stat-value text-2xl"></div>
+                      <div id="ttl-ar-stat-desc" class="stat-desc"></div>
+                    </div>
+                  </div>
+                  <!-- View Notes link at bottom right of bottom row of metrics -->
+                  <label
+                    for="notes-toggle"
+                    class="hidden lg:block text-gray-400 hover:text-primary cursor-pointer absolute bottom-2 right-5 text-xs"
+                  >
+                    View Notes
+                  </label>
+                </div>
+                <!-- Notes section -->
+                <input type="checkbox" id="notes-toggle" class="peer hidden" />
+                <div
+                  class="max-h-0 peer-checked:max-h-96 overflow-hidden transition-all duration-300"
+                >
+                  <hr class="border-t border-base-300 mx-4 mt-4" />
+                  <div class="px-4 my-3">
+                    Notes:
+                    <ul class="list-disc list-inside">
+                      <li>
+                        <b>Net Revenue</b> equals Patient Revenue and Other
+                        Revenue minus Deductions (such as contractal
+                        adjustments)
+                      </li>
+                      <li>
+                        <b>Net Income</b> includes Operating and Non-Operating
+                        revenue and expenses. See Income Statement for details.
+                      </li>
+                      <li>
+                        <b>Average Revenue and Expenses per Day</b> are
+                        calculated using a rolling 3-month average. Average
+                        Revenue uses Total Patient Revenue (without subtracting
+                        Deductions). Average Expenses uses Total Operating
+                        Expenses minus Depreciation.
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>

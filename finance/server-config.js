@@ -1,6 +1,6 @@
 global.APP_CONFIG = {
   // Encryption key for remote data files
-  DATA_KEY: "vLS1LYAi5vuXvBy2s_9_H5rbiMBf4lwxR-cWtmDBSVQ=",
+  DATA_KEY: "",
 
   // S3 connection config
   S3_ACCT_ID: "",
@@ -21,5 +21,6 @@ global.APP_CONFIG = {
   },
 
   // Server configuration
-  PORT: 3001,
+  PORT: 8505,
+  BASE_PATH: "/finance",
 };

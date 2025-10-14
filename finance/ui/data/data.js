@@ -7,6 +7,9 @@ import {
   calculateStats,
 } from "./stats.js";
 
+// URL path to server /api - should match BASE_PATH in server-config.js
+const API_BASE = "/finance/api";
+
 // ------------------------------------------------------------
 // Data classes
 // ------------------------------------------------------------
@@ -84,7 +87,7 @@ class DashboardDataManager {
   // Fetch SQLite database
   async loadData() {
     try {
-      const dbResponse = await fetch("/api/data");
+      const dbResponse = await fetch(`${API_BASE}/data`);
       if (!dbResponse.ok) {
         throw new Error(`Failed to fetch database: ${dbResponse.statusText}`);
       }
@@ -252,7 +255,7 @@ class DashboardDataManager {
   // Load all feedback for a department
   async loadFeedbackForDept(dept) {
     try {
-      const response = await fetch(`/api/feedback/${dept}`);
+      const response = await fetch(`${API_BASE}/feedback/${dept}`);
       if (!response.ok) {
         throw new Error(`Failed to load feedback: ${response.statusText}`);
       }
@@ -275,7 +278,7 @@ class DashboardDataManager {
   // Load all feedback comments for all departments
   async loadAllFeedback() {
     try {
-      const response = await fetch("/api/feedback");
+      const response = await fetch(`${API_BASE}/feedback`);
       if (!response.ok) {
         throw new Error(`Failed to load feedback: ${response.statusText}`);
       }
@@ -302,7 +305,7 @@ class DashboardDataManager {
 
   // Save feedback for a specific department and month
   async saveFeedback(dept, month, comment) {
-    const response = await fetch(`/api/feedback/${dept}/${month}`, {
+    const response = await fetch(`${API_BASE}/feedback/${dept}/${month}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

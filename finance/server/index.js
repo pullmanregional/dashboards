@@ -15,6 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const router = express.Router();
 app.use(express.json());
 
 const USER_HEADER = "x-auth-request-user";
@@ -137,7 +138,7 @@ async function main() {
   // ------------------------------------------------------------
   // Unauthenticated resources
   // ------------------------------------------------------------
-  app.get("/health", (req, res) => {
+  router.get("/health", (req, res) => {
     res.json({
       status: "ok",
       datalen: DATA_FILE?.length,
@@ -148,16 +149,19 @@ async function main() {
   // Static files
   // ------------------------------------------------------------
   // Serve ../ui/dist (built with npm run build)
-  app.use(checkAuth, express.static(path.join(__dirname, "..", "ui", "dist")));
+  router.use(
+    checkAuth,
+    express.static(path.join(__dirname, "..", "ui", "dist"))
+  );
 
   // ------------------------------------------------------------
   // API routes
   // ------------------------------------------------------------
-  app.get("/api/reload", checkAuth, async (req, res) => {
+  router.get("/api/reload", checkAuth, async (req, res) => {
     await loadDataFiles();
     res.ok();
   });
-  app.get("/api/data", checkAuth, (req, res) => {
+  router.get("/api/data", checkAuth, (req, res) => {
     if (!DATA_FILE) {
       return res.status(503).json({ error: "Database not available" });
     }
@@ -168,7 +172,7 @@ async function main() {
   });
 
   // Feedback endpoints
-  app.get("/api/feedback", checkAuth, async (req, res) => {
+  router.get("/api/feedback", checkAuth, async (req, res) => {
     try {
       const feedback = await getAllFeedback();
       res.json(feedback);
@@ -178,7 +182,7 @@ async function main() {
     }
   });
 
-  app.get("/api/feedback/:dept", checkAuth, async (req, res) => {
+  router.get("/api/feedback/:dept", checkAuth, async (req, res) => {
     try {
       const { dept } = req.params;
       const feedback = await getAllFeedbackForDept(dept);
@@ -189,7 +193,7 @@ async function main() {
     }
   });
 
-  app.get("/api/feedback/:dept/:month", checkAuth, async (req, res) => {
+  router.get("/api/feedback/:dept/:month", checkAuth, async (req, res) => {
     try {
       const { dept, month } = req.params;
       const feedback = await getFeedback(dept, month);
@@ -200,7 +204,7 @@ async function main() {
     }
   });
 
-  app.post("/api/feedback/:dept/:month", checkAuth, async (req, res) => {
+  router.post("/api/feedback/:dept/:month", checkAuth, async (req, res) => {
     try {
       const { dept, month } = req.params;
       const { comment } = req.body;
@@ -217,6 +221,9 @@ async function main() {
     }
   });
 
+  // Mount router at configured base path
+  app.use(CONFIG.BASE_PATH, router);
+
   // Initialize feedback database
   await initDB();
 
@@ -225,7 +232,7 @@ async function main() {
   await loadDataFiles();
   console.log(`DB: ${DATA_FILE.length / 1024} kb`);
   app.listen(CONFIG.PORT, () => {
-    console.log(`Server at http://localhost:${CONFIG.PORT}`);
+    console.log(`Server at http://localhost:${CONFIG.PORT}${CONFIG.BASE_PATH}`);
   });
 }
 

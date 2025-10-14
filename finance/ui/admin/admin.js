@@ -1,7 +1,7 @@
 import { getAllDepartments } from "../department-config.js";
 import DATA from "../data/data.js";
 import { DeptData } from "../components/depts-summary.js";
-import { formatAccounting } from "../data/util.js";
+import { formatAccounting, formatCurrencyInThousands } from "../data/util.js";
 import { calculateVolumeTrend, calculateFTETrend } from "../data/stats.js";
 import "../components/data-chart.js";
 import "../components/metric-card.js";
@@ -376,22 +376,24 @@ function renderSummaryMetrics() {
   const ytdRevenueCard = document.getElementById("ytd-revenue-card");
   const ytdExpensesCard = document.getElementById("ytd-expenses-card");
   const ytdNetIncomeCard = document.getElementById("ytd-net-income-card");
-  const ttlCashCard = document.getElementById("ttl-cash-card");
-  const ttlARCard = document.getElementById("ttl-ar-card");
+  const ttlCash = document.getElementById("ttl-cash-stat");
+  const ttlCashDesc = document.getElementById("ttl-cash-stat-desc");
+  const ttlAR = document.getElementById("ttl-ar-stat");
+  const ttlARDesc = document.getElementById("ttl-ar-stat-desc");
 
-  ytdRevenueCard.value = formatAccounting(ttlYTDRevenue);
-  ytdExpensesCard.value = formatAccounting(ttlYTDExpense);
-  ytdNetIncomeCard.value = formatAccounting(ttlYTDNetIncome);
+  ytdRevenueCard.textContent = formatAccounting(ttlYTDRevenue);
+  ytdExpensesCard.textContent = formatAccounting(ttlYTDExpense);
+  ytdNetIncomeCard.textContent = formatAccounting(ttlYTDNetIncome);
 
-  ttlCashCard.value = formatAccounting(STATE.orgStats.ttlCash);
-  ttlCashCard.statusText = `${
+  ttlCash.textContent = formatAccounting(STATE.orgStats.ttlCash);
+  ttlCashDesc.textContent = `${
     STATE.orgStats.daysCash
   } days based on ${formatAccounting(
     STATE.orgStats.avgDailyExpenses
   )} avg expenses / day`;
 
-  ttlARCard.value = formatAccounting(STATE.orgStats.ttlAR);
-  ttlARCard.statusText = `${
+  ttlAR.textContent = formatAccounting(STATE.orgStats.ttlAR);
+  ttlARDesc.textContent = `${
     STATE.orgStats.daysAR
   } days based on ${formatAccounting(
     STATE.orgStats.avgDailyRevenue
