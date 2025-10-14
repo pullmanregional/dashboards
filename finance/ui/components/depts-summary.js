@@ -120,12 +120,13 @@ export class DeptsSummary extends LitElement {
     const chevronClass = isExpanded ? "fa-chevron-down" : "fa-chevron-right";
 
     return html`
-      <tr class="hover:bg-base-200" data-dept-id="${dept.id}">
+      <tr
+        class="hover:bg-base-200 cursor-pointer"
+        data-dept-id="${dept.id}"
+        @click="${() => this.toggleRow(dept.id)}"
+      >
         <td class="py-1 px-2 w-8">
-          <button
-            class="btn btn-ghost btn-xs p-0 min-h-0 h-6"
-            @click="${() => this.toggleRow(dept.id)}"
-          >
+          <button class="btn btn-ghost btn-xs p-0 min-h-0 h-6">
             <i class="fas text-xs ${chevronClass}"></i>
           </button>
         </td>
@@ -314,7 +315,7 @@ export class DeptsSummary extends LitElement {
                   <th class="text-right border-r-2 border-base-300">
                     YTD Expenses
                   </th>
-                  <th class="text-right">Net Income</th>
+                  <th class="text-right">YTD Net Income</th>
                   <th class="text-right">Variance to Budget</th>
                   <th class="text-right">%</th>
                   <th class="text-center"></th>

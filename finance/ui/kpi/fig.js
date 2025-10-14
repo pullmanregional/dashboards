@@ -26,6 +26,13 @@ const CHART_CONFIG = {
       top: "25%",
       containLabel: true,
     },
+    dataZoom: [
+      {
+        type: "inside",
+        start: 0,
+        end: 100,
+      },
+    ],
   },
 };
 
@@ -75,7 +82,7 @@ function createVolumeChartOptions(months, actualVolumes, budgetLine) {
         areaStyle: { opacity: 0.3, color: CHART_CONFIG.colors.primary },
       },
       {
-        name: "Budget",
+        name: "Target",
         type: "line",
         data: budgetLine,
         lineStyle: { type: "dashed", color: CHART_CONFIG.colors.secondary },
