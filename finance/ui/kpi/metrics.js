@@ -248,16 +248,16 @@ function populateUOSMetrics(metricEl, data, currentMonth) {
   // Update Month UOS metric
   const monthUOSMetric = metricEl.querySelector("#month-uos-metric");
   monthUOSMetric.setAttribute("title", `${unit} This Month`);
-  monthUOSMetric.setAttribute("value", formatNumber(monthUOS, 1));
+  monthUOSMetric.setAttribute("value", formatNumber(monthUOS, 0));
   monthUOSMetric.setAttribute("variancePct", monthVariance.toString());
   monthUOSMetric.showVariance = false;
 
   // Update YTD UOS metric
   const ytdUOSMetric = metricEl.querySelector("#ytd-uos-metric");
   ytdUOSMetric.setAttribute("title", `${unit} YTD`);
-  ytdUOSMetric.setAttribute("value", formatNumber(ytdUOS, 1));
+  ytdUOSMetric.setAttribute("value", formatNumber(ytdUOS, 0));
   ytdUOSMetric.setAttribute("variancePct", ytdVariance.toString());
-  ytdUOSMetric.showVariance = true;
+  ytdUOSMetric.showVariance = false;
 }
 
 function populateProductivityMetrics(metricEl, data, currentMonth) {

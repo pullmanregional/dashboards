@@ -167,7 +167,6 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
 
   // Volume calculations
   const volumes = data.volumes;
-
   if (volumes.length > 0) {
     const currentMonth = volumes.find((row) => row.month === month);
     const ytmData = volumes.filter(
@@ -180,6 +179,19 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
     let unit = volumes[0]?.unit || "Volume";
     unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
     stats.volumeUnit = unit;
+  }
+
+  // UOS calculations
+  const uosData = data.uos;
+  if (uosData.length > 0) {
+    const currentMonthUOS = uosData.find((row) => row.month === month);
+    const ytmUOSData = uosData.filter(
+      (row) => row.month.startsWith(yearNum.toString()) && row.month <= month
+    );
+
+    stats.monthUOS = currentMonthUOS?.volume || 0;
+    stats.ytmUOS = ytmUOSData.reduce((sum, row) => sum + (row.volume || 0), 0);
+    stats.uosUnit = uosData[0]?.unit || "UOS";
   }
 
   // Budget calculations
@@ -207,6 +219,8 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
   stats.budgetFTE = budgetSum.budget_fte;
   stats.monthBudgetVolume = budgetSum.budget_volume / 12;
   stats.ytmBudgetVolume = budgetSum.budget_volume * (monthNum / 12);
+  stats.monthBudgetUOS = budgetSum.budget_uos / 12;
+  stats.ytmBudgetUOS = budgetSum.budget_uos * (monthNum / 12);
 
   // Extract revenue and expense data from income statement
   stats.ytdRevenue = incomeStmt.find((row) => row.tree === "Net Revenue")?.[
@@ -257,32 +271,10 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
   stats.ttlAR = ttlAR;
   stats.daysAR = avgDailyRevenue ? Math.floor(ttlAR / avgDailyRevenue) : 0;
 
-  // UOS calculations
-  const uosData = data.uos;
-
-  if (uosData.length > 0) {
-    const currentMonthUOS = uosData.find((row) => row.month === month);
-    const ytmUOSData = uosData.filter(
-      (row) => row.month.startsWith(yearNum.toString()) && row.month <= month
-    );
-
-    stats.monthUOS = currentMonthUOS?.volume || 0;
-    stats.ytmUOS = ytmUOSData.reduce((sum, row) => sum + (row.volume || 0), 0);
-    // Remove anything in parentheses from unit
-    let uosUnit = uosData[0]?.unit || "UOS";
-    uosUnit = uosUnit.replace(/\s*\([^)]*\)/g, "").trim();
-    stats.uosUnit = uosUnit;
-  }
-
-  // Budget UOS calculations
-  stats.monthBudgetUOS = budgetSum.budget_uos / 12;
-  stats.ytmBudgetUOS = budgetSum.budget_uos * (monthNum / 12);
-
   // Calculate KPIs - Volume based
   const kpiVolume = stats.ytmVolume || 1;
   stats.revenuePerVolume = stats.ytdRevenue / kpiVolume;
   stats.expensePerVolume = stats.ytdExpense / kpiVolume;
-
   if (stats.ytdBudgetRevenue && stats.ytmBudgetVolume) {
     stats.targetRevenuePerVolume =
       stats.ytdBudgetRevenue / stats.ytmBudgetVolume;
@@ -290,7 +282,6 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
       (stats.revenuePerVolume / stats.targetRevenuePerVolume - 1) * 100
     );
   }
-
   if (stats.ytdBudgetExpense && stats.ytmBudgetVolume) {
     stats.targetExpensePerVolume =
       stats.ytdBudgetExpense / stats.ytmBudgetVolume;
@@ -303,14 +294,12 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
   const kpiUOS = stats.ytmUOS || 1;
   stats.revenuePerUOS = stats.ytdRevenue / kpiUOS;
   stats.expensePerUOS = stats.ytdExpense / kpiUOS;
-
   if (stats.ytdBudgetRevenue && stats.ytmBudgetUOS) {
     stats.targetRevenuePerUOS = stats.ytdBudgetRevenue / stats.ytmBudgetUOS;
     stats.varianceRevenuePerUOS = Math.trunc(
       (stats.revenuePerUOS / stats.targetRevenuePerUOS - 1) * 100
     );
   }
-
   if (stats.ytdBudgetExpense && stats.ytmBudgetUOS) {
     stats.targetExpensePerUOS = stats.ytdBudgetExpense / stats.ytmBudgetUOS;
     stats.varianceExpensePerUOS = Math.trunc(

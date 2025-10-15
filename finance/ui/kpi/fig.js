@@ -37,7 +37,7 @@ const CHART_CONFIG = {
 };
 
 // ------------------------------------------------------------
-// Volume chart utilities
+// Volume/UOS chart utilities
 // ------------------------------------------------------------
 // Filter data from the start of the selected month's year through the selected month
 function filterDataForYear(dataArray, selectedMonth) {
@@ -102,9 +102,6 @@ function populateVolumeChart(chartEl, data, selectedMonth) {
   chartEl.options = createVolumeChartOptions(months, actualVolumes, budgetLine);
 }
 
-// ------------------------------------------------------------
-// UOS chart utilities
-// ------------------------------------------------------------
 function calculateUOSBudgetLine(budget, monthsLength) {
   const annualBudgetUOS = budget.reduce(
     (sum, b) => sum + (b.budget_uos || 0),
