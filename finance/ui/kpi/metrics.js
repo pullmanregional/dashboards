@@ -134,45 +134,69 @@ function populateKPIMetrics(containerEl, data) {
   const revenueMetric = containerEl.querySelector("#revenue-per-volume-metric");
   const unit = stats.volumeUnit.replace(/s$/, "") || "Volume";
   revenueMetric.setAttribute("title", `Revenue per ${unit}`);
-  revenueMetric.setAttribute("value", formatCurrency(stats.revenuePerVolume));
-  revenueMetric.setAttribute("variancePct", revenueVariance.toString());
-  revenueMetric.setAttribute(
-    "details",
-    `Target: ${formatCurrency(stats.targetRevenuePerVolume)}`
-  );
+  if (data.hasMultipleVolumeUnits) {
+    revenueMetric.setAttribute("value", "-");
+    revenueMetric.setAttribute("variancePct", "0");
+    revenueMetric.setAttribute("details", "-");
+  } else {
+    revenueMetric.setAttribute("value", formatCurrency(stats.revenuePerVolume));
+    revenueMetric.setAttribute("variancePct", revenueVariance.toString());
+    revenueMetric.setAttribute(
+      "details",
+      `Target: ${formatCurrency(stats.targetRevenuePerVolume)}`
+    );
+  }
 
   // Update Expense per Volume metric
   const expenseMetric = containerEl.querySelector("#expense-per-volume-metric");
   expenseMetric.setAttribute("title", `Expense per ${unit}`);
-  expenseMetric.setAttribute("value", formatCurrency(stats.expensePerVolume));
-  expenseMetric.setAttribute("variancePct", expenseVariance.toString());
-  expenseMetric.setAttribute(
-    "details",
-    `Target: ${formatCurrency(stats.targetExpensePerVolume)}`
-  );
+  if (data.hasMultipleVolumeUnits) {
+    expenseMetric.setAttribute("value", "-");
+    expenseMetric.setAttribute("variancePct", "0");
+    expenseMetric.setAttribute("details", "-");
+  } else {
+    expenseMetric.setAttribute("value", formatCurrency(stats.expensePerVolume));
+    expenseMetric.setAttribute("variancePct", expenseVariance.toString());
+    expenseMetric.setAttribute(
+      "details",
+      `Target: ${formatCurrency(stats.targetExpensePerVolume)}`
+    );
+  }
 
   // Update Revenue per UOS metric
   const revenueUOSMetric = containerEl.querySelector("#revenue-per-uos-metric");
   const uosUnit = stats.uosUnit.replace(/s$/, "") || "UOS";
   const revenueUOSVariance = stats.varianceRevenuePerUOS || 0;
   revenueUOSMetric.setAttribute("title", `Revenue per ${uosUnit}`);
-  revenueUOSMetric.setAttribute("value", formatCurrency(stats.revenuePerUOS));
-  revenueUOSMetric.setAttribute("variancePct", revenueUOSVariance.toString());
-  revenueUOSMetric.setAttribute(
-    "details",
-    `Target: ${formatCurrency(stats.targetRevenuePerUOS)}`
-  );
+  if (data.hasMultipleUOSUnits) {
+    revenueUOSMetric.setAttribute("value", "-");
+    revenueUOSMetric.setAttribute("variancePct", "0");
+    revenueUOSMetric.setAttribute("details", "-");
+  } else {
+    revenueUOSMetric.setAttribute("value", formatCurrency(stats.revenuePerUOS));
+    revenueUOSMetric.setAttribute("variancePct", revenueUOSVariance.toString());
+    revenueUOSMetric.setAttribute(
+      "details",
+      `Target: ${formatCurrency(stats.targetRevenuePerUOS)}`
+    );
+  }
 
   // Update Expense per UOS metric
   const expenseUOSMetric = containerEl.querySelector("#expense-per-uos-metric");
   const expenseUOSVariance = stats.varianceExpensePerUOS || 0;
   expenseUOSMetric.setAttribute("title", `Expense per ${uosUnit}`);
-  expenseUOSMetric.setAttribute("value", formatCurrency(stats.expensePerUOS));
-  expenseUOSMetric.setAttribute("variancePct", expenseUOSVariance.toString());
-  expenseUOSMetric.setAttribute(
-    "details",
-    `Target: ${formatCurrency(stats.targetExpensePerUOS)}`
-  );
+  if (data.hasMultipleUOSUnits) {
+    expenseUOSMetric.setAttribute("value", "-");
+    expenseUOSMetric.setAttribute("variancePct", "0");
+    expenseUOSMetric.setAttribute("details", "-");
+  } else {
+    expenseUOSMetric.setAttribute("value", formatCurrency(stats.expensePerUOS));
+    expenseUOSMetric.setAttribute("variancePct", expenseUOSVariance.toString());
+    expenseUOSMetric.setAttribute(
+      "details",
+      `Target: ${formatCurrency(stats.targetExpensePerUOS)}`
+    );
+  }
 }
 
 function populateVolumeMetrics(metricEl, data, currentMonth) {
