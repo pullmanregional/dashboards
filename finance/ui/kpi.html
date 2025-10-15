@@ -412,26 +412,37 @@
                           checked
                         />
                         <div role="tabpanel" class="tab-content pt-0">
-                          <!-- Volume metrics -->
+                          <!-- Message when multiple volume unit types exist -->
                           <div
-                            class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2 pt-3 border-base-300 border-t"
+                            id="volume-multiple-units-msg"
+                            class="hidden flex items-center justify-center text-gray-400 border-base-300 border-t h-48"
                           >
-                            <compact-metric
-                              id="month-volume-metric"
-                              title="Month"
-                            ></compact-metric>
-                            <compact-metric
-                              id="ytd-volume-metric"
-                              title="YTD"
-                            ></compact-metric>
+                            Select a unit to view data
                           </div>
 
-                          <!-- Volume chart -->
-                          <data-chart
-                            id="volume-chart"
-                            title="Volume Trends"
-                            height="h-48"
-                          ></data-chart>
+                          <!-- Volume content (metrics and chart) -->
+                          <div id="volume-content">
+                            <!-- Volume metrics -->
+                            <div
+                              class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2 pt-3 border-base-300 border-t"
+                            >
+                              <compact-metric
+                                id="month-volume-metric"
+                                title="Month"
+                              ></compact-metric>
+                              <compact-metric
+                                id="ytd-volume-metric"
+                                title="YTD"
+                              ></compact-metric>
+                            </div>
+
+                            <!-- Volume chart -->
+                            <data-chart
+                              id="volume-chart"
+                              title="Volume Trends"
+                              height="h-48"
+                            ></data-chart>
+                          </div>
                         </div>
 
                         <!-- UOS Tab with separator -->
@@ -443,26 +454,37 @@
                           aria-label="Units of Service"
                         />
                         <div role="tabpanel" class="tab-content pt-0">
-                          <!-- UOS metrics -->
+                          <!-- Message when multiple UOS unit types exist -->
                           <div
-                            class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2 pt-3 border-base-300 border-t"
+                            id="uos-multiple-units-msg"
+                            class="hidden flex items-center justify-center text-gray-400 border-base-300 border-t h-48"
                           >
-                            <compact-metric
-                              id="month-uos-metric"
-                              title="Month"
-                            ></compact-metric>
-                            <compact-metric
-                              id="ytd-uos-metric"
-                              title="YTD"
-                            ></compact-metric>
+                            Select a unit to view data
                           </div>
 
-                          <!-- UOS chart -->
-                          <data-chart
-                            id="uos-chart"
-                            title="UOS Trends"
-                            height="h-48"
-                          ></data-chart>
+                          <!-- UOS content (metrics and chart) -->
+                          <div id="uos-content">
+                            <!-- UOS metrics -->
+                            <div
+                              class="flex gap-6 font-bold items-center justify-center flex-wrap mb-2 pt-3 border-base-300 border-t"
+                            >
+                              <compact-metric
+                                id="month-uos-metric"
+                                title="Month"
+                              ></compact-metric>
+                              <compact-metric
+                                id="ytd-uos-metric"
+                                title="YTD"
+                              ></compact-metric>
+                            </div>
+
+                            <!-- UOS chart -->
+                            <data-chart
+                              id="uos-chart"
+                              title="UOS Trends"
+                              height="h-48"
+                            ></data-chart>
+                          </div>
                         </div>
                       </div>
                     </div>

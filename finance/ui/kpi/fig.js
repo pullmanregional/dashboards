@@ -107,7 +107,7 @@ function calculateUOSBudgetLine(budget, monthsLength) {
     (sum, b) => sum + (b.budget_uos || 0),
     0
   );
-  const monthlyBudgetUOS = annualBudgetUOS / 12;
+  const monthlyBudgetUOS = Math.round(annualBudgetUOS / 12);
   return new Array(monthsLength).fill(monthlyBudgetUOS);
 }
 
@@ -118,13 +118,28 @@ function createUOSChartOptions(months, actualUOS, budgetLine) {
       ...CHART_CONFIG.commonOptions.title,
       text: "UOS vs Targets",
     },
+    tooltip: {
+      trigger: "axis",
+      formatter: (params) => {
+        let result = `<strong>${params[0].axisValue}</strong><br/>`;
+        params.forEach((item) => {
+          const value = Math.round(item.value);
+          result += `${item.marker} ${item.seriesName}: ${value.toLocaleString()}<br/>`;
+        });
+        return result;
+      },
+    },
     legend: { data: ["Actual UOS", "Target"], bottom: 0 },
     xAxis: {
       type: "category",
       data: months,
       axisLabel: { rotate: 45 },
     },
-    yAxis: { type: "value", name: "UOS" },
+    yAxis: {
+      type: "value",
+      name: "UOS",
+      axisLabel: { formatter: (value) => Math.round(value).toLocaleString() },
+    },
     series: [
       {
         name: "Actual UOS",
@@ -149,7 +164,7 @@ function populateUOSChart(chartEl, data, selectedMonth) {
   const { uos = [], budget = [] } = data;
   const filteredUOS = filterDataForYear(uos, selectedMonth);
   const months = filteredUOS.map((u) => u.month);
-  const actualUOS = filteredUOS.map((u) => u.volume || 0);
+  const actualUOS = filteredUOS.map((u) => Math.round(u.volume || 0));
   const budgetLine = calculateUOSBudgetLine(budget, months.length);
 
   chartEl.options = createUOSChartOptions(months, actualUOS, budgetLine);

@@ -153,7 +153,7 @@ function populateKPIMetrics(containerEl, data) {
 
   // Update Revenue per UOS metric
   const revenueUOSMetric = containerEl.querySelector("#revenue-per-uos-metric");
-  const uosUnit = stats.uosUnit || "UOS";
+  const uosUnit = stats.uosUnit.replace(/s$/, "") || "UOS";
   const revenueUOSVariance = stats.varianceRevenuePerUOS || 0;
   revenueUOSMetric.setAttribute("title", `Revenue per ${uosUnit}`);
   revenueUOSMetric.setAttribute("value", formatCurrency(stats.revenuePerUOS));
@@ -178,6 +178,24 @@ function populateKPIMetrics(containerEl, data) {
 function populateVolumeMetrics(metricEl, data, currentMonth) {
   const stats = data.stats;
   const volumes = data.volumes;
+
+  // Get the content and message elements
+  const volumeContent = metricEl.querySelector("#volume-content");
+  const volumeMultipleUnitsMsg = metricEl.querySelector(
+    "#volume-multiple-units-msg"
+  );
+
+  // Check if there are multiple volume unit types
+  if (data.hasMultipleVolumeUnits) {
+    // Hide the content and show the message
+    volumeContent.classList.add("hidden");
+    volumeMultipleUnitsMsg.classList.remove("hidden");
+    return;
+  }
+
+  // Show the content and hide the message
+  volumeContent.classList.remove("hidden");
+  volumeMultipleUnitsMsg.classList.add("hidden");
 
   // Get current month volume data to extract unit and actual volume
   const currentMonthVolume = volumes.find((row) => row.month === currentMonth);
@@ -223,9 +241,26 @@ function populateUOSMetrics(metricEl, data, currentMonth) {
   const stats = data.stats;
   const uosData = data.uos;
 
+  // Get the content and message elements
+  const uosContent = metricEl.querySelector("#uos-content");
+  const uosMultipleUnitsMsg = metricEl.querySelector("#uos-multiple-units-msg");
+
+  // Check if there are multiple UOS unit types
+  if (data.hasMultipleUOSUnits) {
+    // Hide the content and show the message
+    uosContent.classList.add("hidden");
+    uosMultipleUnitsMsg.classList.remove("hidden");
+    return;
+  }
+
+  // Show the content and hide the message
+  uosContent.classList.remove("hidden");
+  uosMultipleUnitsMsg.classList.add("hidden");
+
   // Get current month UOS data to extract unit and actual UOS
   const currentMonthUOS = uosData.find((row) => row.month === currentMonth);
   let unit = currentMonthUOS?.unit || "UOS";
+  unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
 
   // Calculate month and YTD UOS directly from UOS data
   const monthUOS = currentMonthUOS?.volume || 0;

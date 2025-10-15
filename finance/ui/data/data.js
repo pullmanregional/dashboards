@@ -35,6 +35,8 @@ class DashboardData {
   constructor(data = {}) {
     this.volumes = data.volumes || null;
     this.uos = data.uos || null;
+    this.hasMultipleVolumeUnits = data.hasMultipleVolumeUnits || false;
+    this.hasMultipleUOSUnits = data.hasMultipleUOSUnits || false;
     this.hours = data.hours || null;
     this.hoursForMonth = data.hoursForMonth || null;
     this.hoursYTM = data.hoursYTM || null;
@@ -237,9 +239,15 @@ class DashboardDataManager {
       month
     );
 
+    // Calculate volumes and UOS with multiple unit detection
+    const volumesResult = calcVolumeByMonth(sourceData.volumes);
+    const uosResult = calcVolumeByMonth(sourceData.uos);
+
     return new DashboardData({
-      volumes: calcVolumeByMonth(sourceData.volumes),
-      uos: calcVolumeByMonth(sourceData.uos),
+      volumes: volumesResult.data,
+      uos: uosResult.data,
+      hasMultipleVolumeUnits: volumesResult.hasMultipleUnits,
+      hasMultipleUOSUnits: uosResult.hasMultipleUnits,
       hours: hoursByMonth,
       hoursForMonth: hoursByMonth.find((row) => row.month === month) || [],
       incomeStmt: incomeStmt,

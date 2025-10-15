@@ -11,15 +11,27 @@ export function sortByMonth(data) {
 }
 
 // Calculate volume by month (group by month, sum volume)
+// Returns an object with { data: volumesByMonth[], hasMultipleUnits: boolean }
 export function calcVolumeByMonth(data) {
   const grouped = {};
+  const uniqueUnits = new Set();
+
   data.forEach((row) => {
     if (!grouped[row.month]) {
       grouped[row.month] = { month: row.month, volume: 0, unit: row.unit };
     }
     grouped[row.month].volume += row.volume || 0;
+
+    // Track unique units
+    if (row.unit) {
+      uniqueUnits.add(row.unit);
+    }
   });
-  return sortByMonth(Object.values(grouped));
+
+  return {
+    data: sortByMonth(Object.values(grouped)),
+    hasMultipleUnits: uniqueUnits.size > 1,
+  };
 }
 
 // Calculate hours by month (sum hours and recalculate FTE)
@@ -191,7 +203,9 @@ export function calculateStats(data, incomeStmt, balanceSheet, agedAR, month) {
 
     stats.monthUOS = currentMonthUOS?.volume || 0;
     stats.ytmUOS = ytmUOSData.reduce((sum, row) => sum + (row.volume || 0), 0);
-    stats.uosUnit = uosData[0]?.unit || "UOS";
+    let unit = uosData[0]?.unit || "UOS";
+    unit = unit.replace(/\s*\([^)]*\)/g, "").trim();
+    stats.uosUnit = unit;
   }
 
   // Budget calculations
