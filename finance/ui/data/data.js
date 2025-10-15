@@ -155,7 +155,7 @@ class DashboardDataManager {
         contractedHours: this.query("SELECT * FROM contracted_hours"),
         incomeStmt: this.query("SELECT * FROM income_stmt ORDER BY month DESC"),
         balanceSheet: this.query(
-          "SELECT * FROM balance_sheet ORDER BY month DESC"
+          "SELECT * FROM balance_sheet ORDER BY month DESC, line_num ASC"
         ),
         agedAR: this.query("SELECT * FROM aged_ar"),
         contractedHoursUpdatedMonth:
