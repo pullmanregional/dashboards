@@ -159,7 +159,7 @@ async function main() {
   // ------------------------------------------------------------
   router.get("/api/reload", checkAuth, async (req, res) => {
     await loadDataFiles();
-    res.ok();
+    res.status(200).send("Reloaded");
   });
   router.get("/api/data", checkAuth, (req, res) => {
     if (!DATA_FILE) {
