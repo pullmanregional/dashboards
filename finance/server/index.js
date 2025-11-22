@@ -1,5 +1,6 @@
 import express from "express";
 import { S3Client } from "@aws-sdk/client-s3";
+import * as auth from "./auth.js";
 import * as data from "./data.js";
 import {
   initDB,
@@ -17,19 +18,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const router = express.Router();
 app.use(express.json());
-
-const USER_HEADER = "x-auth-request-user";
-const EMAIL_HEADER = "x-auth-request-email";
-const GROUPS_HEADER = "x-auth-request-groups";
-const EMAIL_RESPONSE_HEADER = "X-User-Email";
-const HTTP_403_PAGE = (
-  data
-) => `<!DOCTYPE html><html><head><title>Restricted</title></head> <body style="text-align: center; font-family: sans-serif; margin-top: 50px;>
-<div style="text-align: center;">
-  <h2>Access Restricted</h2>
-  <p style="color: #555;">Please contact your administrator to request access to this resource.</p>
-</div>
-<pre style="display: inline-block; text-align: left; font-size: 0.6rem; color: #999; border: 1px solid #ccc; padding: 10px; border-radius: 5px;">${data}</pre></body></html>`;
 
 // Configuration and data
 let DATA_FILE = null;
@@ -51,52 +39,15 @@ async function main() {
   // Middleware
   // ------------------------------------------------------------
   // oauth2-proxy middleware. Auth info is sent via headers
-  const allowedGroups = CONFIG.AUTH.ALLOWED_GROUPS;
-  const allowedEmails = CONFIG.AUTH.ALLOWED_EMAILS.map((e) => e.toLowerCase());
-  const getRequestUser = (req) => req.headers[USER_HEADER] || "";
-  const getRequestEmail = (req) => req.headers[EMAIL_HEADER] || "";
-  const getRequestGroups = (req) => req.headers[GROUPS_HEADER] || "";
-  function checkAuth(req, res, next) {
-    // Read user groups and email from headers and check against authorized lists
-    const user = getRequestUser(req);
-    const email = getRequestEmail(req).toLowerCase();
-    const groups = getRequestGroups(req);
-    const groupList = groups?.split(",").map((g) => g.trim()) || [];
-
-    // Allow request if:
-    //   - both ALLOWED_GROUPS and ALLOWED_EMAILS are empty
-    //   - only ALLOWED_GROUPS specified, and user is in one of the groups
-    //   - only ALLOWED_EMAILS specified, and user email matches
-    //   - both ALLOWED_GROUPS and ALLOWED_EMAILS specified, and either condition is met
-    const checkGroups = allowedGroups?.length > 0;
-    const checkEmail = allowedEmails?.length > 0;
-    const groupAllowed =
-      !checkGroups ||
-      allowedGroups.some((allowedGroup) => groupList.includes(allowedGroup));
-    const emailAllowed = !checkEmail || allowedEmails.includes(email);
-    let auth = !checkGroups && !checkEmail;
-    auth =
-      auth || (checkGroups && checkEmail && (groupAllowed || emailAllowed));
-    auth = auth || (!checkGroups && checkEmail && emailAllowed);
-    auth = auth || (checkGroups && !checkEmail && groupAllowed);
-
-    // Send correct response. For 200, add user info as response headers.
-    if (!auth) {
-      console.log(`Access denied for user ${user}/${email} [${groups}]`);
-      const data = { email, groups };
-      return res.status(403).send(HTTP_403_PAGE(JSON.stringify(data)));
-    }
-    res.set(EMAIL_RESPONSE_HEADER, email || "none");
-    next();
-  }
+  const checkAuth = auth.checkAuthFromConfig(CONFIG.AUTH);
 
   // Logging middleware
   app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     const originalSend = res.send;
     res.send = function (data) {
-      const user = getRequestUser(req);
-      const email = getRequestEmail(req);
+      const user = auth.getRequestUser(req);
+      const email = auth.getRequestEmail(req);
       console.log(
         `[${timestamp}] ${req.method} ${req.path} (${res.statusCode}) - ${user}/${email} ${req.ip}`
       );

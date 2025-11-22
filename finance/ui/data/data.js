@@ -88,7 +88,7 @@ class DashboardDataManager {
     try {
       const dbResponse = await fetch(`${API_BASE}/data`);
       if (!dbResponse.ok) {
-        throw new Error(`Failed to fetch database: ${dbResponse.statusText}`);
+        throw new Error(`${dbResponse.statusText}: ${API_BASE}/data`);
       }
       const dbArrayBuffer = await dbResponse.arrayBuffer();
       const dbUint8Array = new Uint8Array(dbArrayBuffer);

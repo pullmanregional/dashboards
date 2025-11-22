@@ -13,11 +13,28 @@ global.APP_CONFIG = {
   DATA_FILE: "../../../prh-warehouse/prh-finance.sqlite3",
 
   AUTH: {
-    // Allowed user groups IDs and emails that can access /api.
-    // Request is authorized if matches group OR email.
-    // Disable check by setting to empty list.
-    ALLOWED_GROUPS: [],
-    ALLOWED_EMAILS: [],
+    // Map of "path?param=value" to allowed groups and emails
+    // Query params that are specified are matched exactly. Params that are not specified
+    // but present in the request are ignored.
+    // Path should be relative to BASE_PATH
+    // Paths support wildcards (e.g., /api/* matches /api/data, /api/reload, etc.)
+    //
+    // Example: "/kpi.html?dept=msu_icu": { ALLOWED_GROUPS: [], ALLOWED_EMAILS: [] }
+    //
+    // Request is authorized if matches group OR email for the matching path rule.
+    // By default, access is denied unless explicitly allowed.
+    "/kpi.html": {
+      ALLOWED_GROUPS: [],
+      ALLOWED_EMAILS: [],
+    },
+    "/admin.html": {
+      ALLOWED_GROUPS: [],
+      ALLOWED_EMAILS: [],
+    },
+    "/api/*": {
+      ALLOWED_GROUPS: [],
+      ALLOWED_EMAILS: [],
+    },
   },
 
   // Server configuration
