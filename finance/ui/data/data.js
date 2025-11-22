@@ -25,7 +25,6 @@ class SourceData {
     this.incomeStmt = data.incomeStmt || null;
     this.balanceSheet = data.balanceSheet || null;
     this.agedAR = data.agedAR || null;
-    this.contractedHoursUpdatedMonth = data.contractedHoursUpdatedMonth || null;
     Object.freeze(this);
   }
 }
@@ -45,7 +44,6 @@ class DashboardData {
     this.incomeStmt = data.incomeStmt || null;
     this.balanceSheet = data.balanceSheet || null;
     this.agedAR = data.agedAR || null;
-    this.contractedHoursUpdatedMonth = data.contractedHoursUpdatedMonth || null;
     this.stats = data.stats || null;
     Object.freeze(this);
   }
@@ -59,7 +57,6 @@ class DashboardDataManager {
     this.db = null;
     this.sqlite3 = null;
     this.sourceData = null;
-    this.kvData = null;
     this.data = null;
     this.initialized = false;
     this.allFeedback = {}; // Store all feedback comments by month for current dept
@@ -111,11 +108,6 @@ class DashboardDataManager {
         throw new Error(`sqlite3_deserialize() failed with code ${rc}`);
       }
       console.log("Data loaded");
-
-      // Read KV data from _kv table
-      this.kvData = this.query("SELECT data FROM _kv LIMIT 1")[0]?.data;
-      this.kvData = JSON.parse(this.kvData);
-      console.log("KV data loaded");
     } catch (error) {
       console.error("Failed to load data:", error);
       throw error;
@@ -158,8 +150,6 @@ class DashboardDataManager {
           "SELECT * FROM balance_sheet ORDER BY month DESC, line_num ASC"
         ),
         agedAR: this.query("SELECT * FROM aged_ar"),
-        contractedHoursUpdatedMonth:
-          this.kvData?.contracted_hours_updated_month,
       });
     }
 
@@ -167,16 +157,14 @@ class DashboardDataManager {
     if (wdIds) {
       const filterWdId = (row) => wdIds.includes(row.dept_wd_id);
       return new SourceData({
-        volumes: this.sourceData.volumes.filter((row) => filterWdId(row)),
-        uos: this.sourceData.uos.filter((row) => filterWdId(row)),
-        hours: this.sourceData.hours.filter((row) => filterWdId(row)),
-        budget: this.sourceData.budget.filter((row) => filterWdId(row)),
-        incomeStmt: this.sourceData.incomeStmt.filter((row) => filterWdId(row)),
+        volumes: this.sourceData.volumes.filter(filterWdId),
+        uos: this.sourceData.uos.filter(filterWdId),
+        hours: this.sourceData.hours.filter(filterWdId),
+        contractedHours: this.sourceData.contractedHours.filter(filterWdId),
+        budget: this.sourceData.budget.filter(filterWdId),
+        incomeStmt: this.sourceData.incomeStmt.filter(filterWdId),
         balanceSheet: this.sourceData.balanceSheet,
         agedAR: this.sourceData.agedAR,
-        contractedHours: this.sourceData.contractedHours.filter((row) =>
-          filterWdId(row)
-        ),
       });
     }
     return this.sourceData;

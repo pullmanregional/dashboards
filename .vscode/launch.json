@@ -15,8 +15,6 @@
         "sqlite:///${workspaceFolder}/../prh-warehouse/prw.sqlite3",
         "--out",
         "${workspaceFolder}/../prh-warehouse/prh-finance.sqlite3",
-        "--kv",
-        "${workspaceFolder}/../prh-warehouse/prh-finance.json"
       ],
       "console": "integratedTerminal",
       "justMyCode": true

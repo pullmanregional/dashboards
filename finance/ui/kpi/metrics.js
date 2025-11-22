@@ -338,11 +338,13 @@ function populateProductivityMetrics(metricEl, data, currentMonth) {
 
   // Calculate Traveler FTE from contracted hours for current year
   const [year, monthNum] = currentMonth.split("-");
-  const yearNum = parseInt(year);
-  const currentYearContracted = contractedHours.find(
-    (row) => row.year === yearNum
+  const currentYearContracted = contractedHours.filter(
+    (row) => row.month.startsWith(year) && row.month <= currentMonth
   );
-  const contractedHoursTotal = currentYearContracted?.hrs || 0;
+  const contractedHoursTotal = currentYearContracted.reduce(
+    (sum, row) => sum + (row.total_hrs || 0),
+    0
+  );
 
   // Divide by months elapsed in the year to get average monthly hours, then convert to FTE
   // Assume 173.33 hours per month per FTE (2080 hours/year / 12 months)

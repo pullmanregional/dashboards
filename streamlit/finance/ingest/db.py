@@ -66,9 +66,8 @@ class ContractedHours(DatamartModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     dept_wd_id: str = Field(max_length=10)
     dept_name: str | None = None
-    year: int
-    hrs: float | None = None
-    ttl_dept_hrs: float
+    month: str = Field(max_length=7)
+    total_hrs: float
 
 
 class IncomeStmt(DatamartModel, table=True):
@@ -106,13 +105,3 @@ class AgedAR(DatamartModel, table=True):
     date: str = Field(max_length=10)
     aged_days: str = Field(max_length=10)
     total: float
-
-
-class KvTable(DatamartModel, table=True):
-    """
-    Stores key/value data. This table will contains a single row with a JSON blob
-    """
-
-    __tablename__ = "_kv"
-    id: int | None = Field(default=None, primary_key=True)
-    data: str
