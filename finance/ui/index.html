@@ -64,7 +64,7 @@
         <!-- Cards Container -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Administrative Overview Card. Click anywhere, not just button, to go to dashboard. -->
-          <div id="btn-view-admin" class="card shadow-xl">
+          <div id="card-view-admin" class="card shadow-xl">
             <div class="card-body h-full">
               <div class="flex flex-col items-center text-center mb-4">
                 <h2 class="card-title text-lg my-3">Administrative Overview</h2>
@@ -75,7 +75,7 @@
               </div>
 
               <div class="card-actions mt-auto">
-                <button class="btn btn-primary btn-block">
+                <button id="btn-view-admin" class="btn btn-primary btn-block">
                   View Administrative Dashboard
                 </button>
               </div>
@@ -98,6 +98,7 @@
                   <!-- Dropdown hint and chevron-->
                   <label
                     tabindex="0"
+                    id="dept-menu-label"
                     class="btn btn-outline w-full justify-between"
                   >
                     <span id="dept-text">Choose a department...</span>

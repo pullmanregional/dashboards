@@ -23,6 +23,14 @@ global.APP_CONFIG = {
     //
     // Request is authorized if matches group OR email for the matching path rule.
     // By default, access is denied unless explicitly allowed.
+    "/": {
+      ALLOWED_GROUPS: [],
+      ALLOWED_EMAILS: [],
+    },
+    "/assets/*": {
+      ALLOWED_GROUPS: [],
+      ALLOWED_EMAILS: [],
+    },
     "/kpi.html": {
       ALLOWED_GROUPS: [],
       ALLOWED_EMAILS: [],

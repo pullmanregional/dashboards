@@ -2,11 +2,15 @@ import { getAllDepartments } from "./department-config.js";
 
 // State management
 let selectedDept = "";
+let hasKpiAccess = false;
+let hasAdminAccess = false;
 
 // DOM elements
+const viewAdminCard = document.getElementById("card-view-admin");
 const viewAdminBtn = document.getElementById("btn-view-admin");
 const deptText = document.getElementById("dept-text");
 const deptMenu = document.getElementById("dept-menu");
+const deptMenuLabel = document.getElementById("dept-menu-label");
 const deptLinkText = document.getElementById("dept-link-text");
 const deptLinkUrl = document.getElementById("dept-link-url");
 const viewDeptBtn = document.getElementById("btn-view-dept");
@@ -50,6 +54,27 @@ function handleDepartmentChange(event) {
   );
 }
 
+async function checkPageAccess(url) {
+  try {
+    const resp = await fetch(url, { method: "HEAD" });
+    return resp.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function enableCards() {
+  hasAdminAccess = await checkPageAccess("admin.html");
+  if (!hasAdminAccess) {
+    viewAdminBtn.disabled = true;
+  }
+  hasKpiAccess = await checkPageAccess("kpi.html");
+  if (!hasKpiAccess) {
+    deptMenuLabel.setAttribute("disabled", "true");
+    viewDeptBtn.disabled = true;
+  }
+}
+
 async function populateAcctMenu() {
   userEmailEl.textContent = "Not logged in";
   try {
@@ -63,9 +88,12 @@ async function populateAcctMenu() {
   }
 }
 
-function init() {
+async function init() {
   // Fill in account menu with user's email
   populateAcctMenu();
+
+  // Check access to admin and kpi pages
+  await enableCards();
 
   // Populate department menu
   getAllDepartments().forEach((dept) => {
@@ -79,7 +107,7 @@ function init() {
 
   // Restore department selection from session storage
   const savedDept = sessionStorage.getItem("dept");
-  if (savedDept) {
+  if (savedDept && hasKpiAccess) {
     const deptElement = deptMenu.querySelector(`a[data-value="${savedDept}"]`);
     if (deptElement) {
       setDepartment(savedDept, deptElement.textContent);
@@ -89,12 +117,14 @@ function init() {
   // Event listeners
   deptMenu.addEventListener("click", handleDepartmentChange);
   viewDeptBtn.addEventListener("click", () => {
-    if (selectedDept) {
+    if (selectedDept && hasKpiAccess) {
       window.location.href = `kpi.html?dept=${selectedDept}`;
     }
   });
-  viewAdminBtn.addEventListener("click", () => {
-    window.location.href = "admin.html";
+  viewAdminCard.addEventListener("click", () => {
+    if (hasAdminAccess) {
+      window.location.href = "admin.html";
+    }
   });
 }
 
